@@ -1,0 +1,1 @@
+fica todos os estilos globais do repositório
