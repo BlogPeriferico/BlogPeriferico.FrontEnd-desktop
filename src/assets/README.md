@@ -1,1 +1,0 @@
-em assets podem colocar, videos, gif, fonts, afins
