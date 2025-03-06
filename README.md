@@ -32,6 +32,8 @@ Este repositório contém a interface do site, desenvolvida com:
  ┣ 📜 index.html     # Página principal  
  ┗ 📜 README.md      # Documentação do projeto  
 
+---
+
 ## 🔧 Como Rodar o Projeto  
 
 Siga os passos abaixo para visualizar e testar o site localmente:
