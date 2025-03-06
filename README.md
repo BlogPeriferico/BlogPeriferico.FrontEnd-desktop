@@ -1,30 +1,36 @@
-🌍 BlogPeriferia - Front-End
-Bem-vindo ao repositório do BlogPeriferia! Nosso site é uma plataforma dedicada a fortalecer e conectar comunidades periféricas por meio de notícias, doações, anúncios e comércio local.
+# 🌍 BlogPeriferia - Front-End
 
-🚀 Sobre o Projeto
-O BlogPeriferia foi criado para oferecer um espaço digital onde as comunidades podem:
+Bem-vindo ao repositório do **BlogPeriferia**! Nosso site é uma plataforma dedicada a fortalecer e conectar comunidades periféricas por meio de **notícias, doações, anúncios e comércio local**.
 
-📢 Divulgar notícias e eventos importantes.
-❤️ Realizar e receber doações para causas sociais.
-🏪 Promover pequenos negócios e comércios locais.
-🔍 Anunciar serviços e oportunidades.
-O Front-End do projeto foi desenvolvido utilizando:
+---
 
-✅ HTML – Estrutura das páginas.
-✅ CSS – Estilização e design responsivo.
-✅ JavaScript – Interatividade e dinamicidade.
+## 🚀 Sobre o Projeto
 
-📂 Estrutura do Projeto
-bash
-Copiar
-Editar
+O **BlogPeriferia** foi criado para oferecer um espaço digital onde as comunidades podem:
+
+- 📢 **Divulgar notícias** e eventos importantes.
+- ❤️ **Realizar e receber doações** para causas sociais.
+- 🏪 **Promover pequenos negócios e comércios locais**.
+- 🔍 **Anunciar serviços e oportunidades**.
+
+O **Front-End** do projeto foi desenvolvido utilizando:
+
+- ✅ **HTML** – Estrutura das páginas.
+- ✅ **CSS** – Estilização e design responsivo.
+- ✅ **JavaScript** – Interatividade e dinamicidade.
+
+---
+
+## 📂 Estrutura do Projeto
+
+```bash
 📦 BlogPeriferico.FrontEnd
- ┣ 📂 assets/        # Imagens, ícones e arquivos estáticos  
- ┣ 📂 css/           # Arquivos de estilos  
- ┣ 📂 js/            # Scripts de interatividade  
- ┣ 📂 pages/         # Páginas internas do site  
- ┣ 📜 index.html     # Página principal  
- ┗ 📜 README.md      # Documentação do projeto  
+ ┣ 📂 assets/        # Imagens, ícones e arquivos estáticos
+ ┣ 📂 css/           # Arquivos de estilos
+ ┣ 📂 js/            # Scripts de interatividade
+ ┣ 📂 pages/         # Páginas internas do site
+ ┣ 📜 index.html     # Página principal
+ ┗ 📜 README.md      # Documentação do projeto
 🔧 Como Rodar o Projeto
 Siga os passos abaixo para visualizar e testar o site localmente:
 
@@ -42,9 +48,8 @@ Editar
 cd BlogPeriferico.FrontEnd
 3️⃣ Abra o site no navegador
 
-✅ Clique duas vezes no arquivo index.html, ou
-✅ Utilize a extensão Live Server no VS Code para rodar um servidor local.
-
+Clique duas vezes no arquivo index.html, ou
+Utilize a extensão Live Server no VS Code para rodar um servidor local.
 💡 Dica: Para uma experiência melhor, instale a extensão Live Server.
 
 🚀 Deploy
@@ -69,4 +74,3 @@ Se tiver dúvidas ou sugestões, entre em contato! 💙
 
 ✉️ Email: [SEU_EMAIL_AQUI]
 🌍 Site: [URL_DO_SITE_AQUI]
-
