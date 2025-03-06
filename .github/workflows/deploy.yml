@@ -3,34 +3,29 @@ name: Deploy to Vercel
 on:
   push:
     branches:
-      - main  # Altere para a branch de sua preferência
+      - main  # Altere para a branch correta se necessário
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Ou a versão que você utiliza
+          node-version: '22'  # Use a versão que seu projeto requer
 
       - name: Install dependencies
         run: |
-          npm install
+          ls -la  # Lista os arquivos para depuração
+          if [ -f "frontend/package.json" ]; then cd frontend; fi
+          npm ci --no-audit --no-fund
 
-      - name: Vercel deploy
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel_token: ${{ secrets.VERCEL_TOKEN }}
-          vercel_org_id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel_project_id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel_team_id: ${{ secrets.VERCEL_TEAM_ID }}
-          vercel_alias: your-domain.vercel.app # Se você tiver um domínio personalizado
-
-      - name: Deploy
+      - name: Deploy to Vercel
         run: |
-          vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --confirm
+          if [ -f "frontend/package.json" ]; then cd frontend; fi
+          npm install -g vercel
+          vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
