@@ -34,7 +34,7 @@ O **Front-End** do projeto foi desenvolvido utilizando:
 
 ---
 
-##🔧 Como Rodar o Projeto
+## 🔧 Como Rodar o Projeto
 Siga os passos abaixo para visualizar e testar o site localmente:
 
 1️⃣ Clone este repositório
