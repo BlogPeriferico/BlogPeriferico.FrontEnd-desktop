@@ -31,6 +31,7 @@ O **Front-End** do projeto foi desenvolvido utilizando:
  ┣ 📂 pages/         # Páginas internas do site
  ┣ 📜 index.html     # Página principal
  ┗ 📜 README.md      # Documentação do projeto
+```bash
 🔧 Como Rodar o Projeto
 Siga os passos abaixo para visualizar e testar o site localmente:
 
