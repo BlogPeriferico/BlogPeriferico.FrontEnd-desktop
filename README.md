@@ -31,3 +31,13 @@ Este repositório contém a interface do site, desenvolvida com:
  ┣ 📂 pages/         # Páginas internas do site  
  ┣ 📜 index.html     # Página principal  
  ┗ 📜 README.md      # Documentação do projeto  
+
+## 🔧 Como Rodar o Projeto  
+
+Siga os passos abaixo para visualizar e testar o site localmente:  
+
+1️⃣ **Clone este repositório:**  
+   ```sh
+   git clone https://github.com/BlogPeriferico/BlogPeriferico.FrontEnd.git
+
+
