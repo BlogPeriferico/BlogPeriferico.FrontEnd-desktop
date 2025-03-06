@@ -30,4 +30,14 @@ O **Front-End** do projeto foi desenvolvido utilizando:
  ┣ 📂 js/            # Scripts de interatividade  
  ┣ 📂 pages/         # Páginas internas do site  
  ┣ 📜 index.html     # Página principal  
- ┗ 📜 README.md      # Documentação do projeto  
+ ┗ 📜 README.md      # Documentação do projeto
+
+## 🔧 Como Rodar o Projeto
+
+Siga os passos abaixo para visualizar e testar o site localmente:
+
+1️⃣ Clone este repositório
+
+```bash
+git clone https://github.com/BlogPeriferico/BlogPeriferico.FrontEnd.git
+
