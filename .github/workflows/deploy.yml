@@ -3,7 +3,7 @@ name: Deploy to Vercel
 on:
   push:
     branches:
-      - main  # Altere para a branch correta se necessário
+      - main  # Altere para a branch correta, se necessário
 
 jobs:
   deploy:
@@ -13,19 +13,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: List files for debugging
+        run: ls -la
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22'  # Use a versão que seu projeto requer
+          node-version: '18'
 
       - name: Install dependencies
         run: |
-          ls -la  # Lista os arquivos para depuração
-          if [ -f "frontend/package.json" ]; then cd frontend; fi
-          npm ci --no-audit --no-fund
+          cd BlogPeriferico.FrontEnd-main  # Entra na pasta correta
+          npm install  # Usa npm install em vez de npm ci
 
       - name: Deploy to Vercel
         run: |
-          if [ -f "frontend/package.json" ]; then cd frontend; fi
+          cd BlogPeriferico.FrontEnd-main  # Garante que estamos na pasta correta
           npm install -g vercel
           vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
