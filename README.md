@@ -1,71 +1,71 @@
-# 🌍 BlogPeriferia - Front-End  
+BlogPeriferia - Front-End
+Bem-vindo ao repositório do BlogPeriferia! Nosso site é uma plataforma dedicada a fortalecer e conectar comunidades periféricas por meio de notícias, doações, anúncios e comércio local.
 
-Bem-vindo ao repositório do **BlogPeriferia**! Nosso site é uma plataforma dedicada a fortalecer e conectar comunidades periféricas por meio de **notícias, doações, anúncios e comércio local**.  
+Sobre o Projeto
+O BlogPeriferia foi criado para oferecer um espaço digital onde as comunidades podem:
 
----
+Divulgar notícias e eventos importantes.
 
-## 🚀 Sobre o Projeto  
+Realizar e receber doações para causas sociais.
 
-O **BlogPeriferia** foi criado para oferecer um espaço digital onde as comunidades podem:  
+Promover pequenos negócios e comércios locais.
 
-- 📢 **Divulgar notícias** e eventos importantes.  
-- ❤️ **Realizar e receber doações** para causas sociais.  
-- 🏪 **Promover pequenos negócios e comércios locais**.  
-- 🔍 **Anunciar serviços e oportunidades**.  
+Anunciar serviços e oportunidades.
 
-O **Front-End** do projeto foi desenvolvido utilizando:  
+O Front-End do projeto foi desenvolvido utilizando:
 
-✅ **HTML** – Estrutura das páginas.  
-✅ **CSS** – Estilização e design responsivo.  
-✅ **JavaScript** – Interatividade e dinamicidade.  
+HTML – Estrutura das páginas.
 
----
+CSS – Estilização e design responsivo.
 
-## 📂 Estrutura do Projeto  
+JavaScript – Interatividade e dinamicidade.
 
-```bash
-📦 BlogPeriferico.FrontEnd
- ┣ 📂 assets/        # Imagens, ícones e arquivos estáticos  
- ┣ 📂 css/           # Arquivos de estilos  
- ┣ 📂 js/            # Scripts de interatividade  
- ┣ 📂 pages/         # Páginas internas do site  
- ┣ 📜 index.html     # Página principal  
- ┗ 📜 README.md      # Documentação do projeto
-
----
-
-## 🔧 Como Rodar o Projeto
+Estrutura do Projeto
+Copy
+BlogPeriferico.FrontEnd/
+│
+├── assets/          # Imagens, ícones e arquivos estáticos
+├── css/             # Arquivos de estilos
+├── js/              # Scripts de interatividade
+├── pages/           # Páginas internas do site
+├── index.html       # Página principal
+└── README.md        # Documentação do projeto
+Como Rodar o Projeto
 Siga os passos abaixo para visualizar e testar o site localmente:
 
-1️⃣ Clone este repositório
-sh
-Copiar
-Editar
+Clone este repositório:
+
+bash
+Copy
 git clone https://github.com/BlogPeriferico/BlogPeriferico.FrontEnd.git
-2️⃣ Acesse a pasta do projeto
-sh
-Copiar
-Editar
+Navegue até o diretório do projeto:
+
+bash
+Copy
 cd BlogPeriferico.FrontEnd
-3️⃣ Abra o site no navegador
-✅ Clique duas vezes no arquivo index.html, ou
-✅ Utilize a extensão Live Server no VS Code para rodar um servidor local.
+Abra o arquivo index.html no seu navegador para visualizar a página principal.
 
-💡 Dica: Para uma experiência melhor, instale a extensão Live Server.
+Contribuindo
+Se você deseja contribuir para o projeto, siga os passos abaixo:
 
-🚀 Deploy
-O site está hospedado na Vercel, garantindo que todas as atualizações no repositório sejam aplicadas automaticamente.
+Faça um fork do repositório.
 
-🔗 Acesse aqui: [URL_DO_SITE_AQUI]
+Crie uma branch para sua feature ou correção:
 
-🛠 Contribuindo
-Quer contribuir para o BlogPeriferia? Siga estes passos:
+bash
+Copy
+git checkout -b nome-da-sua-branch
+Faça commit das suas alterações:
 
-1️⃣ Faça um fork deste repositório.
-2️⃣ Crie uma branch com sua funcionalidade ou correção.
-3️⃣ Envie um Pull Request para análise.
+bash
+Copy
+git commit -m "Descrição das alterações"
+Envie as alterações para o repositório remoto:
 
-📢 Todas as sugestões são bem-vindas!
+bash
+Copy
+git push origin nome-da-sua-branch
+Abra um Pull Request no repositório original.
 
-📜 Licença
-Este projeto é open-source e segue a licença MIT.
+Licença
+Este projeto está licenciado sob a MIT License.
