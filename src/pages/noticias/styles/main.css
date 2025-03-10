@@ -1,0 +1,490 @@
+#main-principal{
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    margin-top: 25px;
+    align-items: center;
+ 
+}
+#div-traco-main{
+    margin-top: 25px;
+    margin-bottom: 25px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+ 
+}
+#traco-main{
+       width: 100%;
+       height: 3px;
+        background: linear-gradient(#FF6A00 0%, #FFA05B 100%);
+}
+#div-traco-main-final{
+  margin-top: 25px;
+  margin-bottom: 40px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+#traco-main-final{
+  width: 83%;
+  height: 3px;
+   background: linear-gradient(#FF6A00 0%, #FFA05B 100%);
+}
+
+/*h1-and-modal*/
+#selecoes-modal{
+  width: 97%;
+  display: flex;
+  justify-content: space-between;
+}
+
+#div-h1-and-refresh{
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+#icon-refresh{
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s ease;  
+  cursor: pointer;
+}
+#icon-refresh:hover {
+  animation: rotate 2s linear infinite;
+ 
+}
+
+@keyframes rotate {
+  0% {
+      transform: rotate(0deg);
+  }
+  100% {
+      transform: rotate(360deg); 
+  }
+}
+
+#h1-modal-noticias{
+  font-family: "Inter", serif;
+  font-size: 48px;
+  font-style: Regular;
+  line-height: auto;
+  color: #000;
+}
+
+#button-modal{
+  border: none;
+  background: none;
+}
+
+#button-modal:hover{
+  transform: scale(1.10);
+  transition: .6s;
+  cursor: pointer;
+}
+
+/*h1-and-modal*/
+
+
+/*////////////////////////////////////////*/
+
+
+/*div-Conteudo postado*/
+
+#div-conteudos-postados{
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    height: auto;
+    margin-top: 25px;
+    align-items: start;
+     align-content: space-between;
+      
+}
+
+/*///////////////////////////////////////////////////////*/
+/*config noticias post*/
+.config-post {
+  width: 100%;
+  height:  330px ;
+  display: flex;
+  border-radius: 20px;
+} 
+.config-post:hover{
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.30);
+ 
+  transition: .8s;
+  cursor: pointer;
+  transform: scale(1.02);
+} 
+.config-right-post{
+  display: flex;
+  align-items: start;
+  flex-direction: column;
+  justify-content: space-around;
+   
+}
+ 
+.config-left-post{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+   width: 50%;
+   height: auto;
+    
+}
+.config-img-post{
+  width: 518px;
+  height: 242px;
+}
+
+
+.config-h1-modal-delete{
+ display: flex;
+  gap: 30px;
+}
+.config-iconDelete{
+   width: 40px;
+  height: 40px;
+}
+.config-iconDelete:hover{
+   transform: scale(1.15);
+   transition: .8s;
+   cursor: pointer;
+}
+
+/*config noticias post*/
+
+
+
+
+/*///////////////////////////////////////////////////////*/
+/*config clima*/
+#div-clima-regioes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);  
+    grid-template-rows: repeat(3, 1fr); 
+    grid-gap: 50px;  
+}
+ 
+
+#div-clima-regioes > div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#div-clima-regioes img {
+    max-width: 100%;  
+    height: auto;
+}
+.config-climas{
+  position: relative;  
+    width: 100%;
+    height: 100%;
+}
+.config-climas:hover{
+  transform: scale(1.05);
+  transition: .8s;
+  cursor: pointer;
+}
+.config-imgs-clima{
+  width: 100%;
+  height: auto;  
+}
+.config-inf-img-clima{
+  position: absolute;  
+  z-index: 1;  
+  width: 100%;
+  height: 100%;
+}
+.config-parte-cima-img-clima{
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  width: 100%;
+  height: 50%;
+}
+.config-lado-esquerdo-img-clima{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.config-lado-direito-img-clima{
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  gap: 10px;
+}
+.config-parte-baixo-img-clima{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 50%;
+}
+.config-temp-img-clima{
+  display: flex;
+  gap: 10px;
+  color: #fff;
+  font-size: 24px;
+  font-style: Regular;
+  line-height: auto;
+  font-family: "Roboto",serif;
+}
+.config-h1-img-clima{
+  color: #fff;
+  font-size: 20px;
+  font-style: medium;
+  line-height: auto;
+  font-family: "Roboto",serif;
+}
+.config-p-img-clima{
+  color: #fff;
+  font-size: 12px;
+  font-style: Regular;
+  line-height: 20px;
+  font-family: "Roboto",serif;
+} 
+ /*config clima*/
+/*///////////////////////////////////////////////////////*/
+
+ 
+
+/*post-1*/
+  
+#div-location-post-1{
+    display: flex;
+    gap: 5px;
+}
+  
+#h1-post-1{
+    font-family: "Inter", serif;
+    font-size: 30px;
+    font-style: bold;
+    line-height:auto ;
+    color: #FF8025;
+}
+#p-post-1{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #000;
+}
+#second-p-post-1{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #555555;
+}
+/*post-1*/
+
+/*///////////////////////*/
+
+/*post-2*/
+ 
+#div-location-post-2{
+    display: flex;
+    gap: 5px;
+}
+#h1-post-2{
+    font-family: "Inter", serif;
+    font-size: 30px;
+    font-style: bold;
+    line-height:auto ;
+    color: #FF8025;
+}
+#p-post-2{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #000;
+}
+#second-p-post-2{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #555555;
+}
+ 
+/*post-2*/
+
+
+/*///////////////////////*/
+
+
+/*post-3*/
+ 
+#div-location-post-3{
+    display: flex;
+    gap: 5px;
+}
+#h1-post-3{
+    font-family: "Inter", serif;
+    font-size: 30px;
+    font-style: bold;
+    line-height:auto ;
+    color: #FF8025;
+}
+#p-post-3{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #000;
+}
+#second-p-post-3{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #555555;
+}
+
+
+/*post-3*/
+/*///////////////////////*/
+
+
+/*post-4*/
+ 
+#div-location-post-4{
+    display: flex;
+    gap: 5px;
+}
+#h1-post-4{
+    font-family: "Inter", serif;
+    font-size: 30px;
+    font-style: bold;
+    line-height:auto ;
+    color: #FF8025;
+}
+#p-post-4{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #000;
+}
+#second-p-post-4{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #555555;
+}
+/*post-4*/
+/*///////////////////////*/
+ 
+/*post-5*/
+ 
+#div-location-post-5{
+    display: flex;
+    gap: 5px;
+}
+#h1-post-5{
+    font-family: "Inter", serif;
+    font-size: 30px;
+    font-style: bold;
+    line-height:auto ;
+    color: #FF8025;
+}
+#p-post-5{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #000;
+}
+#second-p-post-5{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #555555;
+}
+/*post-5*/
+/*///////////////////////*/
+/*///////////////////////*/
+
+
+/*post-6*/
+ 
+#div-location-post-6{
+    display: flex;
+    gap: 5px;
+}
+#h1-post-6{
+    font-family: "Inter", serif;
+    font-size: 30px;
+    font-style: bold;
+    line-height:auto ;
+    color: #FF8025;
+}
+#p-post-6{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #000;
+}
+#second-p-post-6{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #555555;
+}
+/*post-6*/
+/*///////////////////////*/
+/*///////////////////////*/
+
+
+/*post-7*/
+ 
+#div-location-post-7{
+    display: flex;
+    gap: 5px;
+}
+
+#h1-post-7{
+    font-family: "Inter", serif;
+    font-size: 30px;
+    font-style: bold;
+    line-height:auto ;
+    color: #FF8025;
+}
+#p-post-7{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #000;
+}
+#second-p-post-7{
+    font-family: "Inter", serif;
+    font-size: 15px;
+    font-style: bold;
+    line-height:auto ;
+    color: #555555;
+}
+/*post-7*/
+/*///////////////////////*/
+
+
+ 
+/*///////////////////////*/
+/*div-Conteudo postado*/
+
+
+
+
+
+
+/*///////////////div-clima-regioes//////////////////*/
