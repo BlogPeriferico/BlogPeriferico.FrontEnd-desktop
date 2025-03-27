@@ -1,0 +1,22 @@
+:root {
+  
+              /*REGIOES*/          /*REGIOES*/         /*REGIOES*/
+    --cor-Centro: linear-gradient(#C1C1C1 0%, #504E4E 100%); /* Cinza */
+    --cor-Sudoeste: linear-gradient(#E64343 0%, #750E00 100%); /* Vermelho */
+    --cor-Leste:  linear-gradient(#F87D58 0%, #E64343 100%); /* Laranja */
+    --cor-Oeste: linear-gradient(#FFAE74 0%, #FF6C03 100%); /* Amarelo */
+    --cor-Nordeste: linear-gradient(#FFFF00 0%, #FAB404 100%) ; /*  Azul Claro */
+    --cor-Sul: linear-gradient(#E4F0FF   0%, #31B5F0  100%)  ; /* Azul*/
+    --cor-Norte:  linear-gradient(#A8E4FF  0%, #1F4E88  100%) ; /* Azul Escuro*/
+    --cor-Noroeste: linear-gradient(#BDFFF0  0%, #09735A  100%)  ; /* Verde */
+              /*REGIOES*/          /*REGIOES*/          /*REGIOES*/
+
+
+        /*Cor Registro, login e editUser*/     /*Cor Registro, login e editUser*/
+    --cor-registro-preto: #1F1F1F;
+
+
+        /*Cor Registro, login e editUser*/     /*Cor Registro, login e editUser*/
+              
+  }
+  

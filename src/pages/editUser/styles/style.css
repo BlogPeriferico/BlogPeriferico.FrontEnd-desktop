@@ -1,0 +1,10 @@
+@import url(import.css);
+@import url(main.css);
+@import url(header.css);
+
+
+#container{
+    width: 100%;
+    height: auto;
+    
+}

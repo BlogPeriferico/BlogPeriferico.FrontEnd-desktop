@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PageDesk-Comercio</title>
+    <link rel="stylesheet" href="/src/pages/comercio/styles/style.css" />
+    <script src="/src/js/sidebar.js"></script>
+</head>
+<body>
+<div id="container">
+  <header id="header">
+  <div id="left-nav-header">
+    <h1 id="h1-titulo-header">BlogPeriferico</h1>
+    <li id="li-header"><a id="a-header" href="/src/pages/noticias/index.html">Noticias</a></li>
+    <li id="li-header"><a id="a-header" href="/src/pages/doacoes/index.html">Doação</a></li>
+    <li id="li-header"><a id="a-header" href="/src/pages/anuncios/index.html">Anuncios</a></li>
+    <li id="li-header"><a id="a-header" href="/src/pages/comercio/index.html">Comercio</a></li>
+  </div>
+
+  <div id="right-nav-header">
+    <div id="menu-icon" onclick="toggleSidebar()">
+      <img src="/src/assets/icon.svg" alt="" id="image-menu">
+    </div>
+    <div id="div-input-header">
+      <input type="text" id="input-header" placeholder="O que deseja encontrar?">
+      <div id="div-lupa-header">
+        <img src="/src/assets/images/header/pesquisa.svg" alt="logo de lupa" id="lupa-header">
+      </div>
+    </div>
+    <div id="logo">
+      <a href="/src/pages/login/index.html">
+        <img src="/src/assets/images/header/logo.svg" alt="logo do site" id="logo">
+      </a>
+    </div>
+  </div>
+
+
+<div id="sidebar" class="sidebar">
+  <div id="sidebar-header">
+    <h1 id="h1-sidebar">BlogPeriferico</h1>
+    <button id="close-btn" onclick="toggleSidebar()">X</button>
+  </div>
+  <div id="div-logo-sidebar">
+    <a href="/src/pages/login/index.html">
+      <img src="/src/assets/images/header/logo.svg" alt="logo do site" id="logo-sidebar">
+      <button id="button-editar-sidebar"><a href=""><img src="/src/assets/images/header/editButton.svg" id="edit-sidebar" alt=""></a></button>
+    </a>
+  </div>
+  <ul>
+    <li><a href="/src/pages/noticias/index.html" id="li-sidebar">Notícias</a></li>
+    <li><a href="/src/pages/doacoes/index.html" id="li-sidebar">Doações</a></li>
+    <li><a href="/src/pages/comercio/index.html" id="li-sidebar">Comércios</a></li>
+    <li><a href="/src/pages/anuncios/index.html" id="li-sidebar">Anúncios</a></li>
+    <li><a href="/src/pages/sobreNos/index.html" id="li-sidebar">Sobre nós</a></li>
+  </ul>
+</div>
+</header>
+
+<div id="div-traco-header">
+  <div id="traco-header"></div>
+</div>
+
+<div id="div-icons-header">
+  <div id="icons-header">
+    <img src="/src/assets/images/header/regiao.svg" alt="img de regiao" id="regiao">
+    <img src="/src/assets/images/header/clima.svg" alt="img de clima" id="clima">
+  </div>
+</div>
+
+      <main id="main-principal">
+        <div id="selecoes-modal">
+          <div id="div-h1-and-refresh">
+            <h1 id="h1-modal-noticias">Seleções de comercio de Hoje</h1>
+            <img
+              src="/src/assets/images/icon/refresh.svg"
+              alt="imagem de atualização da pagina"
+              id="icon-refresh"
+            />
+          </div>
+
+          <button id="button-modal">
+            <img
+              src="/src/assets/images/icon/botaoModalPost.svg"
+              alt=""
+              id="img-adicionar-modal"
+            />
+          </button>
+        </div>
+
+        <div id="conteudo-postados">
+          <div class="config-post" id="post-1">
+            <div class="config-titulo-post" id="titulo-post-1">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-1">
+                <img
+                  src="/src/assets/images/svg/PageDoacoes/imagePerfil.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-1"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-1">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-1">
+                    mercado sapao
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost1.svg"
+                      class="config-big-img-post"
+                      id="big-img-post-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-1">
+              <p>Estamos com promoções em laticinos. Vendemos de tudo</p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-1"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+
+          <div class="config-post" id="post-2">
+            <div class="config-titulo-post" id="titulo-post-2">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-2">
+                <img
+                  src="/src/assets/images/svg/PageDoacoes/imagePerfil.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-2"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-2">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-2">
+                    comercio da esquina
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost2.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-2"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-2">
+              <p>
+                Somos o comercio da esquina, vendemos de tudo que voce possa
+                imaginar, venha nos visitar!
+              </p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-2"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+
+          <div class="config-post" id="post-3">
+            <div class="config-titulo-post" id="titulo-post-3">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-3">
+                <img
+                  src="/src/assets/images/svg/PageDoacoes/imagePerfil.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-3"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-3">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-3">
+                    mercado torao
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost3.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-3"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-3">
+              <p>Venha conhecer o mercado torao</p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-3"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-4">
+            <div class="config-titulo-post" id="titulo-post-4">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-4">
+                <img
+                  src="/src/assets/images/svg/PageDoacoes/imagePerfil.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-4"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-4">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-4">
+                    vendinha da 25 de marco
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost4.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-4"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-4">
+              <p>sou a primeira vendinha aqui da 25 de marco</p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-4"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-5">
+            <div class="config-titulo-post" id="titulo-post-5">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-5">
+                <img
+                  src="/src/assets/images/svg/PageDoacoes/imagePerfil.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-5"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-5">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-5">
+                    vendinha da claudia
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost5.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-5"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-5">
+              <p>Somos uma vendinha de vendas de roupa</p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-5"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+
+          <div class="config-post" id="post-6">
+            <div class="config-titulo-post" id="titulo-post-6">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-6">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost6.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-6"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-6">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-6">
+                    mercado da quebrada
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost6.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-6"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-6">
+              <p>
+                Aqui é o mercadinho da quebrada vendemos de tudo, venha nos ver
+              </p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-6"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-7">
+            <div class="config-titulo-post" id="titulo-post-7">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-7">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost7.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-7"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-7">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-7">
+                    atacadista
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost7.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-7"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-7">
+              <p>Somos o atacadista, estamos com promoção em varios itens</p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-7"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-8">
+            <div class="config-titulo-post" id="titulo-post-8">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-8">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost8.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-8"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-8">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-8">
+                    mercadinho do fernando
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost8.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-8"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-8">
+              <p>
+                Sou dono do mercadinho do fernando, venha a minha loja para ver
+                meus itens
+              </p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-8"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-9">
+            <div class="config-titulo-post" id="titulo-post-9">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-9">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost9.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-9"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-9">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-9">
+                    whelena
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost9.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-9"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-9">
+              <p>Somos a whelena, um mercado que vende de tudo</p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-9"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-10">
+            <div class="config-titulo-post" id="titulo-post-10">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-10">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost10.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-10"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-10">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-10">
+                    comercio do bras
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost10.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-10"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-10">
+              <p>Venha para nosso comércio para se divertir em nossa adega</p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-10"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-11">
+            <div class="config-titulo-post" id="titulo-post-11">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-11">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost11.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-11"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-11">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-11">
+                    Comercio Baladinha
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost11.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-11"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-11">
+              <p>
+                Nintendo switch branco semi-novo, com caixa, em ótimo estado.
+                Entre em contato caso tenha interesse.
+              </p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-11"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-12">
+            <div class="config-titulo-post" id="titulo-post-12">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-12">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost12.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-12"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-12">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-12">
+                    Comercio Da Rua
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost12.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-12"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-12">
+              <p>
+                Venha no comercio da rua, fica na rua, estou vendendo coisas da
+                rua
+              </p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-12"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-13">
+            <div class="config-titulo-post" id="titulo-post-13">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-13">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost13.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-13"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão de whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-13">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-13">
+                    vendinha do carlos
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost13.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-13"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-13">
+              <p>
+                venha para a vendinha do carlos onde vendemos de tudo que voce
+                possa imaginar
+              </p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-13"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-14">
+            <div class="config-titulo-post" id="titulo-post-14">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-14">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost14.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-14"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão do whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-14">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-14">
+                    fonte bras
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageAnuncios/imagePost14.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-14"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-14">
+              <p>
+                Em nosso Comércio você encontra de tudo que pode imaginar, venha
+                agora conhecer!
+              </p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-14"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+
+          <div class="config-post" id="post-15">
+            <div class="config-titulo-post" id="titulo-post-15">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-15">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost15.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-15"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botão do whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botao de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-15">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-15">
+                    Mavel
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageComercio/imagePost15.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-15"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-15">
+              <p>mavel um local de vendas de imoveis, somos profissionais</p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-15"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+          <div class="config-post" id="post-16">
+            <div class="config-titulo-post" id="titulo-post-16">
+              <div class="config-lado-esquerdo-post" id="lado-esquerdo-post-16">
+                <img
+                  src="/src/assets/images/svg/PageComercio/imagePost16.svg"
+                  alt="imagem de perfil"
+                  class="config-perfil-post"
+                  id="perfil-post-16"
+                />
+
+                <img
+                  src="/src/assets/images/icon/coment.svg"
+                  alt="botão de comentario"
+                  class="config-coment-post"
+                  id="icon-coment"
+                />
+
+                <img
+                  src="/src/assets/images/icon/whattsap.svg"
+                  alt="botao do whattsap"
+                  class="config-zap-post"
+                  id="icon-zap"
+                />
+
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-delete-post"
+                  id="icon-delete"
+                />
+              </div>
+
+              <div class="config-lado-direito-post" id="lado-direito-post-16">
+                <div
+                  class="config-div-titulo-principal"
+                  id="div-titulo-principal"
+                >
+                  <h1 class="config-titulo-h1-post" id="titulo-h1-post-16">
+                    vendinha da joane
+                  </h1>
+
+                  <div class="config-img-big">
+                    <img
+                      src="/src/assets/images/svg/PageComercio/imagePost16.svg"
+                      alt="imagem do post"
+                      class="config-big-img-post"
+                      id="big-img-post-16"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-inf-post" id="inf-post-16">
+              <p>Vendas de materias escolar e roupas</p>
+            </div>
+
+            <div
+              class="config-inf-location-time-post"
+              id="inf-location-time-post-16"
+            >
+              <p>Sudeste</p>
+              <p>19h</p>
+            </div>
+          </div>
+        </div>
+      </main>
+      <footer id="footer">
+        <div id="retangulo-footer">
+          <div id="div-centro-retangulo">
+            <div id="div-inf-footer">
+              <div id="lado-esquerdo-footer">
+                <div id="work-and-email">
+                  <div id="parte-cima-W-E">
+                    <div id="traco-footer"></div>
+
+                    <h1 id="h1-lado-esquerdo-W-E">Sobre nosso Trabalho</h1>
+                  </div>
+
+                  <div id="parte-mid-W-E">
+                    <p id="p-lado-esquerdo-W-E">
+                      Este site foi criado para fins educativos, <br />
+                      nosso TCC visa trazer algo que ajude o dia a dia de<br />
+                      pessoas em areas perifericasque sofrem com transito <br />
+                      assaltos ou em caso de vunerabilidade.
+                    </p>
+                  </div>
+
+                  <div id="email">
+                    <div id="titulo-email">
+                      <div id="traco-footer"></div>
+                      <h1 id="h1-email-footer">
+                        Reporte Algum erro neste email:
+                      </h1>
+                    </div>
+
+                    <div id="div-input-footer">
+                      <input
+                        type="text"
+                        placeholder="blog.periferico@gmail.com"
+                        id="input-footer"
+                      />
+                      <div id="div-iconGmail">
+                        <img
+                          src="/src/assets/images/footer/email.svg"
+                          alt="logo do Gmail"
+                          id="iconGmail"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="lado-direito-footer">
+                <div id="categoria-and-Redes-sociais">
+                  <div id="teste-footer">
+                    <div id="parte-cima-C-R">
+                      <div id="traco-footer"></div>
+
+                      <h1 id="h1-lado-direito-C-R">Categorias</h1>
+                    </div>
+
+                    <div id="parte-mid-C-R">
+                      <li id="li-footer">
+                        <a id="a-footer" href="/src/pages/noticias/index.html"
+                          >Noticias</a
+                        >
+                      </li>
+                      <li id="li-footer">
+                        <a id="a-footer" href="/src/pages/doacoes/index.html"
+                          >Doações</a
+                        >
+                      </li>
+                      <li id="li-footer">
+                        <a id="a-footer" href="/src/pages/comercio/index.html"
+                          >Comercios</a
+                        >
+                      </li>
+                      <li id="li-footer">
+                        <a id="a-footer" href="/src/pages/anuncios/index.html"
+                          >Anuncios</a
+                        >
+                      </li>
+                      <li id="li-footer">
+                        <a id="a-footer" href="/src/pages/sobreNos/index.html"
+                          >Sobre-nós</a
+                        >
+                      </li>
+                    </div>
+                  </div>
+
+                  <div id="parte-baixo-C-R">
+                    <div id="h1-parte-baixo-C-R">
+                      <div id="traco-footer"></div>
+                      <h1 id="h1-redes-sociais-footer">Redes Sociais</h1>
+                    </div>
+
+                    <div id="img-redes-sociais">
+                      <img
+                        src="/src/assets/images/footer/instagram.svg"
+                        alt="logo do instagram"
+                        id="iconInstagram"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="div-politica-privacidade">
+            <div id="politica-privacidade">
+              <p id="p-politica-privacidade">
+                privacy policy | terms & conditions
+              </p>
+              <p id="p-politica-privacidade">all copyright (c) 2022 reserved</p>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+</div>
+</body>
+</html>

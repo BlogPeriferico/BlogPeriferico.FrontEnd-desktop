@@ -1,0 +1,354 @@
+#main-principal{
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    margin-top: 25px;
+    align-items: center;
+ 
+ }
+ #button-coment{
+    border: none;
+    background: none;
+ }
+ #button-coment:hover{
+    transform: scale(1.05);
+    transition: .6s;
+    cursor: pointer;  
+ }
+
+ 
+/*h1-and-modal*/
+#selecoes-modal{
+    width: 97%;
+    display: flex;
+    justify-content: space-between;
+}
+
+#div-h1-and-refresh{
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+#icon-refresh{
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;  
+    cursor: pointer;
+}
+#icon-refresh:hover {
+    animation: rotate 2s linear infinite;
+   
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg); 
+    }
+}
+
+#h1-modal-noticias{
+    font-family: "Inter", serif;
+    font-size: 48px;
+    font-style: Regular;
+    line-height: auto;
+    color: #000;
+}
+
+#button-modal{
+    border: none;
+    background: none;
+}
+
+#button-modal:hover{
+    transform: scale(1.10);
+    transition: .6s;
+    cursor: pointer;
+}
+
+/*h1-and-modal*/
+
+/*//////////////////////////////////////////////////*/
+
+/*conteudo postados*/
+#conteudo-postados{
+     display: grid;
+    height: auto;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap:  25px;
+    justify-items: center;
+    margin-top: 25px;
+    
+}
+
+
+/*///////////////*/
+/*configuração de todos os post*/
+.config-post{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 292px;
+    height: 324px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.25);
+}
+.config-post:hover{
+    transform: scale(1.10);
+    transition: .9s;
+    cursor: pointer;
+  }
+.config-titulo-post{
+    display: flex;
+    width: 100%;
+    height: 60%;
+    
+}
+.config-lado-esquerdo-post{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+    width: 20%; 
+}
+.config-perfil-post{
+    width: 34px;
+    height: 34px;
+    border-radius: 20px;
+}
+.config-coment-post{
+    width: 24px;
+    height: 24px;
+}
+.config-zap-post{
+    width: 24px;
+    height: 24px;
+}
+.config-delete-post{
+    width: 24px;
+    height: 24px;
+}
+.config-perfil-post:hover{
+   transform: scale(1.15);
+   transition: .6s;
+   cursor: pointer;
+}
+.config-coment-post:hover{
+    transform: scale(1.15);
+    transition: .6s;
+    cursor: pointer;
+}
+.config-zap-post:hover{
+    transform: scale(1.15);
+    transition: .6s;
+    cursor: pointer;
+}
+.config-delete-post:hover{
+    transform: scale(1.15);
+    transition: .6s;
+    cursor: pointer;
+}
+.config-lado-direito-post{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    width: 80%;
+    height: 100%;
+    
+}
+.config-div-titulo-principal{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: auto;
+  
+    
+}
+.config-titulo-h1-post{
+   
+    font-size: 18px;
+    font-style: bold;
+    line-height: auto;
+    font-family: "Inter", serif;
+   
+}
+.config-img-big{
+    width: 100%;
+    display: flex;
+    justify-content: start;
+}
+.config-div-img-post{
+    display: flex;
+    justify-content: start;
+}
+.config-big-img-post{
+    width: 181px;
+    height: 158px;
+}
+.config-inf-post{
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    width: 90%;
+    height: 30%;
+    font-family: "Inter", serif;
+    font-size: 14px;
+    font-style: medium;
+    line-height:auto ;
+    color: #000;
+    word-wrap: break-word;
+    
+} 
+
+.config-inf-location-time-post{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    
+    width: 93%;
+    height: 5%;
+    font-family: "Inter", serif;
+    font-size: 14px;
+    font-style: medium;
+    line-height:auto ;
+    color: #8F8F8F;
+}
+
+
+/*configuração de todos os post*/
+
+
+/*///////////////*/
+
+ 
+
+@media (max-width: 1024px) {
+    #conteudo-postados{
+        display: grid;
+       height: auto;
+       grid-template-columns: repeat(3, 1fr);
+       grid-template-rows: repeat(4, 1fr);
+       column-gap: 10px;
+       row-gap: 20px;
+       justify-items: center;
+       margin-top: 25px;
+       
+   }
+   .config-post{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 280px;
+    height: 310px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.25);
+}
+   #selecoes-modal{
+    width: 97%;
+    display: flex;
+    justify-content: space-between;
+}
+
+#div-h1-and-refresh{
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+#h1-modal-noticias{
+    font-family: "Inter", serif;
+    font-size: 38px;
+    font-style: Regular;
+    line-height: auto;
+    color: #000;
+}
+#icon-refresh{
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;  
+    cursor: pointer;
+}
+#icon-refresh:hover {
+    animation: rotate 2s linear infinite;
+   
+}
+#selecoes-modal{
+    width: 97%;
+    display: flex;
+    justify-content:space-around;
+}
+
+ 
+}
+     
+
+@media (max-width: 800px) {
+    #conteudo-postados{
+        display: grid;
+       height: auto;
+       grid-template-columns: repeat(2, 1fr);
+       grid-template-rows: repeat(4, 1fr);
+       column-gap: 10px;
+       row-gap: 20px;
+       justify-items: center;
+       margin-top: 25px;
+       
+   }
+   #h1-modal-noticias{
+    font-family: "Inter", serif;
+    font-size: 25px;
+    font-style: Regular;
+    line-height: auto;
+    color: #000;
+}
+#selecoes-modal{
+    width: 97%;
+    display: flex;
+    justify-content:space-evenly;
+}
+}
+
+@media (max-width: 550px) {
+    #conteudo-postados{
+        display: grid;
+       height: auto;
+       grid-template-columns: repeat(1, 1fr);
+       grid-template-rows: repeat(4, 1fr);
+       column-gap: 10px;
+       row-gap: 20px;   
+       justify-items: center;
+       margin-top: 25px;
+       
+   }
+   #h1-modal-noticias{
+    font-family: "Inter", serif;
+    font-size: 17px;
+    font-style: Regular;
+    line-height: auto;
+    color: #000;
+}
+#button-modal{
+    border: none;
+    background: none;
+}
+#img-adicionar-modal{
+    width: 40px;
+    height: 40px;
+  
+}
+}
+     
+
+
+/*conteudo postados*/
+/*//////////////////////////////////////////////////*/

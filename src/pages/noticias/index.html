@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PageDesk-Noticias</title>
+    <link rel="stylesheet" href="/src/pages/noticias/styles/style.css" />
+    <script src="/src/js/sidebar.js"></script>
+</head>
+<body>
+<div id="container">
+  <header id="header">
+  <div id="left-nav-header">
+    <h1 id="h1-titulo-header">BlogPeriferico</h1>
+    <li id="li-header"><a id="a-header" href="/src/pages/noticias/index.html">Noticias</a></li>
+    <li id="li-header"><a id="a-header" href="/src/pages/doacoes/index.html">Doação</a></li>
+    <li id="li-header"><a id="a-header" href="/src/pages/anuncios/index.html">Anuncios</a></li>
+    <li id="li-header"><a id="a-header" href="/src/pages/comercio/index.html">Comercio</a></li>
+  </div>
+
+  <div id="right-nav-header">
+    <div id="menu-icon" onclick="toggleSidebar()">
+      <img src="/src/assets/icon.svg" alt="" id="image-menu">
+    </div>
+    <div id="div-input-header">
+      <input type="text" id="input-header" placeholder="O que deseja encontrar?">
+      <div id="div-lupa-header">
+        <img src="/src/assets/images/header/pesquisa.svg" alt="logo de lupa" id="lupa-header">
+      </div>
+    </div>
+    <div id="logo">
+      <a href="/src/pages/login/index.html">
+        <img src="/src/assets/images/header/logo.svg" alt="logo do site" id="logo">
+      </a>
+    </div>
+  </div>
+
+
+<div id="sidebar" class="sidebar">
+  <div id="sidebar-header">
+    <h1 id="h1-sidebar">BlogPeriferico</h1>
+    <button id="close-btn" onclick="toggleSidebar()">X</button>
+  </div>
+  <div id="div-logo-sidebar">
+    <a href="/src/pages/login/index.html">
+      <img src="/src/assets/images/header/logo.svg" alt="logo do site" id="logo-sidebar">
+      <button id="button-editar-sidebar"><a href=""><img src="/src/assets/images/header/editButton.svg" id="edit-sidebar" alt=""></a></button>
+    </a>
+  </div>
+  <ul>
+    <li><a href="/src/pages/noticias/index.html" id="li-sidebar">Notícias</a></li>
+    <li><a href="/src/pages/doacoes/index.html" id="li-sidebar">Doações</a></li>
+    <li><a href="/src/pages/comercio/index.html" id="li-sidebar">Comércios</a></li>
+    <li><a href="/src/pages/anuncios/index.html" id="li-sidebar">Anúncios</a></li>
+    <li><a href="/src/pages/sobreNos/index.html" id="li-sidebar">Sobre nós</a></li>
+  </ul>
+</div>
+</header>
+
+<div id="div-traco-header">
+  <div id="traco-header"></div>
+</div>
+
+<div id="div-icons-header">
+  <div id="icons-header">
+    <img src="/src/assets/images/header/regiao.svg" alt="img de regiao" id="regiao">
+    <img src="/src/assets/images/header/clima.svg" alt="img de clima" id="clima">
+  </div>
+</div>
+
+      <main id="main-principal">
+        <div id="selecoes-modal">
+          <div id="div-h1-and-refresh">
+            <h1 id="h1-modal-noticias">Seleções de Doações de Hoje</h1>
+            <img
+              src="/src/assets/images/icon/refresh.svg"
+              alt="icone de atualizar a pagina"
+              id="icon-refresh"
+            />
+          </div>
+
+          <button id="button-modal">
+            <img
+              src="/src/assets/images/icon/botaoModalPost.svg"
+              alt="botão de adicionar postagem"
+              id="img-adicionar-modal"
+            />
+          </button>
+        </div>
+
+        <div id="div-conteudos-postados">
+          <div class="config-post" id="post-1">
+            <div class="config-left-post" id="left-post-1">
+              <img
+                src="/src/assets/images/svg/PageAnuncios/imagePost1.svg"
+                alt="imagem do publicação"
+                class="config-img-post"
+                id="img-post-1"
+              />
+            </div>
+            <div class="config-right-post" id="right-post-1">
+              <div class="config-h1-modal-delete" id="h1-and-modal-delete">
+                <h1  class="config-h1-post" id="h1-post-1">
+                  Desemprego vai a 6,5% no trimestre <br />
+                  terminado em janeiro, diz IBGE
+                </h1>
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-iconDelete"
+                  id="iconDelete"
+                />
+              </div>
+
+              <div id="div-location-post-1">
+                <img
+                  src="/src/assets/images/svg/PageNoticias/bolinhaLocation.svg"
+                  alt="image de bolinha preto"
+                />
+                <p id="p-post-1">Local Postagem</p>
+              </div>
+              <p id="second-p-post-1">Há 3 horas</p>
+            </div>
+          </div>
+
+          <div id="div-traco-main">
+            <div id="traco-main"></div>
+          </div>
+
+          <div class="config-post" id="post-2">
+            <div class="config-left-post" id="left-post-2">
+              <img
+                src="/src/assets/images/svg/PageAnuncios/imagePost2.svg"
+                alt="imagem do publicação"
+                class="config-img-post"
+                id="img-post-2"
+              />
+            </div>
+            <div class="config-right-post" id="right-post-2">
+              <div class="config-h1-modal-delete" id="h1-and-modal-delete">
+                <h1  class="config-h1-post" id="h1-post-1">
+                  Desemprego vai a 6,5% no trimestre <br />
+                  terminado em janeiro, diz IBGE
+                </h1>
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-iconDelete"
+                  id="iconDelete"
+                />
+              </div>
+
+              <div id="div-location-post-2">
+                <img
+                  src="/src/assets/images/svg/PageNoticias/bolinhaLocation.svg"
+                  alt="image de bolinha preto"
+                />
+                <p id="p-post-2">Local Postagem</p>
+              </div>
+              <p id="second-p-post-2">Há 3 horas</p>
+            </div>
+          </div>
+
+          <div id="div-traco-main">
+            <div id="traco-main"></div>
+          </div>
+
+          <div class="config-post" id="post-3">
+            <div class="config-left-post" id="left-post-3">
+              <img
+                src="/src/assets/images/svg/PageAnuncios/imagePost3.svg"
+                alt="imagem do publicação"
+                class="config-img-post"
+                id="img-post-3"
+              />
+            </div>
+            <div class="config-right-post" id="right-post-3">
+              <div class="config-h1-modal-delete" id="h1-and-modal-delete">
+                <h1  class="config-h1-post" id="h1-post-1">
+                  Desemprego vai a 6,5% no trimestre <br />
+                  terminado em janeiro, diz IBGE
+                </h1>
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-iconDelete"
+                  id="iconDelete"
+                />
+              </div>
+              <div id="div-location-post-3">
+                <img
+                  src="/src/assets/images/svg/PageNoticias/bolinhaLocation.svg"
+                  alt="image de bolinha preto"
+                />
+                <p id="p-post-3">Local Postagem</p>
+              </div>
+              <p id="second-p-post-3">Há 3 horas</p>
+            </div>
+          </div>
+
+          <div id="div-traco-main">
+            <div id="traco-main"></div>
+          </div>
+
+          <div class="config-post" id="post-4">
+            <div class="config-left-post" id="left-post-4">
+              <img
+                src="/src/assets/images/svg/PageAnuncios/imagePost4.svg"
+                alt="imagem da publicação"
+                class="config-img-post"
+                id="img-post-4"
+              />
+            </div>
+            <div class="config-right-post" id="right-post-4">
+              <div class="config-h1-modal-delete" id="h1-and-modal-delete">
+                <h1 class="config-h1-post" id="h1-post-1">
+                  Desemprego vai a 6,5% no trimestre <br />
+                  terminado em janeiro, diz IBGE
+                </h1>
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-iconDelete"
+                  id="iconDelete"
+                />
+              </div>
+
+              <div id="div-location-post-4">
+                <img
+                  src="/src/assets/images/svg/PageNoticias/bolinhaLocation.svg"
+                  alt="image de bolinha preto"
+                />
+                <p id="p-post-4">Local Postagem</p>
+              </div>
+              <p id="second-p-post-4">Há 3 horas</p>
+            </div>
+          </div>
+
+          <div id="div-traco-main">
+            <div id="traco-main"></div>
+          </div>
+
+          <div class="config-post" id="post-5">
+            <div class="config-left-post" id="left-post-5">
+              <img
+                src="/src/assets/images/svg/PageAnuncios/imagePost5.svg"
+                alt="imagem da publicação"
+                class="config-img-post"
+                id="img-post-5"
+              />
+            </div>
+            <div class="config-right-post" id="right-post-5">
+              <div class="config-h1-modal-delete" id="h1-and-modal-delete">
+                <h1  class="config-h1-post" id="h1-post-1">
+                  Desemprego vai a 6,5% no trimestre <br />
+                  terminado em janeiro, diz IBGE
+                </h1>
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-iconDelete"
+                  id="iconDelete"
+                />
+              </div>
+
+              <div id="div-location-post-5">
+                <img
+                  src="/src/assets/images/svg/PageNoticias/bolinhaLocation.svg"
+                  alt="image de bolinha preto"
+                />
+                <p id="p-post-5">Local Postagem</p>
+              </div>
+              <p id="second-p-post-5">Há 3 horas</p>
+            </div>
+          </div>
+
+          <div id="div-traco-main">
+            <div id="traco-main"></div>
+          </div>
+
+          <div class="config-post" id="post-6">
+            <div class="config-left-post" id="left-post-6">
+              <img
+                src="/src/assets/images/svg/PageAnuncios/imagePost6.svg"
+                alt="imagem do publicação"
+                class="config-img-post"
+                id="img-post-6"
+              />
+            </div>
+            <div class="config-right-post" id="right-post-6">
+              <div class="config-h1-modal-delete" id="h1-and-modal-delete">
+                <h1  class="config-h1-post" id="h1-post-1">
+                  Desemprego vai a 6,5% no trimestre <br />
+                  terminado em janeiro, diz IBGE
+                </h1>
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-iconDelete"
+                  id="iconDelete"
+                />
+              </div>
+
+              <div id="div-location-post-6">
+                <img
+                  src="/src/assets/images/svg/PageNoticias/bolinhaLocation.svg"
+                  alt="image de bolinha preto"
+                />
+                <p id="p-post-6">Local Postagem</p>
+              </div>
+              <p id="second-p-post-6">Há 3 horas</p>
+            </div>
+          </div>
+
+          <div id="div-traco-main">
+            <div id="traco-main"></div>
+          </div>
+
+          <div class="config-post" id="post-7">
+            <div class="config-left-post" id="left-post-7">
+              <img
+                src="/src/assets/images/svg/PageAnuncios/imagePost7.svg"
+                alt="imagem do publicação"
+                class="config-img-post"
+                id="img-post-7"
+              />
+            </div>
+
+            <div class="config-right-post" id="right-post-7">
+              <div class="config-h1-modal-delete" id="h1-and-modal-delete">
+                <h1  class="config-h1-post" id="h1-post-1">
+                  Desemprego vai a 6,5% no trimestre <br />
+                  terminado em janeiro, diz IBGE
+                </h1>
+                <img
+                  src="/src/assets/images/icon/delete.svg"
+                  alt="botão de deletar"
+                  class="config-iconDelete"
+                  id="iconDelete"
+                />
+              </div>
+
+              <div id="div-location-post-7">
+                <img
+                  src="/src/assets/images/svg/PageNoticias/bolinhaLocation.svg"
+                  alt="image de bolinha preto"
+                />
+                <p id="p-post-7">Local Postagem</p>
+              </div>
+              <p id="second-p-post-7">Há 3 horas</p>
+            </div>
+          </div>
+
+          <div id="div-traco-main">
+            <div id="traco-main"></div>
+          </div>
+
+          <div id="div-clima-regioes">
+            <div class="config-climas" id="clima-centro">
+              <img
+                src="/src/assets/images/svg/PageNoticias/imageCentro.svg"
+                alt="imagem regiao de climatização"
+                class="config-imgs-clima"
+                id="img-centro"
+              />
+
+              <div class="config-inf-img-clima" id="inf-img-centro">
+                <div
+                  class="config-parte-cima-img-clima"
+                  id="parte-cima-img-centro"
+                >
+                  <div
+                    class="config-lado-esquerdo-img-clima"
+                    id="lado-esquerdo-img-centro"
+                  >
+                    <p class="config-p-img-clima" id="p-img-centro">
+                      Precipitation: 18%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-centro">
+                      Humidity: 32%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-centro">
+                      Wind: 16 km/h
+                    </p>
+                  </div>
+
+                  <div
+                    class="config-lado-direito-img-clima"
+                    id="lado-direito-img-centro"
+                  >
+                    <h1 class="config-h1-img-clima" id="h1-img-centro">
+                      Centro
+                    </h1>
+                    <p class="config-p-img-clima" id="p-img-centro">
+                      Tuesday 3:00 AM
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="config-parte-baixo-img-clima"
+                  id="parte-baixo-img-centro"
+                >
+                  <div class="config-temp-img-clima" id="temp-centro">
+                    <img
+                      src="/src/assets/images/svg/PageNoticias/tempestade.svg"
+                      alt="icone de tempestade "
+                    />
+                    <h1>16</h1>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-climas" id="clima-Sudoeste">
+              <img
+                src="/src/assets/images/svg/PageNoticias/imageSudoeste.svg"
+                alt="imagem regiao de climatização"
+                class="config-imgs-clima"
+                id="img-Sudoeste"
+              />
+
+              <div class="config-inf-img-clima" id="inf-img-Sudoeste">
+                <div
+                  class="config-parte-cima-img-clima"
+                  id="parte-cima-img-Sudoeste"
+                >
+                  <div
+                    class="config-lado-esquerdo-img-clima"
+                    id="lado-esquerdo-img-Sudoeste"
+                  >
+                    <p class="config-p-img-clima" id="p-img-Sudoeste">
+                      Precipitation: 0%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Sudoeste">
+                      Humidity: 41%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Sudoeste">
+                      Wind: 27 km/h
+                    </p>
+                  </div>
+
+                  <div
+                    class="config-lado-direito-img-clima"
+                    id="lado-direito-img-Sudoeste"
+                  >
+                    <h1 class="config-h1-img-clima" id="h1-img-Sudoeste">
+                      Sudoeste
+                    </h1>
+                    <p class="config-p-img-clima" id="p-img-Sudoeste">
+                      Tuesday 2:00 PM
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="config-parte-baixo-img-clima"
+                  id="parte-baixo-img-Sudoeste"
+                >
+                  <div class="config-temp-img-clima" id="temp-Sudoeste">
+                    <img
+                      src="/src/assets/images/svg/PageNoticias/Sol.svg"
+                      alt="icone de sol"
+                    />
+                    <h1>32</h1>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-climas" id="clima-Leste">
+              <img
+                src="/src/assets/images/svg/PageNoticias/imageLeste.svg"
+                alt="imagem regiao de climatização"
+                class="config-imgs-clima"
+                id="img-Leste"
+              />
+              <div class="config-inf-img-clima" id="inf-img-Leste">
+                <div
+                  class="config-parte-cima-img-clima"
+                  id="parte-cima-img-Leste"
+                >
+                  <div
+                    class="config-lado-esquerdo-img-clima"
+                    id="lado-esquerdo-img-Leste"
+                  >
+                    <p class="config-p-img-clima" id="p-img-Leste">
+                      Precipitation: 18%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Leste">
+                      Humidity: 32%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Leste">
+                      Wind: 16 km/h
+                    </p>
+                  </div>
+
+                  <div
+                    class="config-lado-direito-img-clima"
+                    id="lado-direito-img-Leste"
+                  >
+                    <h1 class="config-h1-img-clima" id="h1-img-Leste">Leste</h1>
+                    <p class="config-p-img-clima" id="p-img-Leste">
+                      Tuesday 3:00 AM
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="config-parte-baixo-img-clima"
+                  id="parte-baixo-img-Leste"
+                >
+                  <div class="config-temp-img-clima" id="temp-Leste">
+                    <img
+                      src="/src/assets/images/svg/PageNoticias/tempestade.svg"
+                      alt="icone de tempestade"
+                    />
+                    <h1>16</h1>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-climas" id="clima-Oeste">
+              <img
+                src="/src/assets/images/svg/PageNoticias/imageOeste.svg"
+                alt="imagem regiao de climatização"
+                class="config-imgs-clima"
+                id="img-Oeste"
+              />
+
+              <div class="config-inf-img-clima" id="inf-img-Oeste">
+                <div
+                  class="config-parte-cima-img-clima"
+                  id="parte-cima-img-Oeste"
+                >
+                  <div
+                    class="config-lado-esquerdo-img-clima"
+                    id="lado-esquerdo-img-Oeste"
+                  >
+                    <p class="config-p-img-clima" id="p-img-Oeste">
+                      Precipitation: 10%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Oeste">
+                      Humidity: 44%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Oeste">
+                      Wind: 14 km/h
+                    </p>
+                  </div>
+
+                  <div
+                    class="config-lado-direito-img-clima"
+                    id="lado-direito-img-Oeste"
+                  >
+                    <h1 class="config-h1-img-clima" id="h1-img-Oeste">Oeste</h1>
+                    <p class="config-p-img-clima" id="p-img-Oeste">
+                      Tuesday 10:00 AM
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="config-parte-baixo-img-clima"
+                  id="parte-baixo-img-Oeste"
+                >
+                  <div class="config-temp-img-clima" id="temp-Oeste">
+                    <img
+                      src="/src/assets/images/svg/PageNoticias/luaNuvem.svg"
+                      alt="icone de lua com nuvem"
+                    />
+                    <h1>27</h1>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-climas" id="clima-Nordeste">
+              <img
+                src="/src/assets/images/svg/PageNoticias/imageNordeste.svg"
+                alt="imagem regiao de climatização"
+                class="config-imgs-clima"
+                id="img-Nordeste"
+              />
+
+              <div class="config-inf-img-clima" id="inf-img-Nordeste">
+                <div
+                  class="config-parte-cima-img-clima"
+                  id="parte-cima-img-Nordeste"
+                >
+                  <div
+                    class="config-lado-esquerdo-img-clima"
+                    id="lado-esquerdo-img-Nordeste"
+                  >
+                    <p class="config-p-img-clima" id="p-img-Nordeste">
+                      Precipitation: 70%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Nordeste">
+                      Humidity: 50%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Nordeste">
+                      Wind: 14 km/h
+                    </p>
+                  </div>
+
+                  <div
+                    class="config-lado-direito-img-clima"
+                    id="lado-direito-img-Nordeste"
+                  >
+                    <h1 class="config-h1-img-clima" id="h1-img-Nordeste">
+                      Nordeste
+                    </h1>
+                    <p class="config-p-img-clima" id="p-img-Nordeste">
+                      Tuesday 1:00 AM
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="config-parte-baixo-img-clima"
+                  id="parte-baixo-img-Nordeste"
+                >
+                  <div class="config-temp-img-clima" id="temp-Nordeste">
+                    <img
+                      src="/src/assets/images/svg/PageNoticias/NuvemChuva.svg"
+                      alt="icone de chuva"
+                    />
+                    <h1>24</h1>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-climas" id="clima-Norte">
+              <img
+                src="/src/assets/images/svg/PageNoticias/imageNorte.svg"
+                alt="imagem regiao de climatização"
+                class="config-imgs-clima"
+                id="img-Norte"
+              />
+
+              <div class="config-inf-img-clima" id="inf-img-Norte">
+                <div
+                  class="config-parte-cima-img-clima"
+                  id="parte-cima-img-Norte"
+                >
+                  <div
+                    class="config-lado-esquerdo-img-clima"
+                    id="lado-esquerdo-img-Norte"
+                  >
+                    <p class="config-p-img-clima" id="p-img-Norte">
+                      Precipitation: 10%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Norte">
+                      Humidity: 44%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Norte">
+                      Wind: 14 km/h
+                    </p>
+                  </div>
+
+                  <div
+                    class="config-lado-direito-img-clima"
+                    id="lado-direito-img-Norte"
+                  >
+                    <h1 class="config-h1-img-clima" id="h1-img-Norte">Norte</h1>
+                    <p class="config-p-img-clima" id="p-img-Norte">
+                      Tuesday 10:00 AM
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="config-parte-baixo-img-clima"
+                  id="parte-baixo-img-Norte"
+                >
+                  <div class="config-temp-img-clima" id="temp-Norte">
+                    <img
+                      src="/src/assets/images/svg/PageNoticias/luaNuvem.svg"
+                      alt="icone de lua com nuvem "
+                    />
+                    <h1>27</h1>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-climas" id="clima-Sul">
+              <img
+                src="/src/assets/images/svg/PageNoticias/imageSul.svg"
+                alt="imagem regiao de climatização"
+                class="config-imgs-clima"
+                id="img-Sul"
+              />
+
+              <div class="config-inf-img-clima" id="inf-img-Sul">
+                <div
+                  class="config-parte-cima-img-clima"
+                  id="parte-cima-img-Sul"
+                >
+                  <div
+                    class="config-lado-esquerdo-img-clima"
+                    id="lado-esquerdo-img-Sul"
+                  >
+                    <p class="config-p-img-clima" id="p-img-Sul">
+                      Precipitation: 70%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Sul">
+                      Humidity: 50%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Sul">
+                      Wind: 14 km/h
+                    </p>
+                  </div>
+
+                  <div
+                    class="config-lado-direito-img-clima"
+                    id="lado-direito-img-Sul"
+                  >
+                    <h1 class="config-h1-img-clima" id="h1-img-Sul">Sul</h1>
+                    <p class="config-p-img-clima" id="p-img-Sul">
+                      Tuesday 1:00 AM
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="config-parte-baixo-img-clima"
+                  id="parte-baixo-img-Sul"
+                >
+                  <div class="config-temp-img-clima" id="temp-Sul">
+                    <img
+                      src="/src/assets/images/svg/PageNoticias/NuvemChuva.svg"
+                      alt="icone de chuva "
+                    />
+                    <h1>24</h1>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-climas" id="clima-Sudeste">
+              <img
+                src="/src/assets/images/svg/PageNoticias/imageSudeste.svg"
+                alt="imagem regiao de climatização"
+                class="config-imgs-clima"
+                id="img-Sudeste"
+              />
+
+              <div class="config-inf-img-clima" id="inf-img-Sudeste">
+                <div
+                  class="config-parte-cima-img-clima"
+                  id="parte-cima-img-Sudeste"
+                >
+                  <div
+                    class="config-lado-esquerdo-img-clima"
+                    id="lado-esquerdo-img-Sudeste"
+                  >
+                    <p class="config-p-img-clima" id="p-img-Sudeste">
+                      Precipitation: 10%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Sudeste">
+                      Humidity: 44%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Sudeste">
+                      Wind: 14 km/h
+                    </p>
+                  </div>
+
+                  <div
+                    class="config-lado-direito-img-clima"
+                    id="lado-direito-img-Sudeste"
+                  >
+                    <h1 class="config-h1-img-clima" id="h1-img-Sudeste">
+                      Sudeste
+                    </h1>
+                    <p class="config-p-img-clima" id="p-img-Sudeste">
+                      Tuesday 10:00 AM
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="config-parte-baixo-img-clima"
+                  id="parte-baixo-img-Sudeste"
+                >
+                  <div class="config-temp-img-clima" id="temp-Sudeste">
+                    <img
+                      src="/src/assets/images/svg/PageNoticias/luaNuvem.svg"
+                      alt="icone de lua com nuvens"
+                    />
+                    <h1>27</h1>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="config-climas" id="clima-Noroeste">
+              <img
+                src="/src/assets/images/svg/PageNoticias/imageNoroeste.svg"
+                alt="imagem regiao de climatização"
+                class="config-imgs-clima"
+                id="img-Noroeste"
+              />
+
+              <div class="config-inf-img-clima" id="inf-img-Noroeste">
+                <div
+                  class="config-parte-cima-img-clima"
+                  id="parte-cima-img-Noroeste"
+                >
+                  <div
+                    class="config-lado-esquerdo-img-clima"
+                    id="lado-esquerdo-img-Noroeste"
+                  >
+                    <p class="config-p-img-clima" id="p-img-Noroeste">
+                      Precipitation: 0%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Noroeste">
+                      Humidity: 41%
+                    </p>
+                    <p class="config-p-img-clima" id="p-img-Noroeste">
+                      Wind: 27 km/h
+                    </p>
+                  </div>
+
+                  <div
+                    class="config-lado-direito-img-clima"
+                    id="lado-direito-img-Noroeste"
+                  >
+                    <h1 class="config-h1-img-clima" id="h1-img-Noroeste">
+                      Noroeste
+                    </h1>
+                    <p class="config-p-img-clima" id="p-img-Noroeste">
+                      Tuesday 2:00 AM
+                    </p>
+                  </div>
+                </div>
+
+                <div
+                  class="config-parte-baixo-img-clima"
+                  id="parte-baixo-img-Noroeste"
+                >
+                  <div class="config-temp-img-clima" id="temp-Noroeste">
+                    <img
+                      src="/src/assets/images/svg/PageNoticias/Sol.svg"
+                      alt="icone de sol"
+                    />
+                    <h1>32</h1>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="div-traco-main-final">
+            <div id="traco-main-final"></div>
+          </div>
+        </div>
+      </main>
+
+      <footer id="footer">
+        <div id="retangulo-footer">
+          <div id="div-centro-retangulo">
+            <div id="div-inf-footer">
+              <div id="lado-esquerdo-footer">
+                <div id="work-and-email">
+                  <div id="parte-cima-W-E">
+                    <div id="traco-footer"></div>
+
+                    <h1 id="h1-lado-esquerdo-W-E">Sobre nosso Trabalho</h1>
+                  </div>
+
+                  <div id="parte-mid-W-E">
+                    <p id="p-lado-esquerdo-W-E">
+                      Este site foi criado para fins educativos, <br />
+                      nosso TCC visa trazer algo que ajude o dia a dia de<br />
+                      pessoas em areas perifericasque sofrem com transito <br />
+                      assaltos ou em caso de vunerabilidade.
+                    </p>
+                  </div>
+
+                  <div id="email">
+                    <div id="titulo-email">
+                      <div id="traco-footer"></div>
+                      <h1 id="h1-email-footer">
+                        Reporte Algum erro neste email:
+                      </h1>
+                    </div>
+
+                    <div id="div-input-footer">
+                      <input
+                        type="text"
+                        placeholder="blog.periferico@gmail.com"
+                        id="input-footer"
+                      />
+                      <div id="div-iconGmail">
+                        <img
+                          src="/src/assets/images/footer/email.svg"
+                          alt="logo do Gmail"
+                          id="iconGmail"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="lado-direito-footer">
+                <div id="categoria-and-Redes-sociais">
+                  <div id="teste-footer">
+                    <div id="parte-cima-C-R">
+                      <div id="traco-footer"></div>
+
+                      <h1 id="h1-lado-direito-C-R">Categorias</h1>
+                    </div>
+
+                    <div id="parte-mid-C-R">
+                      <li id="li-footer">
+                        <a id="a-footer" href="/src/pages/noticias/index.html"
+                          >Noticias</a
+                        >
+                      </li>
+                      <li id="li-footer">
+                        <a id="a-footer" href="/src/pages/doacoes/index.html"
+                          >Doações</a
+                        >
+                      </li>
+                      <li id="li-footer">
+                        <a id="a-footer" href="/src/pages/comercio/index.html"
+                          >Comercios</a
+                        >
+                      </li>
+                      <li id="li-footer">
+                        <a id="a-footer" href="/src/pages/anuncios/index.html"
+                          >Anuncios</a
+                        >
+                      </li>
+                      <li id="li-footer">
+                        <a id="a-footer" href="/src/pages/sobreNos/index.html"
+                          >Sobre-nós</a
+                        >
+                      </li>
+                    </div>
+                  </div>
+
+                  <div id="parte-baixo-C-R">
+                    <div id="h1-parte-baixo-C-R">
+                      <div id="traco-footer"></div>
+                      <h1 id="h1-redes-sociais-footer">Redes Sociais</h1>
+                    </div>
+
+                    <div id="img-redes-sociais">
+                      <img
+                        src="/src/assets/images/footer/instagram.svg"
+                        alt="logo do instagram"
+                        id="iconInstagram"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="div-politica-privacidade">
+            <div id="politica-privacidade">
+              <p id="p-politica-privacidade">
+                privacy policy | terms & conditions
+              </p>
+              <p id="p-politica-privacidade">all copyright (c) 2022 reserved</p>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+</div>
+</body>
+</html>

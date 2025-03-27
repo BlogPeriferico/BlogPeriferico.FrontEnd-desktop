@@ -1,0 +1,13 @@
+@import url(import.css);
+@import url(global.css);
+@import url(header.css);
+@import url(main.css);
+@import url(footer.css);
+ 
+
+#container{
+    width: 100%;
+    max-width: 1920px;
+    height: auto;
+    
+}
