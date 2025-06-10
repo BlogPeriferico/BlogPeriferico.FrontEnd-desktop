@@ -1,7 +1,10 @@
+// src/pages/noticias/QuebradaInforma.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
+import { Link } from "react-router-dom";
+import { noticias } from "../../data/NoticiasData"; 
 
 const API_KEY = "56fd2180ff9c0389b8ebc9c566b4d563";
 
@@ -17,19 +20,6 @@ const zonasClima = {
   Sul: { bairro: "Santo Amaro", lat: -23.6486, lon: -46.7133 },
 };
 
-const noticias = [
-  {
-    id: 1,
-    titulo: "Desemprego aumentou",
-    resumo: "Desemprego teve aumento de 6,5% no trimestre segundo o IBGE.",
-    imagem: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/...",
-    autor: "Maria da Silva Pereira",
-    data: "17/06/25",
-    hora: "15:30",
-    regiao: "Sudeste",
-  },
-];
-
 export default function QuebradaInforma() {
   const [dados, setDados] = useState({});
   const [horaAtual, setHoraAtual] = useState(new Date());
@@ -38,31 +28,32 @@ export default function QuebradaInforma() {
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const novosDados = {};
-      for (const [nome, zona] of Object.entries(zonasClima)) {
-        try {
-          const res = await axios.get(
-            `https://api.openweathermap.org/data/2.5/weather?lat=${zona.lat}&lon=${zona.lon}&appid=${API_KEY}&units=metric&lang=pt_br`
-          );
-          novosDados[nome] = res.data;
-        } catch (err) {
-          console.error(`Erro ao buscar clima de ${nome}:`, err);
-        }
+  const buscarClima = async () => {
+    const novosDados = {};
+    for (const [nome, zona] of Object.entries(zonasClima)) {
+      try {
+        const res = await axios.get(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${zona.lat}&lon=${zona.lon}&appid=${API_KEY}&units=metric&lang=pt_br`
+        );
+        novosDados[nome] = res.data;
+      } catch (err) {
+        console.error(`Erro ao buscar clima de ${nome}:`, err);
       }
-      setDados(novosDados);
-    };
+    }
+    setDados(novosDados);
+  };
 
-    fetchData();
+  useEffect(() => {
+    buscarClima();
+    const climaTimer = setInterval(buscarClima, 10 * 60 * 1000);
+    return () => clearInterval(climaTimer);
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const horaTimer = setInterval(() => {
       setHoraAtual(new Date());
     }, 1000);
-
-    return () => clearInterval(timer);
+    return () => clearInterval(horaTimer);
   }, []);
 
   return (
@@ -84,7 +75,6 @@ export default function QuebradaInforma() {
               style={{ backgroundColor: corSecundaria }}
             ></div>
           </div>
-
           <h2 className="text-2xl font-fraunces font-semibold mb-4">
             Área de Climatização
           </h2>
@@ -150,28 +140,27 @@ export default function QuebradaInforma() {
       <h2 className="text-2xl font-semibold mb-6">Seleção de notícias</h2>
       <div className="space-y-6">
         {noticias.map((n) => (
-          <div
-            key={n.id}
-            className="flex flex-col sm:flex-row gap-4 border-b pb-4"
-          >
-            <img
-              src={n.imagem}
-              alt={n.titulo}
-              className="w-full sm:w-48 h-32 object-cover rounded-md"
-            />
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {n.titulo}
-              </h3>
-              <p className="text-sm text-gray-700">{n.resumo}</p>
-              <div className="text-xs text-gray-500 mt-2 flex justify-between items-center">
-                <span>{n.regiao}</span>
-                <span>
-                  Por: {n.autor} | {n.data} às {n.hora}
-                </span>
+          <Link to={`/noticia/${n.id}`} key={n.id} className="block px-20">
+            <div className="flex flex-col sm:flex-row gap-4 border-b pb-4 hover:opacity-90 transition-all">
+              <img
+                src={n.imagem}
+                alt={n.titulo}
+                className="w-full sm:w-48 h-32 object-cover rounded-md"
+              />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {n.titulo}
+                </h3>
+                <p className="text-sm text-gray-700">{n.resumo}</p>
+                <div className="text-xs text-gray-500 mt-2 flex justify-between items-center">
+                  <span>{n.regiao}</span>
+                  <span>
+                    Por: {n.autor} | {n.data} às {n.hora}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </main>
