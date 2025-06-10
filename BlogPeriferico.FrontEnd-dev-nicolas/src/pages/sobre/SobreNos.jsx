@@ -1,7 +1,4 @@
 import React from "react";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import fotoSaoPaulo from "../../assets/images/fotoSaoPaulo.png";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 import { FaChevronDown } from "react-icons/fa";
@@ -51,9 +48,16 @@ export default function SobreNos() {
 
       {/* Faixa colorida */}
       <div className="w-full max-w-5xl mx-auto bg-white shadow-md relative">
-        <div className="flex h-2">
-          <div className="w-1/2" style={{ backgroundColor: corPrincipal }}></div>
-          <div className="w-1/4" style={{ backgroundColor: corSecundaria }}></div>
+        <div className="flex h-4">
+        <div className="w-1/6"></div>
+            <div
+              className="w-4/6"
+              style={{ backgroundColor: corPrincipal }}
+            ></div>
+            <div
+              className="w-2/6"
+              style={{ backgroundColor: corSecundaria }}
+            ></div>
         </div>
 
         {/* Texto explicativo */}
@@ -123,10 +127,10 @@ export default function SobreNos() {
             >
               <div
                 className="h-1 w-full absolute top-0 left-0 rounded-t"
-                style={{ backgroundColor: corSecundaria }}
+                style={{ backgroundColor: corPrincipal }}
               ></div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="bg-orange-100 p-2 rounded-md">
+                <div className="p-2 rounded-md" style={{ backgroundColor: corSecundaria }}>
                   <span className="text-lg">{item.icon}</span>
                 </div>
                 <span className="font-semibold text-sm px-2 py-1 bg-white rounded">

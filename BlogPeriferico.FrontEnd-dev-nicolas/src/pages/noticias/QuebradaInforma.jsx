@@ -1,10 +1,11 @@
-// src/pages/noticias/QuebradaInforma.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 import { Link } from "react-router-dom";
-import { noticias } from "../../data/NoticiasData"; 
+import { FiPlus } from "react-icons/fi";
+import { noticias } from "../../data/NoticiasData";
+import ModalNoticia from "../../components/modals/ModalNoticia"; // Importando o Modal
 
 const API_KEY = "56fd2180ff9c0389b8ebc9c566b4d563";
 
@@ -23,6 +24,7 @@ const zonasClima = {
 export default function QuebradaInforma() {
   const [dados, setDados] = useState({});
   const [horaAtual, setHoraAtual] = useState(new Date());
+  const [modalAberto, setModalAberto] = useState(false); // Controle do modal de adicionar
 
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
@@ -56,24 +58,48 @@ export default function QuebradaInforma() {
     return () => clearInterval(horaTimer);
   }, []);
 
+  useEffect(() => {
+    if (modalAberto) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [modalAberto]);
+
   return (
-    <main className="px-4 md:px-10 mt-24 max-w-[1600px] mx-auto">
+    <main className="px-4 md:px-10 mt-24 max-w-[1600px] mx-auto relative">
+      {/* Botão flutuante de adicionar */}
+      <div className="fixed top-28 right-6 z-50">
+        <button
+          onClick={() => setModalAberto(true)}
+          className="bg-[color:var(--corPrincipal)] text-white p-3 rounded-full shadow-lg hover:bg-opacity-90"
+          style={{ backgroundColor: corPrincipal }}
+          title="Adicionar nova notícia"
+        >
+          <FiPlus size={24} />
+        </button>
+      </div>
+
+      {/* Modal de adicionar notícia */}
+      {modalAberto && (
+        <ModalNoticia
+          modalAberto={modalAberto}
+          setModalAberto={setModalAberto}
+          corPrincipal={corPrincipal}
+        />
+      )}
+
+      {/* Conteúdo da página */}
       <div className="flex flex-col lg:flex-row lg:gap-20 mb-16 items-start">
         {/* Introdução */}
         <div
-          className="relative border px-10 py-12 w-full lg:w-[45%] bg-white lg:mt-[172px]"
+          className="relative border px-10 py-8 w-full lg:w-[45%] bg-white lg:mt-[125px]"
           style={{ borderColor: corSecundaria }}
         >
-          <div className="absolute -top-2 left-0 flex h-2 w-full">
-            <div className="w-2/6"></div>
-            <div
-              className="w-3/6"
-              style={{ backgroundColor: corPrincipal }}
-            ></div>
-            <div
-              className="w-2/6"
-              style={{ backgroundColor: corSecundaria }}
-            ></div>
+          <div className="absolute -top-3 left-0 flex h-3 w-full">
+            <div className="w-3/6"></div>
+            <div className="w-3/6" style={{ backgroundColor: corPrincipal }}></div>
+            <div className="w-2/6" style={{ backgroundColor: corSecundaria }}></div>
           </div>
           <h2 className="text-2xl font-fraunces font-semibold mb-4">
             Área de Climatização
@@ -93,7 +119,7 @@ export default function QuebradaInforma() {
         </div>
 
         {/* Cards Clima */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full lg:w-[60%]">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 w-full lg:w-[60%]">
           {Object.entries(zonasClima).map(([nome]) => {
             const clima = dados[nome];
             return (
@@ -152,7 +178,7 @@ export default function QuebradaInforma() {
                   {n.titulo}
                 </h3>
                 <p className="text-sm text-gray-700">{n.resumo}</p>
-                <div className="text-xs text-gray-500 mt-2 flex justify-between items-center">
+                <div className="text-xs text-gray-400 mt-2 flex justify-between items-center">
                   <span>{n.regiao}</span>
                   <span>
                     Por: {n.autor} | {n.data} às {n.hora}

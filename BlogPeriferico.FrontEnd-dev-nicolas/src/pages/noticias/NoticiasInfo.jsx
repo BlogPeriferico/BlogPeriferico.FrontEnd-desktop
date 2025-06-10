@@ -24,55 +24,55 @@ export default function NoticiasInfo() {
     );
   }
 
-   return (
+  return (
     <div className="max-w-7xl mx-auto px-6 py-10 font-poppins mt-[80px]">
       {/* Parte superior */}
       <div className="flex flex-col lg:flex-row items-start gap-10 relative">
         {/* Imagem da notícia */}
-        <img
-          src={noticia.imagem}
-          alt={noticia.titulo}
-          className="w-full lg:w-[500px] h-auto rounded-xl"
-        />
+        <div className="relative">
+          <img
+            src={noticia.imagem}
+            alt={noticia.titulo}
+            className="w-full lg:w-[400px] h-auto rounded-xl"
+          />
+          <div className="absolute top-4 left-4">
+  <img
+    src={noticia.fotoAutor || "https://www.instagram.com/_.vitinho07/p/Clfeu79OHED/"}
+    alt={noticia.autor}
+    className="w-[65px] h-[65px] rounded-full object-cover"
+    style={{ border: `2px solid ${corPrincipal}` }} // Aplicando a corPrincipal
+  />
+</div>
+
+        </div>
 
         {/* Conteúdo */}
         <div className="flex-1 w-full relative">
-          {/* Avatar + conteúdo */}
-          <div className="flex items-start gap-6">
-            <img
-              src={noticia.fotoAutor || "https://i.pravatar.cc/80"}
-              alt={noticia.autor}
-              className="w-[70px] h-[70px] rounded-full object-cover mt-1"
-            />
+          {/* Botão de fechar */}
+          <button
+            onClick={() => navigate("/quebrada-informa")}
+            className="absolute top-0 right-0 text-black text-2xl"
+            title="Fechar"
+          >
+            <FaTimes />
+          </button>
 
-            <div className="flex-1 relative">
-              {/* Botão de fechar */}
-              <button
-                onClick={() => navigate("/quebrada-informa")}
-                className="absolute top-0 right-0 text-black text-2xl"
-                title="Fechar"
-              >
-                <FaTimes />
-              </button>
+          {/* Título */}
+          <h1 className="text-[40px] font-semibold text-[#272727] leading-tight break-words">
+            {noticia.titulo}
+          </h1>
 
-              {/* Título */}
-              <h1 className="text-[60px] font-semibold text-[#272727] leading-tight break-words">
-                {noticia.titulo}
-              </h1>
+          {/* Preço */}
+          {noticia.preco && (
+            <p className="text-[30px] font-semibold text-black mt-2">
+              R$ {noticia.preco}
+            </p>
+          )}
 
-              {/* Preço */}
-              {noticia.preco && (
-                <p className="text-[40px] font-semibold text-black mt-2">
-                  R$ {noticia.preco}
-                </p>
-              )}
-
-              {/* Descrição */}
-              <p className="text-[25px] text-[#4B4B4B] font-semibold leading-relaxed mt-4">
-                {noticia.descricaoCompleta || noticia.resumo}
-              </p>
-            </div>
-          </div>
+          {/* Descrição */}
+          <p className="text-[25px] text-[#4B4B4B] font-semibold leading-relaxed mt-4">
+            {noticia.descricaoCompleta || noticia.resumo}
+          </p>
         </div>
       </div>
 
@@ -96,7 +96,7 @@ export default function NoticiasInfo() {
               className="text-white text-sm font-semibold rounded-[15px]"
               style={{
                 backgroundColor: corPrincipal,
-                padding: "6px 18px", 
+                padding: "6px 18px",
                 marginRight: "10px",
               }}
             >
