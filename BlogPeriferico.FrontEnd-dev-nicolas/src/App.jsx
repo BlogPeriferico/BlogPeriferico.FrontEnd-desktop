@@ -5,6 +5,7 @@ import Register from './pages/login/Register';
 import SobreNos from './pages/sobre/SobreNos';
 import QuebradaInforma from './pages/noticias/QuebradaInforma';
 import NoticiasInfo from './pages/noticias/NoticiasInfo'; 
+import Vendas from './pages/vendas/Achadinhos'; 
 import Header from './components/Header';
 import Footer from './components/Footer';
 
@@ -23,7 +24,8 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/sobre" element={<SobreNos />} />
           <Route path="/quebrada-informa" element={<QuebradaInforma />} />
-          <Route path="/noticia/:id" element={<NoticiasInfo />} /> 
+          <Route path="/noticia/:id" element={<NoticiasInfo />} />
+          <Route path="/achadinhos" element={<Vendas />} /> 
         </Routes>
       </main>
 

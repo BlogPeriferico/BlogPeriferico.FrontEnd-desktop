@@ -12,7 +12,7 @@ export const noticias = [
     data: "17/06/25",
     hora: "15:30",
     regiao: "Sudeste",
-    telefone: "11995095686",
+    telefone: "11953716330",
     comentarios: [
       {
         nome: "Rihanna Josephine",
@@ -47,7 +47,7 @@ export const noticias = [
     data: "17/06/25",
     hora: "15:30",
     regiao: "Sudeste",
-    telefone: "11995095686",
+    telefone: "11953716330",
     comentarios: [
       {
         nome: "Rihanna Josephine",
@@ -82,7 +82,7 @@ export const noticias = [
     data: "17/06/25",
     hora: "15:30",
     regiao: "Sudeste",
-    telefone: "11995095686",
+    telefone: "11953716330",
     comentarios: [
       {
         nome: "Rihanna Josephine",

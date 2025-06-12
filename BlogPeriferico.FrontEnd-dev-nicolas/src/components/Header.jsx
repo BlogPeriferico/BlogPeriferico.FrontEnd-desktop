@@ -15,12 +15,11 @@ export default function Header() {
   const navLinks = [
     { path: "/quebrada-informa", label: "Quebrada Informa" },
     { path: "/doacoes", label: "Mão Amiga" },
-    { path: "/vendas", label: "Achadinhos" },
+    { path: "/achadinhos", label: "Achadinhos" },
     { path: "/empregos", label: "Corre Certo" },
   ];
 
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8"; // padrão azul
-  const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
 
   const handleRegiaoSelecionada = (regiaoSelecionada) => {
     setRegiao(regiaoSelecionada);
