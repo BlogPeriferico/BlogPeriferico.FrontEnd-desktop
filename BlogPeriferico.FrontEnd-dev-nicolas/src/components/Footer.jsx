@@ -19,10 +19,10 @@ export default function Footer() {
             Páginas
           </h3>
           <ul className="text-sm text-gray-500 space-y-1">
-            <li><Link to="/quebrada-informa">Notícias</Link></li>
-            <li><Link to="/doacoes">Doações</Link></li>
-            <li><Link to="/vendas">Vendas</Link></li>
-            <li><Link to="/empregos">Anúncios</Link></li>
+            <li><Link to="/quebrada-informa">Quebrada informa</Link></li>
+            <li><Link to="/doacoes">Mão amiga</Link></li>
+            <li><Link to="/vendas">Achadinhos</Link></li>
+            <li><Link to="/empregos">Corre certo</Link></li>
             <li><Link to="/sobre">Sobre nós</Link></li>
           </ul>
         </div>

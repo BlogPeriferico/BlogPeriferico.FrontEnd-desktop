@@ -10,16 +10,11 @@ export default function SobreNos() {
 
   const scrollToSection = () => {
     const section = document.getElementById("qual-a-finalidade");
-    window.scrollTo({
-      top: section.offsetTop + 810,
-      behavior: "smooth",
-    });
+    section?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <div className="font-poppins">
-
-
       {/* Vídeo de fundo + título */}
       <section className="relative h-screen mb-24">
         <video
@@ -34,14 +29,14 @@ export default function SobreNos() {
           />
         </video>
         <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-30 flex items-center justify-center">
-          <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-fraunces font-semibold opacity-55">
+          <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-fraunces font-semibold opacity-75">
             Quem somos?
           </h1>
         </div>
 
         <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2">
           <button onClick={scrollToSection}>
-            <FaChevronDown className="text-white text-4xl animate-bounce" />
+            <FaChevronDown className="text-white text-4xl animate-bounce opacity-75" />
           </button>
         </div>
       </section>
@@ -49,15 +44,9 @@ export default function SobreNos() {
       {/* Faixa colorida */}
       <div className="w-full max-w-5xl mx-auto bg-white shadow-md relative">
         <div className="flex h-4">
-        <div className="w-1/6"></div>
-            <div
-              className="w-4/6"
-              style={{ backgroundColor: corPrincipal }}
-            ></div>
-            <div
-              className="w-2/6"
-              style={{ backgroundColor: corSecundaria }}
-            ></div>
+          <div className="w-1/6"></div>
+          <div className="w-4/6" style={{ backgroundColor: corPrincipal }}></div>
+          <div className="w-2/6" style={{ backgroundColor: corSecundaria }}></div>
         </div>
 
         {/* Texto explicativo */}
@@ -70,10 +59,11 @@ export default function SobreNos() {
             Qual a finalidade do nosso site?
           </h2>
           <p className="text-gray-600 mt-2 font-fraunces">
-            O Blog Periférico nasceu da vontade de trazer visibilidade às questões
-            sociais e culturais das periferias. Nosso objetivo é conectar pessoas
-            e informações sobre as comunidades e suas histórias, além de
-            proporcionar um espaço para reflexão e divulgação de iniciativas locais.
+            O Blog Periférico nasceu da vontade de trazer visibilidade às
+            questões sociais e culturais das periferias. Nosso objetivo é
+            conectar pessoas e informações sobre as comunidades e suas
+            histórias, além de proporcionar um espaço para reflexão e divulgação
+            de iniciativas locais.
           </p>
           <a
             href="#funcionalidades"
@@ -130,7 +120,10 @@ export default function SobreNos() {
                 style={{ backgroundColor: corPrincipal }}
               ></div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 rounded-md" style={{ backgroundColor: corSecundaria }}>
+                <div
+                  className="p-2 rounded-md"
+                  style={{ backgroundColor: corSecundaria }}
+                >
                   <span className="text-lg">{item.icon}</span>
                 </div>
                 <span className="font-semibold text-sm px-2 py-1 bg-white rounded">
@@ -144,8 +137,6 @@ export default function SobreNos() {
           ))}
         </div>
       </section>
-
-   
     </div>
   );
 }

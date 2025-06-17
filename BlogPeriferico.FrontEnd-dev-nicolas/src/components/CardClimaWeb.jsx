@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_KEY = "56fd2180ff9c0389b8ebc9c566b4d563";
+const API_KEY = "ae928948ef9a78cc99fd981d3aedb19d";
 
 const zonasClima = {
   Centro: { bairro: "Sé", lat: -23.5505, lon: -46.6333 },

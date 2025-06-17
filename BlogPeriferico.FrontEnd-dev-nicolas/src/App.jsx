@@ -8,6 +8,11 @@ import NoticiasInfo from './pages/noticias/NoticiasInfo';
 import Vendas from './pages/vendas/Achadinhos'; 
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ProdutoInfo from "./pages/vendas/ProdutoInfo";
+import Doacoes from './pages/doacoes/MaoAmiga';
+import DoacaoInfo from "./pages/doacoes/DoacaoInfo"; 
+
+
 
 export default function App() {
   const location = useLocation();
@@ -26,6 +31,9 @@ export default function App() {
           <Route path="/quebrada-informa" element={<QuebradaInforma />} />
           <Route path="/noticia/:id" element={<NoticiasInfo />} />
           <Route path="/achadinhos" element={<Vendas />} /> 
+          <Route path="/produto" element={<ProdutoInfo />} />
+          <Route path="/doacoes" element={<Doacoes />} />
+          <Route path="/doacao" element={<DoacaoInfo />} />
         </Routes>
       </main>
 
