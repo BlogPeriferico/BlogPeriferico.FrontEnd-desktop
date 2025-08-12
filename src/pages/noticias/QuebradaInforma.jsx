@@ -115,11 +115,7 @@ export default function QuebradaInforma() {
             baseadas nas cores das <br />
             zonas da SpTrans
           </p>
-          <a
-            href="#"
-            className="text-sm font-bold underline"
-            style={{ color: corSecundaria }}
-          >
+          <a href="#" className="" style={{ color: corSecundaria }}>
             Por que das cores?
           </a>
         </div>

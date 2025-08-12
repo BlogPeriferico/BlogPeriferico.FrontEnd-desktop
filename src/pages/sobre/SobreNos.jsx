@@ -1,10 +1,13 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 import { FaChevronDown } from "react-icons/fa";
 
 export default function SobreNos() {
   const { regiao } = useRegiao();
+  const navigate = useNavigate();
+
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
 
@@ -12,6 +15,33 @@ export default function SobreNos() {
     const section = document.getElementById("qual-a-finalidade");
     section?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const funcionalidades = [
+    {
+      icon: "📋",
+      title: "Quebrada Informa",
+      desc: "Espaço de jornalismo comunitário: aqui publicamos fatos e histórias locais, greves, locais com trânsito e reportagens que impactam diretamente a vida da nossa comunidade.",
+      link: "/quebrada-informa",
+    },
+    {
+      icon: "🤝",
+      title: "Mão Amiga",
+      desc: "Área de solidariedade e doações: ache e ofereça itens em bom estado. Roupas, calçados, brinquedos e utensílios domésticos ganham destaque aqui, incentivando o desapego consciente.",
+      link: "/doacoes",
+    },
+    {
+      icon: "🛍️",
+      title: "Achadinhos",
+      desc: "Loja online: onde vendedores e empreendedores periféricos expõem seus produtos a preços acessíveis. Artesanato, moda, alimentos e serviços. Tudo facilitar a busca e fortalecer a economia da quebrada.",
+      link: "/achadinhos",
+    },
+    {
+      icon: "📢",
+      title: "Corre Certo",
+      desc: "Painel de oportunidades: seção dedicada a vagas de emprego, bolsas de estudo e cursos. Cada anúncio é verificado e descrito de forma direta, para que você encontre a chance certa de crescer sem perder tempo.",
+      link: "/vagas",
+    },
+  ];
 
   return (
     <div className="font-poppins">
@@ -91,31 +121,11 @@ export default function SobreNos() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-screen-xl mx-auto ">
-          {[
-            {
-              icon: "📋",
-              title: "Quebrada Informa",
-              desc: "Espaço de jornalismo comunitário: aqui publicamos fatos e histórias locais, greves, locais com trânsito e reportagens que impactam diretamente a vida da nossa comunidade.",
-            },
-            {
-              icon: "🤝",
-              title: "Mão Amiga",
-              desc: "Área de solidariedade e doações: ache e ofereça itens em bom estado. Roupas, calçados, brinquedos e utensílios domésticos ganham destaque aqui, incentivando o desapego consciente.",
-            },
-            {
-              icon: "🛍️",
-              title: "Achadinhos",
-              desc: "Loja online: onde vendedores e empreendedores periféricos expõem seus produtos a preços acessíveis. Artesanato, moda, alimentos e serviços. Tudo facilitar a busca e fortalecer a economia da quebrada.",
-            },
-            {
-              icon: "📢",
-              title: "Corre Certo",
-              desc: "Painel de oportunidades: seção dedicada a vagas de emprego, bolsas de estudo e cursos. Cada anúncio é verificado e descrito de forma direta, para que você encontre a chance certa de crescer sem perder tempo.",
-            },
-          ].map((item, i) => (
+          {funcionalidades.map((item, i) => (
             <div
               key={i}
-              className="border shadow-md p-6 bg-white relative rounded-lg transtion duration-200 hover:scale-105 cursor-pointer"
+              onClick={() => navigate(item.link)}
+              className="border shadow-md p-6 bg-white relative rounded-lg transition duration-200 hover:scale-105 cursor-pointer"
             >
               <div
                 className="h-1 w-full absolute top-0 left-0 rounded-t"

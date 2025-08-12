@@ -22,19 +22,19 @@ export default function Footer() {
             Páginas
           </h3>
           <ul className="text-sm text-gray-500 space-y-1 ">
-            <li className="hover:text-red-500 transition duration-200">
+            <li className="hover:text-blue-500 transition duration-200">
               <Link to="/quebrada-informa">Quebrada informa</Link>
             </li>
-            <li className="hover:text-red-500 transition duration-200">
+            <li className="hover:text-blue-500 transition duration-200">
               <Link to="/doacoes">Mão amiga</Link>
             </li>
-            <li className="hover:text-red-500 transition duration-200">
-              <Link to="/vendas">Achadinhos</Link>
+            <li className="hover:text-blue-500 transition duration-200">
+              <Link to="/achadinhos">Achadinhos</Link>
             </li>
-            <li className="hover:text-red-500 transition duration-200">
+            <li className="hover:text-blue-500 transition duration-200">
               <Link to="/vagas">Corre certo</Link>
             </li>
-            <li className="hover:text-red-500 transition duration-200">
+            <li className="hover:text-blue-500 transition duration-200">
               <Link to="/sobre">Sobre nós</Link>
             </li>
           </ul>

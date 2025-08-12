@@ -19,7 +19,7 @@ export default function Header() {
     { path: "/vagas", label: "Corre Certo" },
   ];
 
-  const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8"; // padrão azul
+  const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
   const handleRegiaoSelecionada = (regiaoSelecionada) => {
     setRegiao(regiaoSelecionada);
@@ -31,8 +31,8 @@ export default function Header() {
       className="w-full px-6 py-3 flex items-center justify-between shadow-md border-b-2 fixed top-0 left-0 z-50"
       style={{ borderColor: corPrincipal, backgroundColor: "#ffffff" }}
     >
-      {/* Logo + Navegação */}
-      <div className="flex items-center gap-4">
+      {/* Esquerda: Logo */}
+      <div className="flex items-center gap-4 flex-shrink-0">
         <Link
           to="/sobre"
           className="text-2xl font-bold"
@@ -40,56 +40,44 @@ export default function Header() {
         >
           BlogPeriferico
         </Link>
+      </div>
 
+      {/* Centro: Menu links (apenas md+) */}
+      <nav className="hidden md:flex gap-6 font-medium text-sm text-black flex-grow justify-center">
+        {navLinks.map((link) => (
+          <Link
+            key={link.path}
+            to={link.path}
+            className={`transition duration-200 hover:underline ${
+              location.pathname === link.path ? "font-semibold" : ""
+            }`}
+            style={
+              location.pathname === link.path ? { color: corPrincipal } : {}
+            }
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+
+      {/* Direita: Mobile (hamburguer) + perfil + região */}
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {/* Botão hamburguer só aparece no mobile */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="text-xl md:hidden ml-4"
+          className="text-xl md:hidden"
         >
           <FaBars />
         </button>
 
-        <nav
-          className={`${
-            menuOpen
-              ? " block absolute bg-white top-16 left-0 w-full shadow-md p-4"
-              : "hidden"
-          } md:flex gap-6 font-medium text-sm text-black md:static md:w-auto md:p-0 `}
-        >
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`block py-1 md:inline md:py-0 transition duration-200 max-md:hover:bg-gray-200${
-                location.pathname === link.path ? "font-semibold" : ""
-              }`}
-              onClick={() => setMenuOpen(false)}
-              style={
-                location.pathname === link.path ? { color: corPrincipal } : {}
-              }
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-
-      {/* Busca + Avatar + Região */}
-      <div className="flex items-center gap-4">
-        <div className="hidden md:flex items-center bg-gray-100 rounded-full px-3 py-1">
-          <input
-            type="text"
-            placeholder="O que deseja encontrar?"
-            className="bg-transparent outline-none text-sm px-2 w-40"
-          />
-          <FaSearch className="text-gray-500" />
-        </div>
-
+        {/* Avatar */}
         <img
           src="https://i.pravatar.cc/32"
           alt="Usuário"
           className="w-8 h-8 rounded-full border border-gray-300 duration-300 hover:scale-105 cursor-pointer"
         />
 
+        {/* Seletor de Região */}
         <div className="relative flex items-center gap-2">
           <button
             className="w-8 h-8 flex items-center justify-center rounded-full border text-white duration-300 hover:scale-105"
@@ -98,16 +86,14 @@ export default function Header() {
           >
             <FaMapMarkerAlt />
           </button>
-
           {regiao && (
             <span
-              className="text-sm font-medium capitalize "
+              className="hidden sm:inline text-sm font-medium capitalize"
               style={{ color: corPrincipal }}
             >
               {regiao}
             </span>
           )}
-
           {showRegionSelector && (
             <RegionSelector
               onClose={() => setShowRegionSelector(false)}
@@ -116,6 +102,40 @@ export default function Header() {
           )}
         </div>
       </div>
+
+      {/* Menu Mobile (quando aberto) */}
+      {menuOpen && (
+        <div className="absolute top-16 left-0 w-full bg-white shadow-md p-4 md:hidden">
+          {/* Barra de Pesquisa */}
+          <div className="flex items-center bg-gray-100 rounded-full px-3 py-1 mb-4">
+            <input
+              type="text"
+              placeholder="O que deseja encontrar?"
+              className="bg-transparent outline-none text-sm px-2 flex-1"
+            />
+            <FaSearch className="text-gray-500" />
+          </div>
+
+          {/* Links */}
+          <nav className="flex flex-col gap-3">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`py-1 transition duration-200 hover:bg-gray-200 rounded px-2 ${
+                  location.pathname === link.path ? "font-semibold" : ""
+                }`}
+                onClick={() => setMenuOpen(false)}
+                style={
+                  location.pathname === link.path ? { color: corPrincipal } : {}
+                }
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
