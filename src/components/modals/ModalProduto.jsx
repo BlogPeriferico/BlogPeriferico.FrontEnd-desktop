@@ -43,7 +43,6 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
   };
 
   const handleSubmit = async () => {
- 
     if (!titulo || !valor || !telefone || !local || !descricao) {
       alert("Por favor, preencha todos os campos.");
       return;
@@ -52,21 +51,20 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
     try {
       const formData = new FormData();
       formData.append("titulo", titulo);
-    
+
       const precoNum = parseFloat(valor.replace(/\D/g, "")) / 100;
       formData.append("preco", precoNum);
       formData.append("telefone", telefone);
       formData.append("regiao", local);
       formData.append("descricaoCompleta", descricao);
       if (imagem) formData.append("imagem", imagem);
-      
-      formData.append("autor", "Usuário Logado");  
+
+      formData.append("autor", "Usuário Logado");
 
       await criarAnuncio(formData);
 
       alert("Anúncio criado com sucesso!");
       closeModal();
-     
     } catch (error) {
       console.error(error);
       alert("Erro ao criar anúncio. Tente novamente.");
@@ -177,7 +175,9 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
 
             <form className="flex-1 space-y-3 text-xs font-poppins">
               <div className="relative">
-                <label className="text-gray-700 font-semibold block">Título</label>
+                <label className="text-gray-700 font-semibold block">
+                  Título
+                </label>
                 <input
                   type="text"
                   value={titulo}
@@ -194,7 +194,9 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
               </div>
 
               <div className="relative">
-                <label className="text-gray-700 font-semibold block">Descrição</label>
+                <label className="text-gray-700 font-semibold block">
+                  Descrição
+                </label>
                 <textarea
                   value={descricao}
                   onChange={(e) => setDescricao(e.target.value)}
@@ -211,7 +213,9 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
               </div>
 
               <div className="relative">
-                <label className="text-gray-700 font-semibold block">Preço</label>
+                <label className="text-gray-700 font-semibold block">
+                  Preço
+                </label>
                 <input
                   type="text"
                   value={valor}
@@ -222,7 +226,9 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
               </div>
 
               <div className="relative">
-                <label className="text-gray-700 font-semibold block">Zona</label>
+                <label className="text-gray-700 font-semibold block">
+                  Zona
+                </label>
                 <select
                   value={local}
                   onChange={(e) => setLocal(e.target.value)}
@@ -240,7 +246,9 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
               </div>
 
               <div className="relative">
-                <label className="text-gray-700 font-semibold block">Telefone</label>
+                <label className="text-gray-700 font-semibold block">
+                  Telefone
+                </label>
                 <input
                   type="text"
                   value={telefone}
@@ -259,7 +267,7 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow"
+                  className="hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow duration-300 hover:scale-105"
                   style={{ backgroundColor: corSecundaria }}
                 >
                   Publicar

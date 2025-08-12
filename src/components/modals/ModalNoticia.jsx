@@ -31,11 +31,41 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
     setImagem(e.target.files[0]);
   };
 
+  const formatarValor = (valor) => {
+    const numeros = valor.replace(/\D/g, "");
+    const numeroFloat = parseFloat(numeros) / 100;
+    if (isNaN(numeroFloat)) return "";
+    return numeroFloat.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
+  const handleValorChange = (e) => {
+    setValor(formatarValor(e.target.value));
+  };
+
   const closeModal = () => {
     setModalAberto(false); // Fecha o modal
     navigate("/quebrada-informa"); // Navega de volta para a página QuebradaInforma
   };
 
+  // Função para formatar telefone no padrão (11) 99999-9999
+  const formatarTelefone = (valor) => {
+    const numeros = valor.replace(/\D/g, "").slice(0, 11);
+    const parte1 = numeros.slice(0, 2);
+    const parte2 = numeros.slice(2, 7);
+    const parte3 = numeros.slice(7, 11);
+    if (numeros.length <= 2) return `(${parte1}`;
+    if (numeros.length <= 7) return `(${parte1}) ${parte2}`;
+    return `(${parte1}) ${parte2}-${parte3}`;
+  };
+
+  const handleTelefoneChange = (e) => {
+    const valorFormatado = formatarTelefone(e.target.value);
+    setTelefone(valorFormatado);
+  };
+  
   const handleSubmit = () => {
     // Aqui você pode adicionar a lógica para enviar os dados para o servidor ou contexto
     console.log({
@@ -60,7 +90,7 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
           }}
         >
           {/* Botão de fechar */}
-          <div className="flex justify-end">
+          <div className="sticky top-0 flex justify-end bg-white p-2 z-50 ">
             <button
               onClick={closeModal}
               className="text-xl text-gray-500 hover:text-gray-800"
@@ -75,7 +105,7 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
           </h2>
 
           {/* Campos de formulário */}
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
             {/* Título */}
             <div className="flex flex-col">
               <label htmlFor="titulo" className="text-sm text-gray-600 mb-2">
@@ -100,7 +130,7 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
                 id="valor"
                 type="text"
                 value={valor}
-                onChange={(e) => setValor(e.target.value)}
+                onChange={handleValorChange}
                 className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Exemplo: R$ 789,50"
               />
@@ -115,7 +145,7 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
                 id="telefone"
                 type="text"
                 value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
+                onChange={handleTelefoneChange}
                 className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Exemplo: (11) 99999-9999"
               />
@@ -167,7 +197,7 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 duration-300 hover:scale-105"
                 style={{
                   borderRadius: "8px",
                   padding: "12px 20px",

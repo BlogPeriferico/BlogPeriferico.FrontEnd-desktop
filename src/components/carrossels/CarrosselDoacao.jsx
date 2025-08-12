@@ -55,7 +55,9 @@ export default function CarrosselDoacoes() {
             >
               {/* Texto */}
               <div className="flex-1 space-y-4 md:pr-10">
-                <h2 className="text-4xl font-bold text-gray-900">{doacao.titulo}</h2>
+                <h2 className="text-4xl font-bold text-gray-900">
+                  {doacao.titulo}
+                </h2>
                 <p className="text-gray-600 text-lg font-medium">
                   {doacao.descricao}
                 </p>
@@ -63,7 +65,7 @@ export default function CarrosselDoacoes() {
                   href={`https://wa.me/55${doacao.telefone}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-white font-semibold py-3 px-6 rounded-lg"
+                  className="inline-flex items-center gap-2 text-white font-semibold py-3 px-6 rounded-lg trasition-all duration-300 hover:scale-105"
                   style={{ backgroundColor: corPrincipal }}
                 >
                   FAÇA SUA DOAÇÃO
@@ -91,7 +93,9 @@ export default function CarrosselDoacoes() {
         {doacoes.map((_, i) => (
           <div
             key={i}
-            className={`transition-all h-2 rounded-full ${i === index ? "w-8" : "w-4"}`}
+            className={`transition-all h-2 rounded-full ${
+              i === index ? "w-8" : "w-4"
+            }`}
             style={{ backgroundColor: i === index ? corSecundaria : "#ccc" }}
           />
         ))}

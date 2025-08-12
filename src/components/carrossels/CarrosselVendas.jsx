@@ -71,7 +71,7 @@ export default function CarrosselVendas() {
                   href={`https://wa.me/55${produto.telefone}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-white font-semibold py-3 px-6 rounded-lg"
+                  className="inline-flex items-center gap-2 text-white font-semibold py-3 px-6 rounded-lg trasition-all duration-300 hover:scale-105"
                   style={{ backgroundColor: corPrincipal }}
                 >
                   ENTRE EM CONTATO

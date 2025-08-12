@@ -4,7 +4,11 @@ import { FaTimes } from "react-icons/fa";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 
-export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal }) {
+export default function ModalDoacao({
+  modalAberto,
+  setModalAberto,
+  corPrincipal,
+}) {
   const [titulo, setTitulo] = useState("");
   const [telefone, setTelefone] = useState("");
   const [local, setLocal] = useState("");
@@ -49,8 +53,15 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal 
   };
 
   const zonas = [
-    "Centro", "Leste", "Norte", "Sul", "Oeste",
-    "Sudeste", "Sudoeste", "Noroeste", "Nordeste"
+    "Centro",
+    "Leste",
+    "Norte",
+    "Sul",
+    "Oeste",
+    "Sudeste",
+    "Sudoeste",
+    "Noroeste",
+    "Nordeste",
   ];
 
   return (
@@ -99,7 +110,8 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal 
                       className="w-16 h-16 object-contain"
                     />
                     <p className="mt-2">
-                      Coloque sua imagem<br />
+                      Coloque sua imagem
+                      <br />
                       <strong style={{ color: corSecundaria }}>navegar</strong>
                     </p>
                   </>
@@ -117,7 +129,9 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal 
             {/* Formulário */}
             <form className="flex-1 space-y-3 text-xs font-poppins">
               <div className="relative">
-                <label className="text-gray-700 font-semibold block">Título</label>
+                <label className="text-gray-700 font-semibold block">
+                  Título
+                </label>
                 <input
                   type="text"
                   value={titulo}
@@ -134,7 +148,9 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal 
               </div>
 
               <div className="relative">
-                <label className="text-gray-700 font-semibold block">Descrição</label>
+                <label className="text-gray-700 font-semibold block">
+                  Descrição
+                </label>
                 <textarea
                   value={descricao}
                   onChange={(e) => setDescricao(e.target.value)}
@@ -151,21 +167,29 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal 
               </div>
 
               <div className="relative">
-                <label className="text-gray-700 font-semibold block">Zona</label>
+                <label className="text-gray-700 font-semibold block">
+                  Zona
+                </label>
                 <select
                   value={local}
                   onChange={(e) => setLocal(e.target.value)}
                   className="w-full border border-gray-400 rounded px-2 py-2"
                 >
-                  <option value="" disabled>Selecione uma zona</option>
+                  <option value="" disabled>
+                    Selecione uma zona
+                  </option>
                   {zonas.map((zona, idx) => (
-                    <option key={idx} value={zona}>{zona}</option>
+                    <option key={idx} value={zona}>
+                      {zona}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div className="relative">
-                <label className="text-gray-700 font-semibold block">Telefone</label>
+                <label className="text-gray-700 font-semibold block">
+                  Telefone
+                </label>
                 <input
                   type="text"
                   value={telefone}
@@ -184,7 +208,7 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal 
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow"
+                  className="hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow duration-300 hover:scale-105"
                   style={{ backgroundColor: corSecundaria }}
                 >
                   Publicar

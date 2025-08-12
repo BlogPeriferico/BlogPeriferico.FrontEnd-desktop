@@ -169,7 +169,7 @@ export default function QuebradaInforma() {
       </div>
 
       {/* Notícias */}
-      <h2 className="text-4xl font-semibold mb-10 w-max mx-auto text-center">
+      <h2 className="text-4xl font-semibold mb-10 w-max mx-auto text-center  ">
         Seleções de doações
       </h2>
       <div className="space-y-6">

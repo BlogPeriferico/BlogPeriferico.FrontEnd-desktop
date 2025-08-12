@@ -18,20 +18,20 @@ export default function Register() {
           <input
             type="text"
             placeholder="Nome"
-            className="w-full mb-5 px-5 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 text-lg"
+            className="w-full mb-5 px-5 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#2C2C2C] text-lg"
           />
           <input
             type="email"
             placeholder="Email"
-            className="w-full mb-5 px-5 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 text-lg"
+            className="w-full mb-5 px-5 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#2C2C2C] text-lg"
           />
           <input
             type="password"
             placeholder="Senha"
-            className="w-full mb-6 px-5 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 text-lg"
+            className="w-full mb-6 px-5 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#2C2C2C] text-lg"
           />
 
-          <button className="w-full bg-green-500 text-white py-3 text-lg rounded-md transition duration-300 hover:bg-green-600 hover:scale-105">
+          <button className="w-full bg-[#2C2C2C] text-white py-3 text-lg rounded-md transition duration-300 hover:scale-105">
             Cadastrar
           </button>
 

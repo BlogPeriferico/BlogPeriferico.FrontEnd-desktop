@@ -18,7 +18,7 @@ export default function Login() {
       {/* Lado esquerdo: Formulário */}
       <div className="relative w-1/2 bg-white z-10 flex flex-col justify-center px-16">
         <h2 className="text-3xl text-center font-bold mb-6">Fazer Login</h2>
-   
+
         <input
           type="email"
           placeholder="Nome de Usuário/Email"
@@ -45,7 +45,7 @@ export default function Login() {
         </button>
 
         <button
-          className="w-full bg-gray-100 border border-gray-300 text-gray-700 py-3 rounded-md mb-6 transition-all duration-300 hover:scale-105 hover:border-black cursor-pointer"
+          className="w-full bg-gray-100 border border-gray-300 text-gray-700 py-3 rounded-md mb-6 transition-all duration-300 hover:scale-105 hover:border-[#2C2C2C] cursor-pointer"
           onClick={entrarComoVisitante}
         >
           Entrar como visitante

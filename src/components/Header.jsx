@@ -53,13 +53,13 @@ export default function Header() {
             menuOpen
               ? " block absolute bg-white top-16 left-0 w-full shadow-md p-4"
               : "hidden"
-          } md:flex gap-6 font-medium text-sm text-black md:static md:w-auto md:p-0`}
+          } md:flex gap-6 font-medium text-sm text-black md:static md:w-auto md:p-0 `}
         >
           {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
-              className={`block py-1 md:inline md:py-0 transition duration-200  ${
+              className={`block py-1 md:inline md:py-0 transition duration-200 max-md:hover:bg-gray-200${
                 location.pathname === link.path ? "font-semibold" : ""
               }`}
               onClick={() => setMenuOpen(false)}
@@ -87,12 +87,12 @@ export default function Header() {
         <img
           src="https://i.pravatar.cc/32"
           alt="Usuário"
-          className="w-8 h-8 rounded-full border border-gray-300 transtion-1000 hover:scale-105 cursor-pointer"
+          className="w-8 h-8 rounded-full border border-gray-300 duration-300 hover:scale-105 cursor-pointer"
         />
 
         <div className="relative flex items-center gap-2">
           <button
-            className="w-8 h-8 flex items-center justify-center rounded-full border text-white"
+            className="w-8 h-8 flex items-center justify-center rounded-full border text-white duration-300 hover:scale-105"
             onClick={() => setShowRegionSelector(!showRegionSelector)}
             style={{ backgroundColor: corPrincipal, borderColor: corPrincipal }}
           >
