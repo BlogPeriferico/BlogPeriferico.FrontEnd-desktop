@@ -110,6 +110,37 @@ export default function SobreNos() {
           </a>
         </div>
       </div>
+<section className="relative w-full h-auto mb-16 mt-12">
+  {/* Container flex com responsividade */}
+  <div className="flex flex-col md:flex-row items-center max-w-[1200px] mx-auto relative px-4">
+    {/* Imagem à esquerda */}
+    <div
+      className="w-full md:w-[60%] h-[300px] md:h-[400px] bg-cover bg-center shadow-lg"
+      style={{
+        backgroundImage:
+          "url('src/assets/images/fotoSaoPauloSobreNos.png')",
+      }}
+    ></div>
+
+    {/* Caixa de texto */}
+    <div
+  className="bg-white shadow-lg p-6 md:p-10 md:absolute md:top-[65%] md:left-[55%] transform md:-translate-y-1/2 mt-6 md:mt-0 w-full md:w-[45%] max-w-[560px]"
+>
+
+      <h3 className="font-fraunces font-semibold text-2xl md:text-3xl mb-4">
+        São Paulo estado do Movimento Constante
+      </h3>
+      <p className="text-gray-700 text-base md:text-lg leading-relaxed">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+        veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+        commodo consequat.
+      </p>
+    </div>
+  </div>
+</section>
+
+
 
       {/* Funcionalidades */}
       <section
