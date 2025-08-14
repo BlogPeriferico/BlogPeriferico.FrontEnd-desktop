@@ -16,7 +16,7 @@ export default function SelecaoDoacoes() {
           <div
             key={doacao.id}
             onClick={() => navigate("/doacao", { state: doacao })}
-            className="bg-[#F4F5F7] hover:shadow-lg transition-all duration-600 hover:scale-105 cursor-pointer w-[240px] h-[370px]"
+            className="bg-[#F4F5F7] shadow-lg transition-all duration-600 hover:scale-105 cursor-pointer w-[240px] h-[370px]"
           >
             <img
               src={doacao.imagem}

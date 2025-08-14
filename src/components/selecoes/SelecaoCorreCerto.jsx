@@ -9,7 +9,7 @@ export default function SelecaoCorreCerto() {
   return (
     <div className="mt-20 mb-24">
       <h2 className="text-4xl font-semibold mb-10 w-max mx-auto text-center">
-        Seleções do CorreCerto
+        Seleções de vagas 
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
         {ultimasVagas.map((vagas) => (

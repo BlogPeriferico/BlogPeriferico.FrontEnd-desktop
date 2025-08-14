@@ -166,7 +166,7 @@ export default function QuebradaInforma() {
 
       {/* Notícias */}
       <h2 className="text-4xl font-semibold mb-10 w-max mx-auto text-center  ">
-        Seleções de doações
+        Noticias
       </h2>
       <div className="space-y-6">
         {noticias.map((n) => (

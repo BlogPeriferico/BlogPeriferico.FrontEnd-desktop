@@ -105,7 +105,9 @@ export default function Header() {
 
       {/* Menu Mobile (quando aberto) */}
       {menuOpen && (
-        <div className="absolute top-16 left-0 w-full bg-white shadow-md p-4 md:hidden">
+<div className="absolute top-14 left-0 w-full bg-white p-4 md:hidden border-b-[2px] border-b-orange-500">
+
+
           {/* Barra de Pesquisa */}
           <div className="flex items-center bg-gray-100 rounded-full px-3 py-1 mb-4">
             <input
