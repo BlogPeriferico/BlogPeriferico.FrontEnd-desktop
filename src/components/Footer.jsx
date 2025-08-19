@@ -4,6 +4,7 @@ import { useRegiao } from "../contexts/RegionContext";
 import { regionColors } from "../utils/regionColors";
 import { FaInstagram } from "react-icons/fa";
 import Houses from "../assets/svgs/houses.svg";
+import IconGmail from "../assets/images/gmail.png";
 
 export default function Footer() {
   const { regiao } = useRegiao();
@@ -63,7 +64,7 @@ export default function Footer() {
           </a>
         </div>
 
-        {/* E-mail com link mailto */}
+        {/* E-mail com ícone do Gmail */}
         <div>
           <h3 className="text-sm font-bold mb-2 flex items-center gap-1">
             <span
@@ -72,11 +73,12 @@ export default function Footer() {
             ></span>
             Reposte Algum Erro Neste Email:
           </h3>
-          <a
-            href="mailto:blog.periferico@gmail.com"
-            className="bg-gray-200 text-sm text-gray-500 rounded px-3 py-2 inline-block"
-          >
-            blog.periferico@gmail.com
+          <a href="mailto:blog.periferico@gmail.com" className="inline-block">
+            <img
+              src={IconGmail}
+              alt="Enviar email"
+              className="w-8 h-8 object-contain hover:scale-105 transition-transform"
+            />
           </a>
         </div>
       </div>

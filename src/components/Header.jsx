@@ -9,7 +9,6 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showRegionSelector, setShowRegionSelector] = useState(false);
   const location = useLocation();
-
   const { regiao, setRegiao } = useRegiao();
 
   const navLinks = [
@@ -42,27 +41,39 @@ export default function Header() {
         </Link>
       </div>
 
-      {/* Centro: Menu links (apenas md+) */}
-      <nav className="hidden md:flex gap-6 font-medium text-sm text-black flex-grow justify-center">
-        {navLinks.map((link) => (
-          <Link
-            key={link.path}
-            to={link.path}
-            className={`transition duration-200 hover:underline ${
-              location.pathname === link.path ? "font-semibold" : ""
-            }`}
-            style={
-              location.pathname === link.path ? { color: corPrincipal } : {}
-            }
-          >
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+      {/* Centro + direita: Links + barra de pesquisa (md+) */}
+      <div className="hidden md:flex flex-1 items-center justify-between">
+        {/* Links deslocados para a esquerda */}
+        <nav className="flex gap-8 font-medium text-sm text-black ml-4">
+          {navLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`transition duration-200 hover:underline ${
+                location.pathname === link.path ? "font-semibold" : ""
+              }`}
+              style={
+                location.pathname === link.path ? { color: corPrincipal } : {}
+              }
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
 
-      {/* Direita: Mobile (hamburguer) + perfil + região */}
+        {/* Barra de pesquisa alinhada à direita com gap */}
+        <div className="flex items-center bg-gray-100 rounded-full px-3 py-1 w-64 mr-4">
+          <input
+            type="text"
+            placeholder="O que deseja encontrar?"
+            className="bg-transparent outline-none text-sm px-2 flex-1"
+          />
+          <FaSearch className="text-gray-500" />
+        </div>
+      </div>
+
+      {/* Direita: Mobile (hamburguer) + avatar + região */}
       <div className="flex items-center gap-3 flex-shrink-0">
-        {/* Botão hamburguer só aparece no mobile */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="text-xl md:hidden"
@@ -70,7 +81,6 @@ export default function Header() {
           <FaBars />
         </button>
 
-        {/* Avatar */}
         <img
           src="https://i.pravatar.cc/32"
           alt="Usuário"
@@ -105,10 +115,8 @@ export default function Header() {
 
       {/* Menu Mobile (quando aberto) */}
       {menuOpen && (
-<div className="absolute top-14 left-0 w-full bg-white p-4 md:hidden border-b-[2px] border-b-orange-500">
-
-
-          {/* Barra de Pesquisa */}
+        <div className="absolute top-14 left-0 w-full bg-white p-4 md:hidden border-b-[2px] border-b-orange-500">
+          {/* Barra de pesquisa mobile */}
           <div className="flex items-center bg-gray-100 rounded-full px-3 py-1 mb-4">
             <input
               type="text"
@@ -118,7 +126,7 @@ export default function Header() {
             <FaSearch className="text-gray-500" />
           </div>
 
-          {/* Links */}
+          {/* Links Mobile */}
           <nav className="flex flex-col gap-3">
             {navLinks.map((link) => (
               <Link

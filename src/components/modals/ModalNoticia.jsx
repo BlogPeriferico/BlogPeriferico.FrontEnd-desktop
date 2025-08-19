@@ -18,18 +18,11 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
 
   const navigate = useNavigate();
 
-  // Bloquear o scroll da página ao abrir o modal
   useEffect(() => {
-    if (modalAberto) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
+    document.body.style.overflow = modalAberto ? "hidden" : "auto";
   }, [modalAberto]);
 
-  const handleImageChange = (e) => {
-    setImagem(e.target.files[0]);
-  };
+  const handleImageChange = (e) => setImagem(e.target.files[0]);
 
   const formatarValor = (valor) => {
     const numeros = valor.replace(/\D/g, "");
@@ -41,16 +34,8 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
     });
   };
 
-  const handleValorChange = (e) => {
-    setValor(formatarValor(e.target.value));
-  };
+  const handleValorChange = (e) => setValor(formatarValor(e.target.value));
 
-  const closeModal = () => {
-    setModalAberto(false); // Fecha o modal
-    navigate("/quebrada-informa"); // Navega de volta para a página QuebradaInforma
-  };
-
-  // Função para formatar telefone no padrão (11) 99999-9999
   const formatarTelefone = (valor) => {
     const numeros = valor.replace(/\D/g, "").slice(0, 11);
     const parte1 = numeros.slice(0, 2);
@@ -61,13 +46,14 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
     return `(${parte1}) ${parte2}-${parte3}`;
   };
 
-  const handleTelefoneChange = (e) => {
-    const valorFormatado = formatarTelefone(e.target.value);
-    setTelefone(valorFormatado);
+  const handleTelefoneChange = (e) => setTelefone(formatarTelefone(e.target.value));
+
+  const closeModal = () => {
+    setModalAberto(false);
+    navigate("/quebrada-informa");
   };
-  
+
   const handleSubmit = () => {
-    // Aqui você pode adicionar a lógica para enviar os dados para o servidor ou contexto
     console.log({
       titulo,
       valor,
@@ -79,7 +65,10 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-4">
+    <div
+      className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-4"
+      onClick={closeModal} // Fecha ao clicar fora
+    >
       {modalAberto && (
         <div
           className="bg-white p-6 rounded-2xl w-full max-w-[70vw] shadow-xl relative scrollbar-hide"
@@ -88,9 +77,10 @@ export default function ModalAdicionar({ modalAberto, setModalAberto }) {
             maxHeight: "70vh",
             overflowY: "auto",
           }}
+          onClick={(e) => e.stopPropagation()} // Evita fechar ao clicar dentro
         >
           {/* Botão de fechar */}
-          <div className="sticky top-0 flex justify-end bg-white p-2 z-50 ">
+          <div className="sticky top-0 flex justify-end bg-white p-2 z-50">
             <button
               onClick={closeModal}
               className="text-xl text-gray-500 hover:text-gray-800"

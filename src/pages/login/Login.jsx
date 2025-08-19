@@ -1,8 +1,9 @@
 // src/pages/Login.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Onda from "../../assets/images/Onda.png";
-import Periferia from "../../assets/images/periferia.png";
+import FundoSaoPaulo from "/src/assets/images/BackGroundImg.png";
+import EyeOpen from "../../assets/images/view.png";
+import EyeClose from "../../assets/images/hide.png";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -14,75 +15,89 @@ export default function Login() {
   };
 
   return (
-    <div className="flex h-screen w-full font-poppins overflow-hidden">
-      {/* Lado esquerdo: Formulário */}
-      <div className="relative w-1/2 bg-white z-10 flex flex-col justify-center px-16">
-        <h2 className="text-3xl text-center font-bold mb-6">Fazer Login</h2>
-
-        <input
-          type="email"
-          placeholder="Nome de Usuário/Email"
-          className="w-full mb-4 px-4 py-3 border rounded-md"
-        />
-
-        <div className="relative mb-4">
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Senha"
-            className="w-full px-4 py-3 border rounded-md pr-10"
-          />
-          <button
-            type="button"
-            className="absolute right-3 top-3 text-gray-500 trasition-all duration-600"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? "🙈" : "👁️"}
-          </button>
-        </div>
-
-        <button className="w-full bg-[#2C2C2C] text-white py-3 rounded-md mb-4 transition-all hover: duration-300 hover:scale-105 cursor-pointer">
-          Fazer Login
-        </button>
-
-        <button
-          className="w-full bg-gray-100 border border-gray-300 text-gray-700 py-3 rounded-md mb-6 transition-all duration-300 hover:scale-105 hover:border-[#2C2C2C] cursor-pointer"
-          onClick={entrarComoVisitante}
-        >
-          Entrar como visitante
-        </button>
-
-        <p className="text-sm text-center text-gray-500">
-          Já tem uma conta ?{" "}
-          <button
-            className="text-black font-semibold"
-            onClick={() => navigate("/register")}
-          >
-            Cadastre-se
-          </button>
-        </p>
-      </div>
-
-      {/* Onda */}
+    <div className="relative min-h-screen w-full font-poppins">
+      {/* Imagem de fundo */}
       <img
-        src={Onda}
-        alt="onda divisória"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none z-0"
-        style={{ zIndex: 5 }}
+        src={FundoSaoPaulo}
+        alt="fundo"
+        className="absolute inset-0 w-full h-full object-cover"
       />
 
-      {/* Lado direito: Imagem e texto */}
-      <div className="w-1/2 relative z-0">
-        <img
-          src={Periferia}
-          alt="fundo"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-white text-center z-10 bg-black bg-opacity-40">
-          <h1 className="text-4xl font-bold text-orange-500 mb-2">
-            BlogPeriferico
-          </h1>
-          <p className="text-lg">Bem-vindo ao blog periférico!</p>
-          <h2 className="text-3xl font-bold mt-2">Login</h2>
+      {/* Overlay escuro leve */}
+      <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+
+      {/* Painel principal dividido em 2 colunas */}
+      <div className="relative z-10 flex min-h-screen">
+        {/* Esquerda - Formulário */}
+        <div className="w-[45%] bg-[#fff] bg-opacity-70 p-8 shadow-lg flex flex-col justify-center">
+          <h2 className="text-3xl text-center font-bold mb-2 text-black">
+            Login
+          </h2>
+          <h3 className="text-lg text-center font-medium mb-8 text-[#5D5D5D]">
+            Entre com seu email e sua senha
+          </h3>
+
+          <input
+            type="email"
+            placeholder="Nome de Usuário/Email"
+            className="w-full mb-4 px-4 py-3 rounded-md text-black placeholder-gray-400 focus:outline-none"
+          />
+
+          <div className="relative mb-4">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Senha"
+              className="w-full px-4 py-3 rounded-md text-black placeholder-gray-400 pr-10 focus:outline-none"
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-3 text-gray-600"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              <img
+                src={showPassword ? EyeOpen : EyeClose}
+                alt="toggle senha"
+                className="w-5 h-5"
+              />
+            </button>
+          </div>
+
+          <button className="w-full bg-[#828282] text-white py-3 rounded-md mb-4 transition-all duration-300 hover:scale-105 cursor-pointer">
+            Login
+          </button>
+
+          {/* Separador */}
+          <div className="flex items-center my-4">
+            <div className="flex-grow border-t border-gray-400"></div>
+            <span className="px-3 text-gray-500 text-sm">ou</span>
+            <div className="flex-grow border-t border-gray-400"></div>
+          </div>
+
+          {/* Botão visitante */}
+          <button
+            className="w-full bg-[#fff] bg-opacity-50 py-3 rounded-md mb-6 transition-all duration-300 hover:scale-105 cursor-pointer"
+            onClick={entrarComoVisitante}
+          >
+            Entrar como visitante
+          </button>
+
+          <p className="text-sm text-center text-black mt-6">
+            Não tem uma conta?{" "}
+            <button
+              className="text-blue-400 font-semibold hover:underline"
+              onClick={() => navigate("/register")}
+            >
+              Registre-se
+            </button>
+          </p>
+        </div>
+
+        {/* Direita - Texto de boas-vindas */}
+        <div className="w-[55%] flex flex-col justify-center items-center text-white px-12">
+          <h2 className="text-6xl font-bold mb-4">BlogPeriférico</h2>
+          <h3 className="text-2xl font-medium text-gray-200 text-center">
+            Bem-vindo ao blog periférico!
+          </h3>
         </div>
       </div>
     </div>

@@ -65,7 +65,10 @@ export default function CorreCerto({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2">
+    <div
+      className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2"
+      onClick={closeModal} // Fecha ao clicar fora
+    >
       {modalAberto && (
         <div
           className="bg-white rounded-2xl w-full shadow-xl relative p-6"
@@ -75,6 +78,7 @@ export default function CorreCerto({
             maxHeight: "475px",
             overflowY: "hidden",
           }}
+          onClick={(e) => e.stopPropagation()} // Evita fechar ao clicar dentro
         >
           <div className="absolute top-4 right-4">
             <button
@@ -86,7 +90,7 @@ export default function CorreCerto({
           </div>
 
           <h2 className="text-3xl font-bold text-black mb-4 font-poppins">
-            Anuncie sua vagas
+            Anuncie sua vaga
           </h2>
 
           <div className="flex gap-4 items-center">
@@ -208,7 +212,7 @@ export default function CorreCerto({
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="text-white font-bold py-2 px-6 rounded shadow duration-300 hover:scale-105 hover:bg-gray-700 "
+                  className="text-white font-bold py-2 px-6 rounded shadow duration-300 hover:scale-105 hover:bg-gray-700"
                   style={{ backgroundColor: corSecundaria }}
                 >
                   Publicar

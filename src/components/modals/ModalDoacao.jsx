@@ -65,7 +65,10 @@ export default function ModalDoacao({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2">
+    <div
+      className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2"
+      onClick={closeModal} // Fecha ao clicar fora
+    >
       {modalAberto && (
         <div
           className="bg-white rounded-2xl w-full shadow-xl relative p-6"
@@ -75,6 +78,7 @@ export default function ModalDoacao({
             maxHeight: "475px",
             overflowY: "hidden",
           }}
+          onClick={(e) => e.stopPropagation()} // Evita fechar ao clicar dentro
         >
           <div className="absolute top-4 right-4">
             <button
