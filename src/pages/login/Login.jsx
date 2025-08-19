@@ -68,9 +68,9 @@ export default function Login() {
 
           {/* Separador */}
           <div className="flex items-center my-4">
-            <div className="flex-grow border-t border-gray-400"></div>
+            <div className="flex-grow border-t border-white-400"></div>
             <span className="px-3 text-gray-500 text-sm">ou</span>
-            <div className="flex-grow border-t border-gray-400"></div>
+            <div className="flex-grow border-t border-white-400"></div>
           </div>
 
           {/* Botão visitante */}

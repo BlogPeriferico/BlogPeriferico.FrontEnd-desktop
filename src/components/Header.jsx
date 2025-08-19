@@ -40,11 +40,10 @@ export default function Header() {
           BlogPeriferico
         </Link>
       </div>
-
-      {/* Centro + direita: Links + barra de pesquisa (md+) */}
-      <div className="hidden md:flex flex-1 items-center justify-between">
-        {/* Links deslocados para a esquerda */}
-        <nav className="flex gap-8 font-medium text-sm text-black ml-4">
+      {/* Centro: Links + barra de pesquisa */}
+      <div className="flex-1 flex items-center gap-6">
+        {/* Links (só aparecem em lg+) */}
+        <nav className="hidden lg:flex gap-6 font-medium text-sm text-black ml-4">
           {navLinks.map((link) => (
             <Link
               key={link.path}
@@ -61,30 +60,32 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Barra de pesquisa alinhada à direita com gap */}
-        <div className="flex items-center bg-gray-100 rounded-full px-3 py-1 w-64 mr-4">
+        {/* Barra de pesquisa (só aparece em lg+) */}
+        <div className="hidden lg:flex items-center bg-white rounded-full shadow-md px-4 py-2 w-72 border border-gray-200 gap-2 focus-within:shadow-lg transition-all duration-300 ml-auto">
           <input
             type="text"
             placeholder="O que deseja encontrar?"
-            className="bg-transparent outline-none text-sm px-2 flex-1"
+            className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
           />
-          <FaSearch className="text-gray-500" />
+          <FaSearch className="text-gray-400 cursor-pointer transition-colors duration-200" />
         </div>
       </div>
 
       {/* Direita: Mobile (hamburguer) + avatar + região */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-5 flex-shrink-0">
+        {/* Hamburguer */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="text-xl md:hidden"
+          className="text-xl lg:hidden" // 👈 troquei md:hidden por lg:hidden
         >
           <FaBars />
         </button>
 
+        {/* Avatar */}
         <img
           src="https://i.pravatar.cc/32"
           alt="Usuário"
-          className="w-8 h-8 rounded-full border border-gray-300 duration-300 hover:scale-105 cursor-pointer"
+          className="w-8 h-8 ml-4 rounded-full border border-gray-300 duration-300 hover:scale-105 cursor-pointer"
         />
 
         {/* Seletor de Região */}
@@ -113,17 +114,17 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Menu Mobile (quando aberto) */}
+      {/* Menu Mobile */}
       {menuOpen && (
-        <div className="absolute top-14 left-0 w-full bg-white p-4 md:hidden border-b-[2px] border-b-orange-500">
+        <div className="absolute top-14 left-0 w-full bg-white p-4 lg:hidden border-b-[2px] border-b-orange-500">
           {/* Barra de pesquisa mobile */}
-          <div className="flex items-center bg-gray-100 rounded-full px-3 py-1 mb-4">
+          <div className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border border-gray-200 gap-2 focus-within:border-orange-400 focus-within:shadow-lg transition-all duration-300 mb-4">
             <input
               type="text"
               placeholder="O que deseja encontrar?"
-              className="bg-transparent outline-none text-sm px-2 flex-1"
+              className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
             />
-            <FaSearch className="text-gray-500" />
+            <FaSearch className="text-gray-400 cursor-pointer transition-colors duration-200 hover:text-orange-500" />
           </div>
 
           {/* Links Mobile */}
