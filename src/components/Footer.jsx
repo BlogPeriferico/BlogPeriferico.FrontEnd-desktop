@@ -22,22 +22,27 @@ export default function Footer() {
             ></span>
             Páginas
           </h3>
-          <ul className="text-sm text-gray-500 space-y-1 ">
-            <li className="hover:text-blue-500 transition duration-200">
-              <Link to="/quebrada-informa">Quebrada informa</Link>
-            </li>
-            <li className="hover:text-blue-500 transition duration-200">
-              <Link to="/doacoes">Mão amiga</Link>
-            </li>
-            <li className="hover:text-blue-500 transition duration-200">
-              <Link to="/achadinhos">Achadinhos</Link>
-            </li>
-            <li className="hover:text-blue-500 transition duration-200">
-              <Link to="/vagas">Corre certo</Link>
-            </li>
-            <li className="hover:text-blue-500 transition duration-200">
-              <Link to="/sobre">Sobre nós</Link>
-            </li>
+          <ul className="text-sm text-gray-500 space-y-1">
+            {[
+              { path: "/quebrada-informa", label: "Quebrada informa" },
+              { path: "/doacoes", label: "Mão amiga" },
+              { path: "/achadinhos", label: "Achadinhos" },
+              { path: "/vagas", label: "Corre certo" },
+              { path: "/sobre", label: "Sobre nós" },
+            ].map((link) => (
+              <li
+                key={link.path}
+                className="transition duration-200 cursor-pointer"
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.color = corPrincipal)
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = "#6b7280") // cinza original
+                }
+              >
+                <Link to={link.path}>{link.label}</Link>
+              </li>
+            ))}
           </ul>
         </div>
 

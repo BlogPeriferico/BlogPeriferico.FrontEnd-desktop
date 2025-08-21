@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaSearch, FaMapMarkerAlt, FaBars } from "react-icons/fa";
 import RegionSelector from "./RegionSelector";
 import { useRegiao } from "../contexts/RegionContext";
 import { regionColors } from "../utils/regionColors";
 
 export default function Header() {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showRegionSelector, setShowRegionSelector] = useState(false);
   const location = useLocation();
@@ -25,6 +26,14 @@ export default function Header() {
     setShowRegionSelector(false);
   };
 
+  // Função para converter HEX em RGBA com opacidade
+  const hexToRGBA = (hex, alpha = 1) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   return (
     <header
       className="w-full px-6 py-3 flex items-center justify-between shadow-md border-b-2 fixed top-0 left-0 z-50"
@@ -40,9 +49,10 @@ export default function Header() {
           BlogPeriferico
         </Link>
       </div>
+
       {/* Centro: Links + barra de pesquisa */}
       <div className="flex-1 flex items-center gap-6">
-        {/* Links (só aparecem em lg+) */}
+        {/* Links (desktop) */}
         <nav className="hidden lg:flex gap-6 font-medium text-sm text-black ml-4">
           {navLinks.map((link) => (
             <Link
@@ -60,32 +70,51 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Barra de pesquisa (só aparece em lg+) */}
-        <div className="hidden lg:flex items-center bg-white rounded-full shadow-md px-4 py-2 w-72 border border-gray-200 gap-2 focus-within:shadow-lg transition-all duration-300 ml-auto">
+        {/* Barra de pesquisa desktop */}
+        <div
+          className="hidden lg:flex items-center bg-white rounded-full shadow-md px-4 py-2 w-72 border gap-2 transition-all duration-300 ml-auto"
+          style={{ borderColor: "#d1d5db" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = corPrincipal;
+            e.currentTarget.style.boxShadow = `0 0 10px ${hexToRGBA(
+              corPrincipal,
+              0.3
+            )}`;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "#d1d5db";
+            e.currentTarget.style.boxShadow = "0 0 0 rgba(0,0,0,0)";
+          }}
+        >
           <input
             type="text"
             placeholder="O que deseja encontrar?"
             className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
           />
-          <FaSearch className="text-gray-400 cursor-pointer transition-colors duration-200" />
+          <FaSearch
+            className="text-gray-400 cursor-pointer transition-colors duration-200"
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.color = hexToRGBA(corPrincipal, 0.6))
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
+          />
         </div>
       </div>
 
       {/* Direita: Mobile (hamburguer) + avatar + região */}
       <div className="flex items-center gap-5 flex-shrink-0">
-        {/* Hamburguer */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="text-xl lg:hidden" // 👈 troquei md:hidden por lg:hidden
+          className="text-xl lg:hidden"
         >
           <FaBars />
         </button>
 
-        {/* Avatar */}
         <img
           src="https://i.pravatar.cc/32"
           alt="Usuário"
           className="w-8 h-8 ml-4 rounded-full border border-gray-300 duration-300 hover:scale-105 cursor-pointer"
+          onClick={() => navigate("/editar-perfil")}
         />
 
         {/* Seletor de Região */}
@@ -116,15 +145,38 @@ export default function Header() {
 
       {/* Menu Mobile */}
       {menuOpen && (
-        <div className="absolute top-14 left-0 w-full bg-white p-4 lg:hidden border-b-[2px] border-b-orange-500">
+        <div
+          className="absolute top-14 left-0 w-full bg-white p-4 lg:hidden border-b-[2px]"
+          style={{ borderColor: corPrincipal }}
+        >
           {/* Barra de pesquisa mobile */}
-          <div className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border border-gray-200 gap-2 focus-within:border-orange-400 focus-within:shadow-lg transition-all duration-300 mb-4">
+          <div
+            className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300 mb-4"
+            style={{ borderColor: "#d1d5db" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = corPrincipal;
+              e.currentTarget.style.boxShadow = `0 0 10px ${hexToRGBA(
+                corPrincipal,
+                0.3
+              )}`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#d1d5db";
+              e.currentTarget.style.boxShadow = "0 0 0 rgba(0,0,0,0)";
+            }}
+          >
             <input
               type="text"
               placeholder="O que deseja encontrar?"
               className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
             />
-            <FaSearch className="text-gray-400 cursor-pointer transition-colors duration-200 hover:text-orange-500" />
+            <FaSearch
+              className="text-gray-400 cursor-pointer transition-colors duration-200"
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.color = hexToRGBA(corPrincipal, 0.6))
+              }
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
+            />
           </div>
 
           {/* Links Mobile */}

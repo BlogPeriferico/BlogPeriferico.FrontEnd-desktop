@@ -35,23 +35,35 @@ export default function Register() {
             Crie seu perfil
           </p>
 
+          {/* Input Nome */}
           <input
             type="text"
             placeholder="Nome"
-            className="w-full mb-5 px-5 py-3 rounded-md text-black placeholder-gray-400 focus:outline-none"
+            className="w-full mb-5 px-5 py-3 rounded-md text-black placeholder-gray-400 
+                       border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 
+                       outline-none transition-all duration-400 ease-in-out transform 
+                       hover:scale-[1.01] focus:scale-[1.02]"
           />
+
+          {/* Input Email */}
           <input
             type="email"
             placeholder="Email"
-            className="w-full mb-5 px-5 py-3 rounded-md text-black placeholder-gray-400 focus:outline-none"
+            className="w-full mb-5 px-5 py-3 rounded-md text-black placeholder-gray-400 
+                       border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 
+                       outline-none transition-all duration-400 ease-in-out transform 
+                       hover:scale-[1.01] focus:scale-[1.02]"
           />
 
-          {/* Campo senha com olho */}
+          {/* Campo Senha com olho */}
           <div className="relative mb-6">
             <input
               type={mostrarSenha ? "text" : "password"}
               placeholder="Senha"
-              className="w-full px-5 py-3 rounded-md text-black placeholder-gray-400 focus:outline-none"
+              className="w-full px-5 py-3 rounded-md text-black placeholder-gray-400 pr-10
+                         border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 
+                         outline-none transition-all duration-400 ease-in-out transform 
+                         hover:scale-[1.01] focus:scale-[1.02]"
             />
             <button
               type="button"
