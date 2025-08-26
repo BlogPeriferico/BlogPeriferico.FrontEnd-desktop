@@ -1,10 +1,11 @@
 import React from "react";
-import { DoacaoData } from "../../data/DoacaoData";
 import { useNavigate } from "react-router-dom";
 
-export default function SelecaoDoacoes() {
-  const ultimasDoacoes = DoacaoData.slice(-16);
+export default function SelecaoDoacoes({ doacoes }) {
   const navigate = useNavigate();
+
+  // Limita a 16 itens, se desejar
+  const ultimasDoacoes = doacoes.slice(-16);
 
   return (
     <div className="w-full mt-20 mb-24">
@@ -14,7 +15,7 @@ export default function SelecaoDoacoes() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
         {ultimasDoacoes.map((doacao) => (
           <div
-            key={doacao.id}
+            key={doacao.id} // garante que a key seja única
             onClick={() => navigate("/doacao", { state: doacao })}
             className="bg-[#F4F5F7] shadow-lg transition-all duration-600 hover:scale-105 cursor-pointer w-[240px] h-[370px]"
           >
