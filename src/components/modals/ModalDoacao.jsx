@@ -5,12 +5,7 @@ import { regionColors } from "../../utils/regionColors";
 import DoacaoService from "../../services/DoacaoService";
 import { useNavigate } from "react-router-dom";
 
-export default function ModalDoacao({
-  modalAberto,
-  setModalAberto,
-  corPrincipal,
-  atualizarDoacoes,
-}) {
+export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal, atualizarDoacoes }) {
   const [titulo, setTitulo] = useState("");
   const [telefone, setTelefone] = useState("");
   const [local, setLocal] = useState("");
@@ -22,14 +17,11 @@ export default function ModalDoacao({
 
   const { regiao } = useRegiao();
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
-
   const navigate = useNavigate();
 
   useEffect(() => {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
   }, [modalAberto]);
-
-  const handleImageChange = (e) => setImagem(e.target.files[0]);
 
   const closeModal = () => {
     setModalAberto(false);
@@ -51,37 +43,40 @@ export default function ModalDoacao({
     return `(${parte1}) ${parte2}-${parte3}`;
   };
 
-  const handleTelefoneChange = (e) => {
-    const valorFormatado = formatarTelefone(e.target.value);
-    setTelefone(valorFormatado);
-  };
+  const handleTituloChange = (e) => setTitulo(e.target.value);
+  const handleDescricaoChange = (e) => setDescricao(e.target.value);
+  const handleLocalChange = (e) => setLocal(e.target.value);
+  const handleTelefoneChange = (e) => setTelefone(formatarTelefone(e.target.value));
+  const handleImageChange = (e) => setImagem(e.target.files[0]);
 
-  const zonas = [
-    "Centro", "Leste", "Norte", "Sul", "Oeste",
-    "Sudeste", "Sudoeste", "Noroeste", "Nordeste",
-  ];
+  // Valores do enum do backend (case-sensitive)
+  const zonas = ["CENTRO","LESTE","NORTE","SUL","OESTE","SUDESTE","SUDOESTE","NOROEST"];
 
   const handleSubmit = async () => {
-    const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem("token");
     if (!token) {
       alert("Você precisa estar logado para criar uma doação.");
-      navigate("/"); // redireciona para página principal
+      navigate("/");
       return;
     }
 
+    const dto = {
+      titulo,
+      descricao,
+      telefone,
+      zona: local, // agora envia valor exato do enum
+      imagem: null,
+    };
+
     const formData = new FormData();
-    formData.append("titulo", titulo);
-    formData.append("telefone", telefone);
-    formData.append("local", local);
-    formData.append("descricao", descricao);
-    if (imagem) formData.append("imagem", imagem);
+    formData.append("dto", JSON.stringify(dto));
+    if (imagem) formData.append("file", imagem);
 
     try {
       const novaDoacao = await DoacaoService.criarDoacao(formData);
       closeModal();
       if (atualizarDoacoes) atualizarDoacoes(novaDoacao);
     } catch (err) {
-      console.error(err);
       setErroToast("Erro ao criar doação. Verifique os dados e tente novamente.");
       setTimeout(() => setErroToast(""), 3000);
     }
@@ -104,9 +99,7 @@ export default function ModalDoacao({
             </button>
           </div>
 
-          <h2 className="text-3xl font-bold text-black mb-4 font-poppins">
-            Anuncie uma doação
-          </h2>
+          <h2 className="text-3xl font-bold text-black mb-4 font-poppins">Anuncie uma doação</h2>
 
           {erroToast && (
             <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
@@ -123,11 +116,7 @@ export default function ModalDoacao({
                 ) : (
                   <>
                     <img src="/src/assets/gifs/upload.gif" alt="upload" className="w-16 h-16 object-contain" />
-                    <p className="mt-2">
-                      Coloque sua imagem
-                      <br />
-                      <strong style={{ color: corSecundaria }}>navegar</strong>
-                    </p>
+                    <p className="mt-2">Coloque sua imagem<br/><strong style={{ color: corSecundaria }}>navegar</strong></p>
                   </>
                 )}
               </label>
@@ -138,17 +127,17 @@ export default function ModalDoacao({
             <div className="flex-1 space-y-3 text-xs font-poppins">
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Título</label>
-                <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="nome do item para doar" className="w-full border border-gray-400 rounded px-2 py-2" maxLength={maxLength} />
+                <input type="text" value={titulo} onChange={handleTituloChange} placeholder="nome do item para doar" className="w-full border border-gray-400 rounded px-2 py-2" maxLength={maxLength} />
               </div>
 
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Descrição</label>
-                <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="descreva o que será doado..." className="w-full border border-gray-400 rounded px-2 py-2 resize-none" rows={2} maxLength={maxDescricao}></textarea>
+                <textarea value={descricao} onChange={handleDescricaoChange} placeholder="descreva o que será doado..." className="w-full border border-gray-400 rounded px-2 py-2 resize-none" rows={2} maxLength={maxDescricao}></textarea>
               </div>
 
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Zona</label>
-                <select value={local} onChange={(e) => setLocal(e.target.value)} className="w-full border border-gray-400 rounded px-2 py-2">
+                <select value={local} onChange={handleLocalChange} className="w-full border border-gray-400 rounded px-2 py-2">
                   <option value="" disabled>Selecione uma zona</option>
                   {zonas.map((zona, idx) => (
                     <option key={`${zona}-${idx}`} value={zona}>{zona}</option>

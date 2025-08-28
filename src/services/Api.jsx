@@ -1,12 +1,10 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080"; // URL do seu backend
+const API_URL = "http://localhost:8080"; // ou sua URL da nuvem
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // removemos Content-Type fixo para permitir FormData
 });
 
 // Intercepta requisições e injeta o token JWT
