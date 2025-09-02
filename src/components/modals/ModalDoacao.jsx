@@ -43,13 +43,6 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
     return `(${parte1}) ${parte2}-${parte3}`;
   };
 
-  const handleTituloChange = (e) => setTitulo(e.target.value);
-  const handleDescricaoChange = (e) => setDescricao(e.target.value);
-  const handleLocalChange = (e) => setLocal(e.target.value);
-  const handleTelefoneChange = (e) => setTelefone(formatarTelefone(e.target.value));
-  const handleImageChange = (e) => setImagem(e.target.files[0]);
-
-  // Valores do enum do backend (case-sensitive)
   const zonas = ["CENTRO","LESTE","NORTE","SUL","OESTE","SUDESTE","SUDOESTE","NOROEST"];
 
   const handleSubmit = async () => {
@@ -64,8 +57,7 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
       titulo,
       descricao,
       telefone,
-      zona: local, // agora envia valor exato do enum
-      imagem: null,
+      zona: local,
     };
 
     const formData = new FormData();
@@ -73,7 +65,7 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
     if (imagem) formData.append("file", imagem);
 
     try {
-      const novaDoacao = await DoacaoService.criarDoacao(formData);
+      const novaDoacao = await DoacaoService.criarDoacao(formData); // backend pega usuário do JWT
       closeModal();
       if (atualizarDoacoes) atualizarDoacoes(novaDoacao);
     } catch (err) {
@@ -120,24 +112,24 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
                   </>
                 )}
               </label>
-              <input type="file" id="imagem" accept="image/*" onChange={handleImageChange} className="hidden" />
+              <input type="file" id="imagem" accept="image/*" onChange={(e) => setImagem(e.target.files[0])} className="hidden" />
             </div>
 
             {/* Formulário */}
             <div className="flex-1 space-y-3 text-xs font-poppins">
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Título</label>
-                <input type="text" value={titulo} onChange={handleTituloChange} placeholder="nome do item para doar" className="w-full border border-gray-400 rounded px-2 py-2" maxLength={maxLength} />
+                <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="nome do item para doar" className="w-full border border-gray-400 rounded px-2 py-2" maxLength={maxLength} />
               </div>
 
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Descrição</label>
-                <textarea value={descricao} onChange={handleDescricaoChange} placeholder="descreva o que será doado..." className="w-full border border-gray-400 rounded px-2 py-2 resize-none" rows={2} maxLength={maxDescricao}></textarea>
+                <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="descreva o que será doado..." className="w-full border border-gray-400 rounded px-2 py-2 resize-none" rows={2} maxLength={maxDescricao}></textarea>
               </div>
 
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Zona</label>
-                <select value={local} onChange={handleLocalChange} className="w-full border border-gray-400 rounded px-2 py-2">
+                <select value={local} onChange={(e) => setLocal(e.target.value)} className="w-full border border-gray-400 rounded px-2 py-2">
                   <option value="" disabled>Selecione uma zona</option>
                   {zonas.map((zona, idx) => (
                     <option key={`${zona}-${idx}`} value={zona}>{zona}</option>
@@ -147,7 +139,7 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
 
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Telefone</label>
-                <input type="text" value={telefone} onChange={handleTelefoneChange} placeholder="(11) 98765-4321" className="w-full border border-gray-400 rounded px-2 py-2" />
+                <input type="text" value={telefone} onChange={(e) => setTelefone(formatarTelefone(e.target.value))} placeholder="(11) 98765-4321" className="w-full border border-gray-400 rounded px-2 py-2" />
               </div>
 
               <div className="flex justify-end">

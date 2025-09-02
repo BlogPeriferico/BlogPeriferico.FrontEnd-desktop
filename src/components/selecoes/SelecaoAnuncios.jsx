@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAnuncios } from "../../services/AnuncioService";
-
+import AnuncioService from "../../services/AnuncioService";
+ 
 export default function SelecaoAnuncios() {
   const [produtos, setProdutos] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    getAnuncios().then(setProdutos).catch(console.error);
-  }, []);
+  AnuncioService.getAnuncios().then(setProdutos).catch(console.error);
+}, []);
 
   if (produtos.length === 0) return <p>Carregando anúncios...</p>;
 
