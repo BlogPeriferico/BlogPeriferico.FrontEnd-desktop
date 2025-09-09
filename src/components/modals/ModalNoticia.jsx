@@ -1,203 +1,216 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { FaTimes } from "react-icons/fa";
-import { useRegiao } from "../../contexts/RegionContext"; // Para aplicar a cor da região
+import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
-import "./ModalNoticia.css";
+import NoticiaService from "../../services/NoticiasService";
+import { useNavigate } from "react-router-dom";
 
-export default function ModalAdicionar({ modalAberto, setModalAberto }) {
+export default function ModalNoticia({
+  modalAberto,
+  setModalAberto,
+  corPrincipal,
+  atualizarNoticias, // função do parent para atualizar lista
+}) {
   const [titulo, setTitulo] = useState("");
-  const [valor, setValor] = useState("");
-  const [telefone, setTelefone] = useState("");
+  const [texto, setTexto] = useState(""); // renomeado para texto
   const [local, setLocal] = useState("");
-  const [descricao, setDescricao] = useState("");
   const [imagem, setImagem] = useState(null);
+  const [erroToast, setErroToast] = useState("");
+  const maxLength = 60;
+  const maxTexto = 120;
 
   const { regiao } = useRegiao();
-  const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6"; // cor secundária para bordas
-
+  const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
   const navigate = useNavigate();
 
   useEffect(() => {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
   }, [modalAberto]);
 
-  const handleImageChange = (e) => setImagem(e.target.files[0]);
-
-  const formatarValor = (valor) => {
-    const numeros = valor.replace(/\D/g, "");
-    const numeroFloat = parseFloat(numeros) / 100;
-    if (isNaN(numeroFloat)) return "";
-    return numeroFloat.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  };
-
-  const handleValorChange = (e) => setValor(formatarValor(e.target.value));
-
-  const formatarTelefone = (valor) => {
-    const numeros = valor.replace(/\D/g, "").slice(0, 11);
-    const parte1 = numeros.slice(0, 2);
-    const parte2 = numeros.slice(2, 7);
-    const parte3 = numeros.slice(7, 11);
-    if (numeros.length <= 2) return `(${parte1}`;
-    if (numeros.length <= 7) return `(${parte1}) ${parte2}`;
-    return `(${parte1}) ${parte2}-${parte3}`;
-  };
-
-  const handleTelefoneChange = (e) => setTelefone(formatarTelefone(e.target.value));
-
   const closeModal = () => {
     setModalAberto(false);
-    navigate("/quebrada-informa");
+    setTitulo("");
+    setTexto("");
+    setLocal("");
+    setImagem(null);
+    setErroToast("");
   };
 
-  const handleSubmit = () => {
-    console.log({
+  const zonas = [
+    "CENTRO",
+    "LESTE",
+    "NORTE",
+    "SUL",
+    "OESTE",
+    "SUDESTE",
+    "SUDOESTE",
+    "NOROESTE",
+  ];
+
+  const handleSubmit = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Você precisa estar logado para criar uma notícia.");
+      navigate("/");
+      return;
+    }
+
+    const dto = {
       titulo,
-      valor,
-      telefone,
-      local,
-      descricao,
-      imagem,
-    });
+      texto, // agora envia como texto
+      zona: local,
+    };
+
+    const formData = new FormData();
+    formData.append("dto", JSON.stringify(dto));
+    if (imagem) formData.append("file", imagem);
+
+    try {
+      const novaNoticia = await NoticiaService.criarNoticia(formData);
+      closeModal();
+      if (atualizarNoticias) atualizarNoticias(novaNoticia); // adiciona na lista
+    } catch (err) {
+      setErroToast(
+        "Erro ao criar notícia. Verifique os dados e tente novamente."
+      );
+      setTimeout(() => setErroToast(""), 3000);
+    }
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-4"
-      onClick={closeModal} // Fecha ao clicar fora
+      className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2"
+      onClick={closeModal}
     >
       {modalAberto && (
         <div
-          className="bg-white p-6 rounded-2xl w-full max-w-[70vw] shadow-xl relative scrollbar-hide"
+          className="bg-white rounded-2xl w-full shadow-xl relative p-6"
           style={{
-            border: `2px solid ${corSecundaria}`,
-            maxHeight: "70vh",
+            border: `2px solid ${corPrincipal}`,
+            maxWidth: "842px",
+            maxHeight: "475px",
             overflowY: "auto",
           }}
-          onClick={(e) => e.stopPropagation()} // Evita fechar ao clicar dentro
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Botão de fechar */}
-          <div className="sticky top-0 flex justify-end bg-white p-2 z-50">
+          <div className="absolute top-4 right-4">
             <button
               onClick={closeModal}
-              className="text-xl text-gray-500 hover:text-gray-800"
+              className="text-2xl text-gray-600 hover:text-black"
             >
               <FaTimes />
             </button>
           </div>
 
-          {/* Título do Modal */}
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-            Adicionar nova postagem
+          <h2 className="text-3xl font-bold text-black mb-4 font-poppins">
+            Publicar notícia
           </h2>
 
-          {/* Campos de formulário */}
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-            {/* Título */}
-            <div className="flex flex-col">
-              <label htmlFor="titulo" className="text-sm text-gray-600 mb-2">
-                Digite o título de sua postagem...
-              </label>
-              <input
-                id="titulo"
-                type="text"
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-                className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Exemplo: Nintendo Switch usado"
-              />
+          {erroToast && (
+            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
+              {erroToast}
             </div>
+          )}
 
-            {/* Valor */}
-            <div className="flex flex-col">
-              <label htmlFor="valor" className="text-sm text-gray-600 mb-2">
-                Digite o valor do item que você vai vender...
-              </label>
-              <input
-                id="valor"
-                type="text"
-                value={valor}
-                onChange={handleValorChange}
-                className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Exemplo: R$ 789,50"
-              />
-            </div>
-
-            {/* Telefone */}
-            <div className="flex flex-col">
-              <label htmlFor="telefone" className="text-sm text-gray-600 mb-2">
-                Digite seu número de telefone...
-              </label>
-              <input
-                id="telefone"
-                type="text"
-                value={telefone}
-                onChange={handleTelefoneChange}
-                className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Exemplo: (11) 99999-9999"
-              />
-            </div>
-
-            {/* Local de venda */}
-            <div className="flex flex-col">
-              <label htmlFor="local" className="text-sm text-gray-600 mb-2">
-                Digite o local onde o produto está sendo vendido...
-              </label>
-              <input
-                id="local"
-                type="text"
-                value={local}
-                onChange={(e) => setLocal(e.target.value)}
-                className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Exemplo: São Paulo, SP"
-              />
-            </div>
-
-            {/* Descrição */}
-            <div className="flex flex-col">
-              <label htmlFor="descricao" className="text-sm text-gray-600 mb-2">
-                Digite uma pequena descrição sobre o produto...
-              </label>
-              <textarea
-                id="descricao"
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Exemplo: Produto novo, com garantia."
-              />
-            </div>
-
-            {/* Upload de imagem */}
-            <div className="flex flex-col">
-              <label className="text-sm text-gray-600 mb-2">
-                Faça o upload de uma imagem
+          <div className="flex gap-4 items-center">
+            {/* Imagem */}
+            <div className="flex-shrink-0 border border-dashed border-gray-400 rounded-lg w-[200px] h-[200px] flex flex-col items-center justify-center text-center text-gray-700 text-xs px-2 overflow-hidden">
+              <label
+                htmlFor="imagem"
+                className="cursor-pointer flex flex-col items-center justify-center h-full w-full"
+              >
+                {imagem ? (
+                  <img
+                    src={URL.createObjectURL(imagem)}
+                    alt="pré-visualização"
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                ) : (
+                  <>
+                    <img
+                      src="/src/assets/gifs/upload.gif"
+                      alt="upload"
+                      className="w-16 h-16 object-contain"
+                    />
+                    <p className="mt-2">
+                      Coloque sua imagem
+                      <br />
+                      <strong style={{ color: corSecundaria }}>navegar</strong>
+                    </p>
+                  </>
+                )}
               </label>
               <input
                 type="file"
-                onChange={handleImageChange}
-                className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                id="imagem"
+                accept="image/*"
+                onChange={(e) => setImagem(e.target.files[0])}
+                className="hidden"
               />
             </div>
 
-            {/* Botão para enviar */}
-            <div className="flex justify-between items-center mt-4">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 duration-300 hover:scale-105"
-                style={{
-                  borderRadius: "8px",
-                  padding: "12px 20px",
-                  backgroundColor: corSecundaria,
-                }}
-              >
-                Publicar
-              </button>
+            {/* Formulário */}
+            <div className="flex-1 space-y-3 text-xs font-poppins">
+              <div className="relative">
+                <label className="text-gray-700 font-semibold block">
+                  Título
+                </label>
+                <input
+                  type="text"
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                  placeholder="título da notícia"
+                  className="w-full border border-gray-400 rounded px-2 py-2"
+                  maxLength={maxLength}
+                />
+              </div>
+
+              <div className="relative">
+                <label className="text-gray-700 font-semibold block">
+                  Texto
+                </label>
+                <textarea
+                  value={texto}
+                  onChange={(e) => setTexto(e.target.value)}
+                  placeholder="escreva a notícia..."
+                  className="w-full border border-gray-400 rounded px-2 py-2 resize-none"
+                  rows={2}
+                  maxLength={maxTexto}
+                ></textarea>
+              </div>
+
+              <div className="relative">
+                <label className="text-gray-700 font-semibold block">
+                  Zona
+                </label>
+                <select
+                  value={local}
+                  onChange={(e) => setLocal(e.target.value)}
+                  className="w-full border border-gray-400 rounded px-2 py-2"
+                >
+                  <option value="" disabled>
+                    Selecione uma zona
+                  </option>
+                  {zonas.map((zona, idx) => (
+                    <option key={`${zona}-${idx}`} value={zona}>
+                      {zona}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  className="hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow duration-300 hover:scale-105"
+                  style={{ backgroundColor: corSecundaria }}
+                >
+                  Publicar
+                </button>
+              </div>
             </div>
-          </form>
+          </div>
         </div>
       )}
     </div>

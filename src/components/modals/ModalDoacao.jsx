@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
-import DoacaoService from "../../services/DoacaoService";
+import CorreCertoService from "../../services/CorreCertoService";
 import { useNavigate } from "react-router-dom";
 
-export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal, atualizarDoacoes }) {
+export default function ModalCorreCerto({ modalAberto, setModalAberto, corPrincipal, atualizarCorrecertos }) {
   const [titulo, setTitulo] = useState("");
   const [telefone, setTelefone] = useState("");
   const [local, setLocal] = useState("");
@@ -43,42 +43,35 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
     return `(${parte1}) ${parte2}-${parte3}`;
   };
 
-  const zonas = ["CENTRO","LESTE","NORTE","SUL","OESTE","SUDESTE","SUDOESTE","NOROEST"];
+  const zonas = ["CENTRO","LESTE","NORTE","SUL","OESTE","SUDESTE","SUDOESTE","NOROESTE"];
 
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Você precisa estar logado para criar uma doação.");
+      alert("Você precisa estar logado para criar uma vaga.");
       navigate("/");
       return;
     }
 
-    const dto = {
-      titulo,
-      descricao,
-      telefone,
-      zona: local,
-    };
+    const dto = { titulo, descricao, telefone, zona: local };
 
     const formData = new FormData();
     formData.append("dto", JSON.stringify(dto));
     if (imagem) formData.append("file", imagem);
 
     try {
-      const novaDoacao = await DoacaoService.criarDoacao(formData); // backend pega usuário do JWT
+      const novoItem = await CorreCertoService.criarCorrecerto(formData); // backend pega usuário do JWT
       closeModal();
-      if (atualizarDoacoes) atualizarDoacoes(novaDoacao);
+      if (atualizarCorrecertos) atualizarCorrecertos(novoItem); // atualizar lista
     } catch (err) {
-      setErroToast("Erro ao criar doação. Verifique os dados e tente novamente.");
+      console.error(err);
+      setErroToast("Erro ao criar a vaga. Verifique os dados e tente novamente.");
       setTimeout(() => setErroToast(""), 3000);
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2"
-      onClick={closeModal}
-    >
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2" onClick={closeModal}>
       {modalAberto && (
         <div
           className="bg-white rounded-2xl w-full shadow-xl relative p-6"
@@ -91,7 +84,7 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
             </button>
           </div>
 
-          <h2 className="text-3xl font-bold text-black mb-4 font-poppins">Anuncie uma doação</h2>
+          <h2 className="text-3xl font-bold text-black mb-4 font-poppins">Anuncie sua vaga</h2>
 
           {erroToast && (
             <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
@@ -108,7 +101,11 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
                 ) : (
                   <>
                     <img src="/src/assets/gifs/upload.gif" alt="upload" className="w-16 h-16 object-contain" />
-                    <p className="mt-2">Coloque sua imagem<br/><strong style={{ color: corSecundaria }}>navegar</strong></p>
+                    <p className="mt-2">
+                      Coloque sua imagem
+                      <br />
+                      <strong style={{ color: corSecundaria }}>navegar</strong>
+                    </p>
                   </>
                 )}
               </label>
@@ -119,12 +116,12 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
             <div className="flex-1 space-y-3 text-xs font-poppins">
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Título</label>
-                <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="nome do item para doar" className="w-full border border-gray-400 rounded px-2 py-2" maxLength={maxLength} />
+                <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Anuncie sua vaga" className="w-full border border-gray-400 rounded px-2 py-2" maxLength={maxLength} />
               </div>
 
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Descrição</label>
-                <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="descreva o que será doado..." className="w-full border border-gray-400 rounded px-2 py-2 resize-none" rows={2} maxLength={maxDescricao}></textarea>
+                <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descreva a vaga" className="w-full border border-gray-400 rounded px-2 py-2 resize-none" rows={2} maxLength={maxDescricao}></textarea>
               </div>
 
               <div className="relative">

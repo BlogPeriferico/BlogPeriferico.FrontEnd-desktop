@@ -4,8 +4,8 @@ import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 import { Link } from "react-router-dom";
 import { FiPlus } from "react-icons/fi";
-import { noticias } from "../../data/NoticiasData";
-import ModalNoticia from "../../components/modals/ModalNoticia"; // Importando o Modal
+import ModalNoticia from "../../components/modals/ModalNoticia";
+import NoticiaService from "../../services/NoticiasService";
 
 const API_KEY = "56fd2180ff9c0389b8ebc9c566b4d563";
 
@@ -24,12 +24,15 @@ const zonasClima = {
 export default function QuebradaInforma() {
   const [dados, setDados] = useState({});
   const [horaAtual, setHoraAtual] = useState(new Date());
-  const [modalAberto, setModalAberto] = useState(false); // Controle do modal de adicionar
+  const [modalAberto, setModalAberto] = useState(false);
+  const [noticias, setNoticias] = useState([]);
+  const [loadingNoticias, setLoadingNoticias] = useState(true);
 
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
 
+  // Busca clima
   const buscarClima = async () => {
     const novosDados = {};
     for (const [nome, zona] of Object.entries(zonasClima)) {
@@ -58,13 +61,20 @@ export default function QuebradaInforma() {
     return () => clearInterval(horaTimer);
   }, []);
 
+  // Busca notícias
   useEffect(() => {
-    if (modalAberto) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-  }, [modalAberto]);
+    const fetchNoticias = async () => {
+      try {
+        const response = await NoticiaService.listarNoticias();
+        setNoticias(response);
+      } catch (err) {
+        console.error("❌ Erro ao carregar notícias:", err);
+      } finally {
+        setLoadingNoticias(false);
+      }
+    };
+    fetchNoticias();
+  }, []);
 
   return (
     <main className="px-4 md:px-10 mt-24 max-w-[1600px] mx-auto relative">
@@ -86,12 +96,14 @@ export default function QuebradaInforma() {
           modalAberto={modalAberto}
           setModalAberto={setModalAberto}
           corPrincipal={corPrincipal}
+          atualizarNoticias={(novaNoticia) =>
+            setNoticias([novaNoticia, ...noticias])
+          }
         />
       )}
 
-      {/* Conteúdo da página */}
+      {/* Área de clima */}
       <div className="flex flex-col lg:flex-row lg:gap-20 mb-24 items-start">
-        {/* Introdução */}
         <div
           className="relative border px-10 py-8 w-full lg:w-[45%] bg-white lg:mt-[125px]"
           style={{ borderColor: corSecundaria }}
@@ -120,7 +132,6 @@ export default function QuebradaInforma() {
           </a>
         </div>
 
-        {/* Cards Clima */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full lg:w-[60%] mt-10">
           {Object.entries(zonasClima).map(([nome]) => {
             const clima = dados[nome];
@@ -165,34 +176,48 @@ export default function QuebradaInforma() {
       </div>
 
       {/* Notícias */}
-      <h2 className="text-4xl font-semibold mb-10 w-max mx-auto text-center  ">
-        Noticias
+      <h2 className="text-4xl font-semibold mb-10 w-max mx-auto text-center">
+        Notícias
       </h2>
-      <div className="space-y-6">
-        {noticias.map((n) => (
-          <Link to={`/noticia/${n.id}`} key={n.id} className="block px-20">
-            <div className="flex flex-col sm:flex-row gap-4 border-b pb-4 hover:opacity-90 transition-all">
-              <img
-                src={n.imagem}
-                alt={n.titulo}
-                className="w-full sm:w-48 h-32 object-cover rounded-md"
-              />
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {n.titulo}
-                </h3>
-                <p className="text-sm text-gray-700">{n.resumo}</p>
-                <div className="text-xs text-gray-400 mt-2 flex justify-between items-center">
-                  <span>{n.regiao}</span>
-                  <span>
-                    Por: {n.autor} | {n.data} às {n.hora}
-                  </span>
+
+      {loadingNoticias ? (
+        <p className="text-center">Carregando notícias...</p>
+      ) : noticias.length === 0 ? (
+        <p className="text-center">Nenhuma notícia publicada ainda.</p>
+      ) : (
+        <div className="space-y-6">
+          {noticias.map((n) => (
+            <Link to={`/noticia/${n.id}`} key={n.id} className="block px-20">
+              <div className="flex flex-col sm:flex-row gap-4 border-b pb-4 hover:opacity-90 transition-all">
+                {n.imagem && (
+                  <img
+                    src={n.imagem}
+                    alt={n.titulo}
+                    className="w-full sm:w-48 h-32 object-cover rounded-md"
+                  />
+                )}
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {n.titulo}
+                  </h3>
+                  <p className="text-sm text-gray-700 line-clamp-3">
+                    {n.texto}
+                  </p>
+                  <div className="text-xs text-gray-400 mt-2 flex justify-between items-center">
+                    <span>{n.zona}</span>
+                    <span>
+                      Publicado em{" "}
+                      {new Date(n.dataHoraCriacao).toLocaleDateString("pt-BR")}{" "}
+                      às{" "}
+                      {new Date(n.dataHoraCriacao).toLocaleTimeString("pt-BR")}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </main>
   );
 }

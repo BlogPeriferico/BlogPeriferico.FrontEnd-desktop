@@ -3,17 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { FaTimes } from "react-icons/fa";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
+import CorreCertoService from "../../services/CorreCertoService";
 
-export default function CorreCerto({
+export default function ModalCorreCerto({
   modalAberto,
   setModalAberto,
   corPrincipal,
+  atualizarCorrecertos, // nome correto
 }) {
   const [titulo, setTitulo] = useState("");
   const [telefone, setTelefone] = useState("");
   const [local, setLocal] = useState("");
   const [descricao, setDescricao] = useState("");
   const [imagem, setImagem] = useState(null);
+  const [erroToast, setErroToast] = useState("");
 
   const maxDescricao = 120;
   const maxLength = 60;
@@ -26,15 +29,14 @@ export default function CorreCerto({
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
   }, [modalAberto]);
 
-  const handleImageChange = (e) => setImagem(e.target.files[0]);
-
   const closeModal = () => {
     setModalAberto(false);
-    navigate("/vagas");
-  };
-
-  const handleSubmit = () => {
-    console.log({ titulo, telefone, local, descricao, imagem });
+    setTitulo("");
+    setTelefone("");
+    setLocal("");
+    setDescricao("");
+    setImagem(null);
+    setErroToast("");
   };
 
   const formatarTelefone = (valor) => {
@@ -47,27 +49,52 @@ export default function CorreCerto({
     return `(${parte1}) ${parte2}-${parte3}`;
   };
 
-  const handleTelefoneChange = (e) => {
-    const valorFormatado = formatarTelefone(e.target.value);
-    setTelefone(valorFormatado);
-  };
+  const handleTelefoneChange = (e) =>
+    setTelefone(formatarTelefone(e.target.value));
 
   const zonas = [
-    "Centro",
-    "Leste",
-    "Norte",
-    "Sul",
-    "Oeste",
-    "Sudeste",
-    "Sudoeste",
-    "Noroeste",
-    "Nordeste",
+    "CENTRO",
+    "LESTE",
+    "NORTE",
+    "SUL",
+    "OESTE",
+    "SUDESTE",
+    "SUDOESTE",
+    "NOROESTE",
   ];
+
+  const handleSubmit = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Você precisa estar logado para criar uma vaga.");
+      navigate("/");
+      return;
+    }
+
+    const dto = { titulo, descricao, telefone, zona: local };
+
+    const formData = new FormData();
+    formData.append("dto", JSON.stringify(dto));
+    if (imagem) formData.append("file", imagem);
+
+    try {
+      await CorreCertoService.criarCorrecerto(formData);
+      closeModal();
+      // Atualiza lista chamando a função da page
+      if (atualizarCorrecertos) atualizarCorrecertos();
+    } catch (err) {
+      console.error(err);
+      setErroToast(
+        "Erro ao criar a vaga. Verifique os dados e tente novamente."
+      );
+      setTimeout(() => setErroToast(""), 3000);
+    }
+  };
 
   return (
     <div
       className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2"
-      onClick={closeModal} // Fecha ao clicar fora
+      onClick={closeModal}
     >
       {modalAberto && (
         <div
@@ -76,9 +103,9 @@ export default function CorreCerto({
             border: `2px solid ${corPrincipal}`,
             maxWidth: "842px",
             maxHeight: "475px",
-            overflowY: "hidden",
+            overflowY: "auto",
           }}
-          onClick={(e) => e.stopPropagation()} // Evita fechar ao clicar dentro
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="absolute top-4 right-4">
             <button
@@ -92,6 +119,12 @@ export default function CorreCerto({
           <h2 className="text-3xl font-bold text-black mb-4 font-poppins">
             Anuncie sua vaga
           </h2>
+
+          {erroToast && (
+            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
+              {erroToast}
+            </div>
+          )}
 
           <div className="flex gap-4 items-center">
             {/* Imagem */}
@@ -125,13 +158,13 @@ export default function CorreCerto({
                 type="file"
                 id="imagem"
                 accept="image/*"
-                onChange={handleImageChange}
+                onChange={(e) => setImagem(e.target.files[0])}
                 className="hidden"
               />
             </div>
 
             {/* Formulário */}
-            <form className="flex-1 space-y-3 text-xs font-poppins">
+            <div className="flex-1 space-y-3 text-xs font-poppins">
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">
                   Título
@@ -144,11 +177,6 @@ export default function CorreCerto({
                   className="w-full border border-gray-400 rounded px-2 py-2"
                   maxLength={maxLength}
                 />
-                {titulo.length > 0 && (
-                  <div className="absolute right-2 bottom-1 text-gray-400 text-[10px]">
-                    {maxLength - titulo.length}
-                  </div>
-                )}
               </div>
 
               <div className="relative">
@@ -158,16 +186,11 @@ export default function CorreCerto({
                 <textarea
                   value={descricao}
                   onChange={(e) => setDescricao(e.target.value)}
-                  placeholder="Descreva o emprego"
+                  placeholder="Descreva a vaga"
                   className="w-full border border-gray-400 rounded px-2 py-2 resize-none"
                   rows={2}
                   maxLength={maxDescricao}
                 ></textarea>
-                {descricao.length > 0 && (
-                  <div className="absolute right-2 bottom-1 text-gray-400 text-[10px]">
-                    {maxDescricao - descricao.length}
-                  </div>
-                )}
               </div>
 
               <div className="relative">
@@ -201,24 +224,19 @@ export default function CorreCerto({
                   placeholder="(11) 98765-4321"
                   className="w-full border border-gray-400 rounded px-2 py-2"
                 />
-                {telefone.length > 0 && (
-                  <div className="absolute right-2 bottom-1 text-gray-400 text-[10px]">
-                    {11 - telefone.replace(/\D/g, "").length} dígitos restantes
-                  </div>
-                )}
               </div>
 
               <div className="flex justify-end">
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  className="text-white font-bold py-2 px-6 rounded shadow duration-300 hover:scale-105 hover:bg-gray-700"
+                  className="hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow duration-300 hover:scale-105"
                   style={{ backgroundColor: corSecundaria }}
                 >
                   Publicar
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

@@ -93,7 +93,7 @@ export default function ModalProduto({ modalAberto, setModalAberto, corPrincipal
     }
   };
 
-  const zonas = ["CENTRO", "LESTE", "NORTE", "SUL", "OESTE", "SUDESTE", "SUDOESTE", "NOROEST"];
+  const zonas = ["CENTRO", "LESTE", "NORTE", "SUL", "OESTE", "SUDESTE", "SUDOESTE", "NOROESTE"];
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2" onClick={closeModal}>

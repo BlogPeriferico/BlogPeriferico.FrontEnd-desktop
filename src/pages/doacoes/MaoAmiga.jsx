@@ -1,16 +1,16 @@
-import CarrosselDoacoes from "../../components/carrossels/CarrosselDoacao";
-import SelecaoDoacoes from "../../components/selecoes/SelecaoDoacoes";
+import CarrosselCorreCerto from "../../components/carrossels/CarrosselCorreCerto";
+import SelecaoCorreCerto from "../../components/selecoes/SelecaoCorreCerto";
 import { FiPlus } from "react-icons/fi";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import ModalDoacao from "../../components/modals/ModalDoacao";
+import ModalCorreCerto from "../../components/modals/ModalCorreCerto";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
-import DoacaoService from "../../services/DoacaoService";
+import CorreCertoService from "../../services/CorreCertoService";
 
-export default function Doacoes() {
+export default function CorreCerto() {
   const [modalAberto, setModalAberto] = useState(false);
-  const [doacoes, setDoacoes] = useState([]);
+  const [correcertos, setCorrecertos] = useState([]);
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
@@ -20,24 +20,25 @@ export default function Doacoes() {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
   }, [modalAberto]);
 
-  const carregarDoacoes = async () => {
+  // Função para carregar vagas do backend
+  const carregarCorrecertos = async () => {
     try {
-      const data = await DoacaoService.listarDoacoes();
-      setDoacoes(data);
+      const data = await CorreCertoService.listarCorrecertos();
+      setCorrecertos(data);
     } catch (err) {
-      console.error("Erro ao carregar doações:", err);
+      console.error("Erro ao carregar vagas:", err);
     }
   };
 
   useEffect(() => {
-    carregarDoacoes();
+    carregarCorrecertos();
   }, []);
 
   // Abre modal somente se estiver logado
   const abrirModal = () => {
     const token = localStorage.getItem("userToken");
     if (!token) {
-      alert("Você precisa estar logado para criar uma doação.");
+      alert("Você precisa estar logado para criar uma vaga.");
       navigate("/"); // redireciona para página principal
       return;
     }
@@ -51,23 +52,23 @@ export default function Doacoes() {
           onClick={abrirModal}
           className="bg-[color:var(--corPrincipal)] text-white p-3 rounded-full shadow-lg hover:bg-opacity-90"
           style={{ backgroundColor: corPrincipal }}
-          title="Adicionar nova doação"
+          title="Adicionar sua Vaga de emprego"
         >
           <FiPlus size={24} />
         </button>
       </div>
 
       {modalAberto && (
-        <ModalDoacao
+        <ModalCorreCerto
           modalAberto={modalAberto}
           setModalAberto={setModalAberto}
           corPrincipal={corPrincipal}
-          atualizarDoacoes={carregarDoacoes}
+          atualizarCorreCerto={carregarCorrecertos}
         />
       )}
 
-      <CarrosselDoacoes doacoes={doacoes} />
-      <SelecaoDoacoes doacoes={doacoes} />
+      <CarrosselCorreCerto correcertos={correcertos} />
+      <SelecaoCorreCerto correcertos={correcertos} />
     </div>
   );
 }
