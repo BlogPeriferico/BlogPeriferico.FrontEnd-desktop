@@ -1,51 +1,49 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import NoticiaService from "../../services/NoticiasService";
+import DoacaoService from "../../services/DoacaoService";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 import { FaTimes } from "react-icons/fa";
 
-export default function NoticiasInfo() {
+export default function DoacaoInfo() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
-  const [noticia, setNoticia] = useState(location.state || null);
+  const [doacao, setDoacao] = useState(location.state || null);
   const [loading, setLoading] = useState(!location.state);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-
-    // Se não tiver estado passado pelo navigate, buscar do backend
-    if (!noticia) {
+    if (!doacao) {
       setLoading(true);
-      NoticiaService.buscarNoticiaPorId(id)
-        .then((data) => setNoticia(data))
+      DoacaoService.buscarDoacaoPorId(id)
+        .then((data) => setDoacao(data))
         .catch((err) => {
-          console.error("❌ Erro ao buscar notícia:", err);
-          setNoticia(null);
+          console.error("❌ Erro ao buscar doação:", err);
+          setDoacao(null);
         })
         .finally(() => setLoading(false));
     }
-  }, [id, noticia]);
+  }, [id, doacao]);
 
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto p-6 mt-[80px]">
-        <p className="text-gray-600">Carregando notícia...</p>
+        <p className="text-gray-600">Carregando doação...</p>
       </div>
     );
   }
 
-  if (!noticia) {
+  if (!doacao) {
     return (
       <div className="max-w-6xl mx-auto p-6 mt-[80px]">
         <button onClick={() => navigate(-1)} className="text-blue-600">
           Voltar
         </button>
-        <p className="text-gray-600">Notícia não encontrada.</p>
+        <p className="text-gray-600">Doação não encontrada.</p>
       </div>
     );
   }
@@ -54,17 +52,17 @@ export default function NoticiasInfo() {
     <div className="max-w-7xl mx-auto px-6 py-10 font-poppins mt-[80px]">
       {/* Parte superior */}
       <div className="flex flex-col lg:flex-row items-start gap-10 relative">
-        {/* Imagem da notícia */}
+        {/* Imagem da doação */}
         <div className="relative">
           <img
-            src={noticia.imagem}
-            alt={noticia.titulo}
-            className="w-full lg:w-[400px] h-auto rounded-xl"
+            src={doacao.imagem}
+            alt={doacao.titulo}
+            className="w-full lg:w-[400px] h-auto rounded-xl object-cover"
           />
           <div className="absolute top-4 left-4">
             <img
-              src={noticia.fotoAutor || "https://www.instagram.com/_.vitinho07/p/Clfeu79OHED/"}
-              alt={noticia.autor}
+              src={doacao.fotoAutor || "https://via.placeholder.com/65"}
+              alt={doacao.autor}
               className="w-[65px] h-[65px] rounded-full object-cover"
               style={{ border: `2px solid ${corPrincipal}` }}
             />
@@ -84,19 +82,19 @@ export default function NoticiasInfo() {
 
           {/* Título */}
           <h1 className="text-[40px] font-semibold text-[#272727] leading-tight break-words">
-            {noticia.titulo}
+            {doacao.titulo}
           </h1>
 
-          {/* Preço */}
-          {noticia.preco && (
+          {/* Valor */}
+          {doacao.valor && (
             <p className="text-[30px] font-semibold text-black mt-2">
-              R$ {noticia.preco}
+              R$ {doacao.valor}
             </p>
           )}
 
           {/* Descrição */}
           <p className="text-[25px] text-[#4B4B4B] font-semibold leading-relaxed mt-4">
-            {noticia.descricaoCompleta || noticia.resumo}
+            {doacao.descricaoCompleta || doacao.resumo}
           </p>
         </div>
       </div>
@@ -125,19 +123,19 @@ export default function NoticiasInfo() {
             </button>
           </div>
 
-          {noticia.telefone && (
+          {doacao.telefone && (
             <a
-              href={`https://wa.me/${noticia.telefone}`}
+              href={`https://wa.me/${doacao.telefone}`}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
             >
-              Contate o vendedor
+              Contate o doador
             </a>
           )}
         </div>
 
-        {noticia.comentarios?.map((coment, idx) => (
+        {doacao.comentarios?.map((coment, idx) => (
           <div
             key={idx}
             className="bg-gray-50 rounded-lg p-4 mb-4 shadow-sm border"

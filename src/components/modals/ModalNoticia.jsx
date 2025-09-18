@@ -9,11 +9,12 @@ export default function ModalNoticia({
   modalAberto,
   setModalAberto,
   corPrincipal,
-  atualizarNoticias, // função do parent para atualizar lista
+  atualizarNoticias,
 }) {
   const [titulo, setTitulo] = useState("");
-  const [texto, setTexto] = useState(""); // renomeado para texto
-  const [local, setLocal] = useState("");
+  const [texto, setTexto] = useState("");
+  const [local, setLocal] = useState(""); // texto livre
+  const [zona, setZona] = useState("");   // select enum
   const [imagem, setImagem] = useState(null);
   const [erroToast, setErroToast] = useState("");
   const maxLength = 60;
@@ -23,8 +24,14 @@ export default function ModalNoticia({
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
   const navigate = useNavigate();
 
+  // ❌ Ajuste scroll
   useEffect(() => {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
+
+    return () => {
+      // garante scroll mesmo se o modal for desmontado
+      document.body.style.overflow = "auto";
+    };
   }, [modalAberto]);
 
   const closeModal = () => {
@@ -32,8 +39,10 @@ export default function ModalNoticia({
     setTitulo("");
     setTexto("");
     setLocal("");
+    setZona("");
     setImagem(null);
     setErroToast("");
+    document.body.style.overflow = "auto"; // garante scroll de volta
   };
 
   const zonas = [
@@ -57,8 +66,9 @@ export default function ModalNoticia({
 
     const dto = {
       titulo,
-      texto, // agora envia como texto
-      zona: local,
+      texto,
+      local,
+      zona,
     };
 
     const formData = new FormData();
@@ -68,7 +78,7 @@ export default function ModalNoticia({
     try {
       const novaNoticia = await NoticiaService.criarNoticia(formData);
       closeModal();
-      if (atualizarNoticias) atualizarNoticias(novaNoticia); // adiciona na lista
+      if (atualizarNoticias) atualizarNoticias(novaNoticia);
     } catch (err) {
       setErroToast(
         "Erro ao criar notícia. Verifique os dados e tente novamente."
@@ -179,21 +189,36 @@ export default function ModalNoticia({
                 ></textarea>
               </div>
 
+              {/* Local */}
+              <div className="relative">
+                <label className="text-gray-700 font-semibold block">
+                  Local
+                </label>
+                <input
+                  type="text"
+                  value={local}
+                  onChange={(e) => setLocal(e.target.value)}
+                  placeholder="Digite o local da notícia"
+                  className="w-full border border-gray-400 rounded px-2 py-2"
+                />
+              </div>
+
+              {/* Zona */}
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">
                   Zona
                 </label>
                 <select
-                  value={local}
-                  onChange={(e) => setLocal(e.target.value)}
+                  value={zona}
+                  onChange={(e) => setZona(e.target.value)}
                   className="w-full border border-gray-400 rounded px-2 py-2"
                 >
                   <option value="" disabled>
                     Selecione uma zona
                   </option>
-                  {zonas.map((zona, idx) => (
-                    <option key={`${zona}-${idx}`} value={zona}>
-                      {zona}
+                  {zonas.map((z, idx) => (
+                    <option key={`${z}-${idx}`} value={z}>
+                      {z}
                     </option>
                   ))}
                 </select>

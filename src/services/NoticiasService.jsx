@@ -4,7 +4,8 @@ const NoticiaService = {
   criarNoticia: async (noticiaData) => {
     console.log("📤 Criando notícia com dados:", noticiaData);
 
-    if (!(noticiaData instanceof FormData) && noticiaData.id !== undefined) {
+    // 🔥 Garante que nenhum id vai junto
+    if (!(noticiaData instanceof FormData) && noticiaData?.id !== undefined) {
       delete noticiaData.id;
     }
 
@@ -16,10 +17,10 @@ const NoticiaService = {
     const config = {
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type":
-          noticiaData instanceof FormData
-            ? "multipart/form-data"
-            : "application/json",
+        // ❌ não define Content-Type se for FormData
+        ...(noticiaData instanceof FormData
+          ? {}
+          : { "Content-Type": "application/json" }),
       },
     };
 
@@ -29,6 +30,33 @@ const NoticiaService = {
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao criar notícia:", err.response?.data || err);
+      throw err;
+    }
+  },
+
+  atualizarNoticia: async (id, noticiaData) => {
+    console.log(`✏️ Atualizando notícia ${id} com dados:`, noticiaData);
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Usuário não está logado.");
+    }
+
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(noticiaData instanceof FormData
+          ? {}
+          : { "Content-Type": "application/json" }),
+      },
+    };
+
+    try {
+      const response = await api.put(`/noticias/${id}`, noticiaData, config);
+      console.log(`✅ Notícia ${id} atualizada com sucesso:`, response.data);
+      return response.data;
+    } catch (err) {
+      console.error(`❌ Erro ao atualizar notícia ${id}:`, err.response?.data || err);
       throw err;
     }
   },
@@ -53,34 +81,6 @@ const NoticiaService = {
       return response.data;
     } catch (err) {
       console.error(`❌ Erro ao buscar notícia ${id}:`, err.response?.data || err);
-      throw err;
-    }
-  },
-
-  atualizarNoticia: async (id, noticiaData) => {
-    console.log(`✏️ Atualizando notícia ${id} com dados:`, noticiaData);
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("Usuário não está logado.");
-    }
-
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type":
-          noticiaData instanceof FormData
-            ? "multipart/form-data"
-            : "application/json",
-      },
-    };
-
-    try {
-      const response = await api.put(`/noticias/${id}`, noticiaData, config);
-      console.log(`✅ Notícia ${id} atualizada com sucesso:`, response.data);
-      return response.data;
-    } catch (err) {
-      console.error(`❌ Erro ao atualizar notícia ${id}:`, err.response?.data || err);
       throw err;
     }
   },
