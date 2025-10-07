@@ -43,6 +43,16 @@ const AuthService = {
     console.log("Token atual no localStorage:", token);
     return token;
   },
+
+  getPerfilUsuario: async () => {
+    try {
+      const response = await api.get("/usuarios/perfil");
+      return response.data;
+    } catch (err) {
+      console.error("Erro ao buscar perfil do usuário:", err);
+      throw err;
+    }
+  },
 };
 
 export default AuthService;

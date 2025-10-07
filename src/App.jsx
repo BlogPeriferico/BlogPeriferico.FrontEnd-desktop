@@ -35,7 +35,7 @@ export default function App() {
           <Route path="/achadinhos" element={<Vendas />} />
           <Route path="/produto" element={<ProdutoInfo />} />
           <Route path="/doacoes" element={<Doacoes />} />
-          <Route path="/doacao" element={<DoacaoInfo />} />
+          <Route path="/doacao/:id" element={<DoacaoInfo />} />
           <Route path="/vagas" element={<CorreCerto />} />
         </Routes>
       </main>

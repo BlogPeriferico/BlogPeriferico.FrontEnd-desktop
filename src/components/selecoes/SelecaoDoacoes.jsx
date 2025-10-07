@@ -16,7 +16,7 @@ export default function SelecaoDoacoes({ doacoes }) {
         {ultimasDoacoes.map((doacao) => (
           <div
             key={doacao.id} // garante que a key seja única
-            onClick={() => navigate("/doacao", { state: doacao })}
+            onClick={() => navigate(`/doacao/${doacao.id}`, { state: doacao })}
             className="bg-[#F4F5F7] shadow-lg transition-all duration-600 hover:scale-105 cursor-pointer w-[240px] h-[370px]"
           >
             <img
