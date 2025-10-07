@@ -2,14 +2,15 @@ import React, { useState, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
-import CorreCertoService from "../../services/CorreCertoService";
+import DoacaoService from "../../services/DoacaoService";
 import { useNavigate } from "react-router-dom";
 
-export default function ModalCorreCerto({ modalAberto, setModalAberto, corPrincipal, atualizarCorrecertos }) {
+export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal, atualizarDoacoes }) {
   const [titulo, setTitulo] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [local, setLocal] = useState("");
+  const [categoria, setCategoria] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [zona, setZona] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [imagem, setImagem] = useState(null);
   const [erroToast, setErroToast] = useState("");
   const maxDescricao = 120;
@@ -26,12 +27,17 @@ export default function ModalCorreCerto({ modalAberto, setModalAberto, corPrinci
   const closeModal = () => {
     setModalAberto(false);
     setTitulo("");
-    setTelefone("");
-    setLocal("");
+    setCategoria("");
     setDescricao("");
+    setZona("");
+    setTelefone("");
     setImagem(null);
     setErroToast("");
   };
+
+  const categorias = ["Alimentos", "Roupas", "Brinquedos", "Livros", "Eletrônicos", "Outros"];
+
+  const zonas = ["CENTRO", "LESTE", "NORTE", "SUL", "OESTE", "SUDESTE", "SUDOESTE", "NOROESTE"];
 
   const formatarTelefone = (valor) => {
     const numeros = valor.replace(/\D/g, "").slice(0, 11);
@@ -43,29 +49,27 @@ export default function ModalCorreCerto({ modalAberto, setModalAberto, corPrinci
     return `(${parte1}) ${parte2}-${parte3}`;
   };
 
-  const zonas = ["CENTRO","LESTE","NORTE","SUL","OESTE","SUDESTE","SUDOESTE","NOROESTE"];
-
   const handleSubmit = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Você precisa estar logado para criar uma vaga.");
+      alert("Você precisa estar logado para criar uma doação.");
       navigate("/");
       return;
     }
 
-    const dto = { titulo, descricao, telefone, zona: local };
+    const dto = { titulo, descricao, categoria, zona, telefone };
 
     const formData = new FormData();
     formData.append("dto", JSON.stringify(dto));
     if (imagem) formData.append("file", imagem);
 
     try {
-      const novoItem = await CorreCertoService.criarCorrecerto(formData); // backend pega usuário do JWT
+      const novaDoacao = await DoacaoService.criarDoacao(formData);
       closeModal();
-      if (atualizarCorrecertos) atualizarCorrecertos(novoItem); // atualizar lista
+      if (atualizarDoacoes) atualizarDoacoes(novaDoacao);
     } catch (err) {
       console.error(err);
-      setErroToast("Erro ao criar a vaga. Verifique os dados e tente novamente.");
+      setErroToast("Erro ao criar a doação. Verifique os dados e tente novamente.");
       setTimeout(() => setErroToast(""), 3000);
     }
   };
@@ -84,7 +88,7 @@ export default function ModalCorreCerto({ modalAberto, setModalAberto, corPrinci
             </button>
           </div>
 
-          <h2 className="text-3xl font-bold text-black mb-4 font-poppins">Anuncie sua vaga</h2>
+          <h2 className="text-3xl font-bold text-black mb-4 font-poppins">Anuncie sua doação</h2>
 
           {erroToast && (
             <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
@@ -116,20 +120,30 @@ export default function ModalCorreCerto({ modalAberto, setModalAberto, corPrinci
             <div className="flex-1 space-y-3 text-xs font-poppins">
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Título</label>
-                <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Anuncie sua vaga" className="w-full border border-gray-400 rounded px-2 py-2" maxLength={maxLength} />
+                <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Anuncie sua doação" className="w-full border border-gray-400 rounded px-2 py-2" maxLength={maxLength} />
               </div>
 
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Descrição</label>
-                <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descreva a vaga" className="w-full border border-gray-400 rounded px-2 py-2 resize-none" rows={2} maxLength={maxDescricao}></textarea>
+                <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descreva a doação" className="w-full border border-gray-400 rounded px-2 py-2 resize-none" rows={2} maxLength={maxDescricao}></textarea>
+              </div>
+
+              <div className="relative">
+                <label className="text-gray-700 font-semibold block">Categoria</label>
+                <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="w-full border border-gray-400 rounded px-2 py-2">
+                  <option value="" disabled>Selecione uma categoria</option>
+                  {categorias.map((cat, idx) => (
+                    <option key={`${cat}-${idx}`} value={cat}>{cat}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">Zona</label>
-                <select value={local} onChange={(e) => setLocal(e.target.value)} className="w-full border border-gray-400 rounded px-2 py-2">
+                <select value={zona} onChange={(e) => setZona(e.target.value)} className="w-full border border-gray-400 rounded px-2 py-2">
                   <option value="" disabled>Selecione uma zona</option>
-                  {zonas.map((zona, idx) => (
-                    <option key={`${zona}-${idx}`} value={zona}>{zona}</option>
+                  {zonas.map((z, idx) => (
+                    <option key={`${z}-${idx}`} value={z}>{z}</option>
                   ))}
                 </select>
               </div>

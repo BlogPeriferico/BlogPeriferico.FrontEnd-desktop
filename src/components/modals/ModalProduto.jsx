@@ -67,11 +67,10 @@ export default function ModalProduto({ modalAberto, setModalAberto, corPrincipal
 
     const dto = {
       titulo,
-      preco: parseFloat(valor.replace(/\D/g, "")) / 100,
+      valor: parseFloat(valor.replace(/\D/g, "")) / 100, // ✅ CORRIGIDO: valor (não preco)
       telefone,
-      regiao: local,
-      descricaoCompleta: descricao,
-      autor: "Usuário Logado",
+      zona: local, // ✅ CORRIGIDO: zona (não regiao)
+      descricao: descricao, // ✅ CORRIGIDO: descricao (não descricaoCompleta)
     };
 
     const formData = new FormData();

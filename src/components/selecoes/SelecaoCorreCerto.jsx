@@ -16,7 +16,7 @@ export default function SelecaoCorreCerto({ correcertos }) {
         {ultimasVagas.map((vaga) => (
           <div
             key={vaga.id}
-            onClick={() => navigate("/CorreCertoDetalhe", { state: vaga })}
+            onClick={() => navigate(`/vaga/${vaga.id}`, { state: vaga })}
             className="bg-[#F4F5F7] hover:scale-105 shadow-lg transition-all w-[240px] h-[370px] cursor-pointer"
           >
             <img

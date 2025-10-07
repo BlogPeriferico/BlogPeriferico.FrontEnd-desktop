@@ -119,7 +119,7 @@ export default function ProdutoInfo() {
     buscarAutor();
   }, [produto]);
 
-  // Verificação de propriedade do produto
+  // Verificação de propriedade do produto (IGUAL AO NOTICIASINFO)
   const podeExcluirProduto = Boolean(
     produto &&
       usuarioLogado &&
@@ -153,11 +153,19 @@ export default function ProdutoInfo() {
   // Deletar produto (IGUAL AO NOTICIASINFO)
   const handleDeletarProduto = async () => {
     try {
-      console.log("🗑️ Tentando excluir produto ID:", id);
+      // ✅ USA O ID DO PRODUTO OU DA URL
+      const produtoId = produto?.id || id;
+      
+      console.log("🗑️ Tentando excluir produto ID:", produtoId);
       console.log("🔑 Token no localStorage:", localStorage.getItem("token"));
       console.log("👤 Usuário logado:", usuarioLogado);
 
-      await AnuncioService.excluirAnuncio(id);
+      if (!produtoId) {
+        alert("Erro: ID do produto não encontrado.");
+        return;
+      }
+
+      await AnuncioService.excluirAnuncio(produtoId);
       setModalDeletarProduto(false);
       alert("Produto excluído com sucesso.");
       navigate("/achadinhos");

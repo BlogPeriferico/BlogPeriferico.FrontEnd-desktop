@@ -11,6 +11,7 @@ import ProdutoInfo from "./pages/vendas/ProdutoInfo";
 import Doacoes from "./pages/doacoes/MaoAmiga";
 import DoacaoInfo from "./pages/doacoes/DoacaoInfo";
 import CorreCerto from "./pages/vagas/CorreCerto";
+import VagaInfo from "./pages/vagas/VagasInfo";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
@@ -33,10 +34,11 @@ export default function App() {
           <Route path="/quebrada-informa" element={<QuebradaInforma />} />
           <Route path="/noticia/:id" element={<NoticiasInfo />} />
           <Route path="/achadinhos" element={<Vendas />} />
-          <Route path="/produto" element={<ProdutoInfo />} />
+          <Route path="/produto/:id" element={<ProdutoInfo />} />
           <Route path="/doacoes" element={<Doacoes />} />
           <Route path="/doacao/:id" element={<DoacaoInfo />} />
           <Route path="/vagas" element={<CorreCerto />} />
+          <Route path="/vaga/:id" element={<VagaInfo />} />
         </Routes>
       </main>
 

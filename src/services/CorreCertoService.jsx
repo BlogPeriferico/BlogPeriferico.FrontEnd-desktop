@@ -64,14 +64,14 @@ const CorreCertoService = {
   },
 
   // Excluir
-  excluirCorrecerto: async (id) => {
+  excluirVaga: async (id) => {
     const token = localStorage.getItem("token");
     if (!token) throw new Error("Usuário não está logado.");
 
     try {
       const response = await api.delete(`/vagas/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
-      }); // <- trocado
+      });
       return response.data;
     } catch (err) {
       throw err;

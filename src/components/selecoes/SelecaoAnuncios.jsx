@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
- 
+
 export default function SelecaoAnuncios({ produtos = [] }) {
   const navigate = useNavigate();
 
@@ -17,7 +17,7 @@ export default function SelecaoAnuncios({ produtos = [] }) {
         {ultimosProdutos.map((anuncio) => (
           <div
             key={anuncio.id}
-            onClick={() => navigate("/produto", { state: anuncio })}
+            onClick={() => navigate(`/produto/${anuncio.id}`, { state: anuncio })}
             className="bg-[#F4F5F7] hover:scale-105 shadow-lg transition-all w-[240px] h-[370px] cursor-pointer"
           >
             <img
@@ -29,15 +29,15 @@ export default function SelecaoAnuncios({ produtos = [] }) {
               <h3 className="text-[#3A3A3A] font-semibold text-[16px] leading-tight">
                 {anuncio.titulo}
               </h3>
-              <p className="text-[#8F8F8F] font-medium text-[12px]">
-                {anuncio.usuario}
+              <p className="text-[#8F8F8F] font-medium text-[12px] line-clamp-2">
+                {anuncio.descricao || "Sem descrição"}
               </p>
               <div className="flex justify-between items-center mt-2">
                 <span className="text-[#000] font-semibold text-[18px]">
-                  R${anuncio.preco}
+                  {anuncio.valor ? `R$ ${anuncio.valor}` : "A combinar"}
                 </span>
                 <span className="text-[#8F8F8F] font-normal text-[14px]">
-                  {anuncio.tempo}
+                  {anuncio.zona || "SP"}
                 </span>
               </div>
             </div>
