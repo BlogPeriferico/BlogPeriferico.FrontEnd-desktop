@@ -7,6 +7,7 @@ import AuthService from "../../services/AuthService";
 import api from "../../services/Api";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
+import { FaTrash } from "react-icons/fa";
 import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
 
 export default function DoacaoInfo() {
@@ -21,8 +22,18 @@ export default function DoacaoInfo() {
   const [comentarios, setComentarios] = useState([]);
   const [novoComentario, setNovoComentario] = useState("");
   const [comentLoading, setComentLoading] = useState(false);
-  const [usuarioLogado, setUsuarioLogado] = useState({ id: null, email: null, nome: "Visitante" });
-  const [modalDeletar, setModalDeletar] = useState({ isOpen: false, comentarioId: null });
+  const [usuarioLogado, setUsuarioLogado] = useState({
+    id: null,
+    email: null,
+    nome: "Visitante",
+    papel: null,
+  });
+  const [modalDeletar, setModalDeletar] = useState({
+    isOpen: false,
+    comentarioId: null,
+  });
+  const [modalDeletarDoacao, setModalDeletarDoacao] = useState(false);
+  const [nomeAutor, setNomeAutor] = useState(null);
 
   // Carregar perfil do usuário
   useEffect(() => {
@@ -36,19 +47,26 @@ export default function DoacaoInfo() {
       try {
         const decoded = jwtDecode(token);
         const email = decoded.sub;
+        const papel =
+          decoded.role ||
+          decoded.authorities ||
+          localStorage.getItem("role") ||
+          null;
         console.log("📧 Email do token:", email);
+        console.log("🔑 Papel do usuário:", papel);
 
         // Buscar usuário na lista de todos os usuários
         try {
-          const response = await api.get('/usuarios/listar');
+          const response = await api.get("/usuarios/listar");
           const usuarios = response.data;
-          const usuarioEncontrado = usuarios.find(u => u.email === email);
-          
+          const usuarioEncontrado = usuarios.find((u) => u.email === email);
+
           if (usuarioEncontrado) {
-            setUsuarioLogado({ 
-              id: usuarioEncontrado.id, 
-              email: email, 
-              nome: usuarioEncontrado.nome 
+            setUsuarioLogado({
+              id: usuarioEncontrado.id,
+              email: email,
+              nome: usuarioEncontrado.nome,
+              papel: papel || usuarioEncontrado.papel || usuarioEncontrado.role,
             });
             console.log("✅ Usuário encontrado:", usuarioEncontrado);
           } else {
@@ -92,6 +110,34 @@ export default function DoacaoInfo() {
     carregarComentarios();
   }, [id]);
 
+  // Buscar nome do autor da doação
+  useEffect(() => {
+    const buscarAutor = async () => {
+      if (doacao && doacao.idUsuario) {
+        try {
+          const response = await api.get("/usuarios/listar");
+          const usuarios = response.data;
+          const autor = usuarios.find((u) => u.id === doacao.idUsuario);
+          if (autor) {
+            setNomeAutor(autor.nome);
+            console.log("✅ Autor da doação:", autor.nome);
+          }
+        } catch (err) {
+          console.error(
+            "❌ Erro ao buscar autor (403 - backend bloqueando):",
+            err
+          );
+          // Fallback: usa o campo autor se existir
+          setNomeAutor(doacao.autor || "Autor");
+        }
+      } else if (doacao && doacao.autor) {
+        // Se não tem idUsuario, usa o campo autor direto
+        setNomeAutor(doacao.autor);
+      }
+    };
+    buscarAutor();
+  }, [doacao]);
+
   // Publicar comentário
   const handlePublicarComentario = async () => {
     if (!novoComentario.trim()) return;
@@ -120,7 +166,7 @@ export default function DoacaoInfo() {
         comentarioCriado.dataHoraCriacao = new Date().toISOString();
       }
 
-      setComentarios(prev => [...prev, comentarioCriado]);
+      setComentarios((prev) => [...prev, comentarioCriado]);
       setNovoComentario("");
     } catch (err) {
       console.error("❌ Erro ao publicar comentário:", err);
@@ -134,10 +180,43 @@ export default function DoacaoInfo() {
   const handleDeletarComentario = async () => {
     try {
       await ComentariosService.excluirComentario(modalDeletar.comentarioId);
-      setComentarios(prev => prev.filter(c => c.id !== modalDeletar.comentarioId));
+      setComentarios((prev) =>
+        prev.filter((c) => c.id !== modalDeletar.comentarioId)
+      );
     } catch (err) {
       console.error("Erro ao deletar comentário:", err);
       alert("Não foi possível excluir o comentário.");
+    }
+  };
+
+  // Verificação de propriedade da doação
+  const podeExcluirDoacao = Boolean(
+    doacao &&
+      usuarioLogado &&
+      // ADMIN pode deletar qualquer doação
+      (usuarioLogado.papel === "ADMINISTRADOR" ||
+        usuarioLogado.papel === "ADMIN" ||
+        // Autor pode deletar apenas sua própria doação
+        doacao.idUsuario === usuarioLogado.id ||
+        doacao.emailUsuario === usuarioLogado.email ||
+        doacao.autor === usuarioLogado.nome)
+  );
+
+  // Deletar doação
+  const handleDeletarDoacao = async () => {
+    try {
+      await DoacaoService.excluirDoacao(id);
+      setModalDeletarDoacao(false);
+      alert("Doação excluída com sucesso.");
+      navigate("/doacoes");
+    } catch (err) {
+      console.error("❌ Erro ao excluir doação:", err);
+      const status = err?.response?.status;
+      if (status === 403 || status === 401) {
+        alert("Você não tem permissão para excluir esta doação.");
+      } else {
+        alert("Não foi possível excluir a doação. Tente novamente.");
+      }
     }
   };
 
@@ -168,8 +247,18 @@ export default function DoacaoInfo() {
           onClick={() => navigate("/doacoes")}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
         >
-          <svg className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+          <svg
+            className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M15 19l-7-7 7-7"
+            ></path>
           </svg>
           <span className="font-medium">Voltar para doações</span>
         </button>
@@ -184,35 +273,42 @@ export default function DoacaoInfo() {
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-            
+
             {/* Badge da Zona */}
-            <div 
+            <div
               className="absolute top-6 right-6 px-4 py-2 rounded-full text-white font-bold text-sm shadow-lg backdrop-blur-sm"
               style={{ backgroundColor: corPrincipal }}
             >
               {doacao.zona}
             </div>
 
-            {/* Badge de Doação */}
-            <div className="absolute top-6 left-6 px-4 py-2 rounded-full bg-green-500 text-white font-bold text-sm shadow-lg backdrop-blur-sm flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-              </svg>
-              Doação
-            </div>
-
-            {/* Doador */}
-            <div className="absolute bottom-6 left-6 flex items-center gap-4">
+            {/* Doador - MOVIDO PARA CANTO SUPERIOR ESQUERDO */}
+            <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
                 src={doacao.fotoAutor || "https://i.pravatar.cc/80"}
                 alt={doacao.autor}
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
               />
-              <div className="text-white">
-                <p className="text-sm font-medium opacity-90">Doado por</p>
-                <p className="text-lg font-bold">{doacao.autor || "Doador"}</p>
+              <div>
+                <p className="text-sm font-medium text-black">Doado por</p>
+                <p className="text-lg font-bold text-black">
+                  {nomeAutor || "Carregando..."}
+                </p>
               </div>
             </div>
+
+            {/* Botão Excluir - CANTO INFERIOR DIREITO */}
+            {podeExcluirDoacao && (
+              <div className="absolute bottom-6 right-6">
+                <button
+                  onClick={() => setModalDeletarDoacao(true)}
+                  className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-all duration-200 transform hover:scale-110"
+                  title="Excluir doação"
+                >
+                  <FaTrash size={16} />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Conteúdo */}
@@ -222,28 +318,63 @@ export default function DoacaoInfo() {
               {doacao.titulo}
             </h1>
 
-            {/* Metadados */}
+            {/* Texto/Resumo da Doação - ACIMA DOS METADADOS */}
+            {(doacao.resumo || doacao.descricao) && (
+              <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed">
+                {doacao.resumo || doacao.descricao}
+              </p>
+            )}
+
+            {/* Metadados - COM LOCAL E HORÁRIO */}
             <div className="flex flex-wrap items-center gap-4 pb-6 mb-6 border-b border-gray-200">
               <div className="flex items-center gap-2 text-gray-600">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  ></path>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  ></path>
                 </svg>
-                <span className="text-sm font-medium">{doacao.local}</span>
+                <span className="text-sm font-medium">
+                  {doacao.local || "Local não informado"}
+                </span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path>
                 </svg>
-                <span className="text-sm font-medium">{doacao.dataPublicacao || "Hoje"}</span>
+                <span className="text-sm font-medium">
+                  {doacao.dataHoraCriacao
+                    ? `Publicado em ${new Date(
+                        doacao.dataHoraCriacao
+                      ).toLocaleDateString("pt-BR")} às ${new Date(
+                        doacao.dataHoraCriacao
+                      ).toLocaleTimeString("pt-BR")}`
+                    : "Hoje"}
+                </span>
               </div>
-            </div>
-
-            {/* Descrição */}
-            <div className="prose prose-lg max-w-none mb-8">
-              <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-line">
-                {doacao.descricaoCompleta || doacao.resumo || doacao.descricao}
-              </p>
             </div>
 
             {/* Botão de Contato */}
@@ -254,8 +385,12 @@ export default function DoacaoInfo() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-all duration-200 transform hover:scale-105"
               >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                <svg
+                  className="w-6 h-6"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
                 </svg>
                 Entrar em contato
               </a>
@@ -266,7 +401,7 @@ export default function DoacaoInfo() {
         {/* Comentários */}
         <div className="mt-12 bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-200">
           <div className="flex items-center gap-3 mb-6">
-            <div 
+            <div
               className="w-1 h-8 rounded-full"
               style={{ backgroundColor: corPrincipal }}
             ></div>
@@ -290,9 +425,14 @@ export default function DoacaoInfo() {
                   placeholder="Escreva um comentário..."
                   value={novoComentario}
                   onChange={(e) => setNovoComentario(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && !comentLoading && !e.shiftKey && handlePublicarComentario()}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" &&
+                    !comentLoading &&
+                    !e.shiftKey &&
+                    handlePublicarComentario()
+                  }
                   className="flex-1 px-4 py-3 bg-gray-50 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 transition-all duration-200"
-                  style={{ 
+                  style={{
                     focusRingColor: corPrincipal,
                   }}
                 />
@@ -307,12 +447,26 @@ export default function DoacaoInfo() {
                   {comentLoading ? (
                     <span className="flex items-center justify-center gap-2">
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Enviando...
                     </span>
-                  ) : "Publicar"}
+                  ) : (
+                    "Publicar"
+                  )}
                 </button>
               </div>
             </div>
@@ -322,12 +476,26 @@ export default function DoacaoInfo() {
           {comentarios.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                <svg
+                  className="w-8 h-8 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  ></path>
                 </svg>
               </div>
-              <p className="text-gray-500 text-lg font-medium">Nenhum comentário ainda</p>
-              <p className="text-gray-400 text-sm mt-1">Seja o primeiro a comentar!</p>
+              <p className="text-gray-500 text-lg font-medium">
+                Nenhum comentário ainda
+              </p>
+              <p className="text-gray-400 text-sm mt-1">
+                Seja o primeiro a comentar!
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -349,23 +517,44 @@ export default function DoacaoInfo() {
                             {coment.nomeUsuario || "Usuário"}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
-                            {coment.dataHoraCriacao ? new Date(coment.dataHoraCriacao).toLocaleString('pt-BR', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            }) : "agora"}
+                            {coment.dataHoraCriacao
+                              ? new Date(coment.dataHoraCriacao).toLocaleString(
+                                  "pt-BR",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )
+                              : "agora"}
                           </p>
                         </div>
-                        {(coment.idUsuario === usuarioLogado.id || coment.emailUsuario === usuarioLogado.email) && (
+                        {(coment.idUsuario === usuarioLogado.id ||
+                          coment.emailUsuario === usuarioLogado.email) && (
                           <button
-                            onClick={() => setModalDeletar({ isOpen: true, comentarioId: coment.id })}
+                            onClick={() =>
+                              setModalDeletar({
+                                isOpen: true,
+                                comentarioId: coment.id,
+                              })
+                            }
                             className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200"
                             title="Excluir comentário"
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              ></path>
                             </svg>
                           </button>
                         )}
@@ -381,13 +570,25 @@ export default function DoacaoInfo() {
           )}
         </div>
 
-        {/* Modal de Confirmação de Exclusão */}
+        {/* Modal de Confirmação de Exclusão de Comentário */}
         <ModalConfirmacao
           isOpen={modalDeletar.isOpen}
           onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}
           onConfirm={handleDeletarComentario}
           titulo="Excluir Comentário"
           mensagem="Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
+          textoBotaoConfirmar="Excluir"
+          textoBotaoCancelar="Cancelar"
+          corBotaoConfirmar="#ef4444"
+        />
+
+        {/* Modal de Confirmação para Excluir Doação */}
+        <ModalConfirmacao
+          isOpen={modalDeletarDoacao}
+          onClose={() => setModalDeletarDoacao(false)}
+          onConfirm={handleDeletarDoacao}
+          titulo="Excluir Doação"
+          mensagem="Tem certeza que deseja excluir esta doação? Esta ação não pode ser desfeita."
           textoBotaoConfirmar="Excluir"
           textoBotaoCancelar="Cancelar"
           corBotaoConfirmar="#ef4444"

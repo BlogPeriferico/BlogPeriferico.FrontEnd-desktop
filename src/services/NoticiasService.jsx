@@ -93,6 +93,8 @@ const NoticiaService = {
       throw new Error("Usuário não está logado.");
     }
 
+    console.log("🔑 Token sendo enviado:", token.substring(0, 50) + "...");
+
     try {
       const response = await api.delete(`/noticias/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -101,6 +103,8 @@ const NoticiaService = {
       return response.data;
     } catch (err) {
       console.error(`❌ Erro ao excluir notícia ${id}:`, err.response?.data || err);
+      console.error(`❌ Status HTTP:`, err.response?.status);
+      console.error(`❌ Headers da resposta:`, err.response?.headers);
       throw err;
     }
   },

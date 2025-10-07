@@ -1,22 +1,187 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+import AnuncioService from "../../services/AnuncioService";
+import api from "../../services/Api";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
-import { FaTimes } from "react-icons/fa";
-import { FiTrash } from "react-icons/fi";
+import { FaTrash } from "react-icons/fa";
+import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
 
 export default function ProdutoInfo() {
-  const { state: produto } = useLocation();
+  const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
-  const [confirmarExclusao, setConfirmarExclusao] = useState(false);
+  const [produto, setProduto] = useState(location.state || null);
+  const [loading, setLoading] = useState(!location.state);
+  const [usuarioLogado, setUsuarioLogado] = useState({ id: null, email: null, nome: "Visitante", papel: null });
+  const [modalDeletarProduto, setModalDeletarProduto] = useState(false);
+  const [nomeAutor, setNomeAutor] = useState(null);
 
+  // Carregar perfil do usuário
   useEffect(() => {
-    console.log("Produto recebido:", produto);
+    const carregarPerfil = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Usuário não está logado");
+        return;
+      }
+
+      try {
+        const decoded = jwtDecode(token);
+        const email = decoded.sub;
+        const papel =
+          decoded.role ||
+          decoded.authorities ||
+          localStorage.getItem("role") ||
+          null;
+        console.log("📧 Email do token:", email);
+        console.log("🔑 Papel do usuário:", papel);
+
+        // Buscar usuário na lista de todos os usuários
+        try {
+          const response = await api.get("/usuarios/listar");
+          const usuarios = response.data;
+          const usuarioEncontrado = usuarios.find((u) => u.email === email);
+
+          if (usuarioEncontrado) {
+            setUsuarioLogado({
+              id: usuarioEncontrado.id,
+              email: email,
+              nome: usuarioEncontrado.nome,
+              papel: papel || usuarioEncontrado.papel || usuarioEncontrado.role,
+            });
+            console.log("✅ Usuário encontrado:", usuarioEncontrado);
+          } else {
+            console.error("⚠️ Usuário não encontrado na lista");
+          }
+        } catch (err) {
+          console.error("❌ Erro ao buscar lista de usuários:", err);
+        }
+      } catch (err) {
+        console.error("❌ Erro geral ao carregar perfil:", err);
+      }
+    };
+    carregarPerfil();
+  }, []);
+
+  // Carregar produto se não vier via state
+  useEffect(() => {
     window.scrollTo(0, 0);
+
+    if (!produto && id) {
+      setLoading(true);
+      AnuncioService.buscarAnuncioPorId(id)
+        .then((data) => {
+          console.log("🔍 PRODUTO RECEBIDO DO BACKEND:", data);
+          console.log("📝 Campos disponíveis:", Object.keys(data));
+          setProduto(data);
+        })
+        .catch((err) => {
+          console.error("❌ Erro ao buscar produto:", err);
+          setProduto(null);
+        })
+        .finally(() => setLoading(false));
+    } else if (produto) {
+      console.log("🔍 PRODUTO VIA STATE:", produto);
+      console.log("📝 Campos disponíveis:", Object.keys(produto));
+    }
+  }, [id, produto]);
+
+  // Buscar nome do autor do produto
+  useEffect(() => {
+    const buscarAutor = async () => {
+      if (produto && produto.idUsuario) {
+        try {
+          const response = await api.get("/usuarios/listar");
+          const usuarios = response.data;
+          const autor = usuarios.find((u) => u.id === produto.idUsuario);
+          if (autor) {
+            setNomeAutor(autor.nome);
+            console.log("✅ Autor do produto:", autor.nome);
+          }
+        } catch (err) {
+          console.error(
+            "❌ Erro ao buscar autor (403 - backend bloqueando):",
+            err
+          );
+          // Fallback: usa o campo autor se existir
+          setNomeAutor(produto.autor || "Vendedor");
+        }
+      } else if (produto && produto.autor) {
+        // Se não tem idUsuario, usa o campo autor direto
+        setNomeAutor(produto.autor);
+      }
+    };
+    buscarAutor();
   }, [produto]);
+
+  // Verificação de propriedade do produto
+  const podeExcluirProduto = Boolean(
+    produto &&
+      usuarioLogado &&
+      // ADMIN pode deletar qualquer produto
+      (usuarioLogado.papel === "ADMINISTRADOR" ||
+        usuarioLogado.papel === "ADMIN" ||
+        // Autor pode deletar apenas seu próprio produto
+        produto.idUsuario === usuarioLogado.id ||
+        produto.emailUsuario === usuarioLogado.email ||
+        produto.autor === usuarioLogado.nome)
+  );
+
+  // Debug: log de permissões (IGUAL AO NOTICIASINFO)
+  useEffect(() => {
+    if (produto && usuarioLogado.id) {
+      console.log("🔍 Verificação de permissões:");
+      console.log("  - Papel do usuário:", usuarioLogado.papel);
+      console.log(
+        "  - É ADMIN?",
+        usuarioLogado.papel === "ADMINISTRADOR" ||
+          usuarioLogado.papel === "ADMIN"
+      );
+      console.log("  - ID do autor do produto:", produto.idUsuario);
+      console.log("  - Nome do autor:", nomeAutor);
+      console.log("  - ID do usuário logado:", usuarioLogado.id);
+      console.log("  - Nome do usuário:", usuarioLogado.nome);
+      console.log("  - Pode excluir?", podeExcluirProduto);
+    }
+  }, [produto, usuarioLogado, podeExcluirProduto, nomeAutor]);
+
+  // Deletar produto (IGUAL AO NOTICIASINFO)
+  const handleDeletarProduto = async () => {
+    try {
+      console.log("🗑️ Tentando excluir produto ID:", id);
+      console.log("🔑 Token no localStorage:", localStorage.getItem("token"));
+      console.log("👤 Usuário logado:", usuarioLogado);
+
+      await AnuncioService.excluirAnuncio(id);
+      setModalDeletarProduto(false);
+      alert("Produto excluído com sucesso.");
+      navigate("/achadinhos");
+    } catch (err) {
+      console.error("❌ Erro ao excluir produto:", err);
+      console.error("❌ Status HTTP:", err.response?.status);
+      console.error("❌ Dados do erro:", err.response?.data);
+      
+      const status = err?.response?.status;
+      if (status === 403 || status === 401) {
+        alert("Você não tem permissão para excluir este produto.");
+      } else {
+        alert("Não foi possível excluir o produto. Tente novamente.");
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto p-6 mt-[80px]">
+        <p className="text-gray-600">Carregando produto...</p>
+      </div>
+    );
+  }
 
   if (!produto) {
     return (
@@ -30,161 +195,163 @@ export default function ProdutoInfo() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10 font-poppins mt-[80px]">
-      {/* Modal de confirmação */}
-      {confirmarExclusao && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-lg text-center">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Confirmar exclusão</h2>
-            <p className="text-gray-600 mb-6">Tem certeza que deseja excluir este produto?</p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => {
-                  console.log("Excluindo produto:", produto);
-                  setConfirmarExclusao(false);
-                  navigate("/achadinhos");
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-              >
-                Excluir
-              </button>
-              <button
-                onClick={() => setConfirmarExclusao(false)}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Parte superior */}
-      <div className="flex flex-col lg:flex-row items-start gap-10 relative">
-        {/* Imagem do produto */}
-        <div className="relative">
-          <img
-            src={produto.imagem}
-            alt={produto.titulo}
-            className="w-full lg:w-[400px] h-auto rounded-xl object-cover"
-          />
-          {produto.fotoAutor && (
-            <div className="absolute top-4 left-4">
-              <img
-                src={produto.fotoAutor}
-                alt={produto.usuario || produto.autor}
-                className="w-[65px] h-[65px] rounded-full object-cover"
-                style={{ border: `2px solid ${corPrincipal}` }}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Conteúdo */}
-        <div className="flex-1 w-full relative">
-          <div className="absolute top-0 right-0 flex items-center gap-3">
-            <button
-              onClick={() => setConfirmarExclusao(true)}
-              className="text-red-600 hover:text-red-800 text-xl"
-              title="Excluir produto"
-            >
-              <FiTrash />
-            </button>
-            <button
-              onClick={() => navigate("/achadinhos")}
-              className="text-black text-2xl"
-              title="Fechar"
-            >
-              <FaTimes />
-            </button>
-          </div>
-
-          <h1 className="text-[40px] font-semibold text-[#272727] leading-tight break-words">
-            {produto.titulo}
-          </h1>
-
-          <p className="text-[30px] font-semibold text-black mt-2">
-            R$ {produto.preco}
-          </p>
-
-          {(produto.descricaoCompleta || produto.descricao || produto.resumo) && (
-            <p className="text-[25px] text-[#4B4B4B] font-semibold leading-relaxed mt-4">
-              {produto.descricaoCompleta || produto.descricao || produto.resumo}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Comentários + botão WhatsApp */}
-      <div className="mt-10">
-        <h2 className="text-xl font-semibold mb-4">Comentários</h2>
-
-        <div className="flex flex-col lg:flex-row items-center gap-4 mb-8">
-          <div className="flex items-center w-full lg:w-[70%] bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-            <input
-              type="text"
-              placeholder="Digite seu comentário aqui"
-              className="flex-grow px-4 py-3 outline-none text-sm"
-            />
-            <button className="px-3 text-gray-500 hover:text-gray-700">🔗</button>
-            <button
-              className="text-white text-sm font-semibold rounded-[15px]"
-              style={{
-                backgroundColor: corPrincipal,
-                padding: "6px 18px",
-                marginRight: "10px",
-              }}
-            >
-              Publique
-            </button>
-          </div>
-
-          {produto.telefone && (
-            <a
-              href={`https://wa.me/55${produto.telefone}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M20.52 3.48A11.94 11.94 0 0012.07 0C5.4 0 .07 5.37.07 12a11.87 11.87 0 001.6 6l-1.7 6.2 6.34-1.66a11.87 11.87 0 005.76 1.48H12c6.63 0 12-5.37 12-12 0-3.2-1.25-6.21-3.48-8.52zM12 22.07a9.89 9.89 0 01-5.06-1.37l-.36-.22-3.76.98.98-3.66-.23-.38a9.88 9.88 0 01-1.45-5.14c0-5.48 4.47-9.95 9.95-9.95 2.66 0 5.16 1.04 7.04 2.92A9.92 9.92 0 0122.07 12c0 5.49-4.47 9.95-9.95 9.95zm5.04-7.36c-.28-.14-1.64-.81-1.9-.9-.26-.1-.45-.14-.64.14-.19.28-.74.9-.9 1.08-.17.18-.33.21-.61.07-.28-.14-1.2-.44-2.29-1.4-.85-.76-1.42-1.7-1.58-1.98-.16-.28-.02-.43.12-.57.13-.13.28-.33.42-.5.14-.18.19-.28.29-.47.1-.19.05-.36-.02-.5-.07-.14-.64-1.53-.88-2.1-.23-.56-.46-.48-.63-.49H7.4c-.18 0-.47.07-.72.34-.25.27-.95.93-.95 2.28 0 1.34.98 2.64 1.11 2.82.14.18 1.93 2.95 4.69 4.14.65.28 1.15.45 1.54.58.65.21 1.24.18 1.71.11.52-.08 1.64-.67 1.87-1.31.23-.65.23-1.2.16-1.31-.07-.1-.26-.18-.55-.32z" />
-              </svg>
-              Contate o vendedor
-            </a>
-          )}
-        </div>
-
-        {/* Comentários simulados se existirem */}
-        {produto.comentarios?.map((coment, idx) => (
-          <div
-            key={idx}
-            className="bg-gray-50 rounded-lg p-4 mb-4 shadow-sm border"
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 mt-[80px]">
+        {/* Botão Voltar */}
+        <button
+          onClick={() => navigate("/achadinhos")}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
+        >
+          <svg
+            className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            <div className="flex items-center gap-3 mb-2">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M15 19l-7-7 7-7"
+            ></path>
+          </svg>
+          <span className="font-medium">Voltar para produtos</span>
+        </button>
+
+        {/* Card Principal do Produto */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+          {/* Imagem de Capa */}
+          <div className="relative h-[300px] lg:h-[500px] overflow-hidden">
+            <img
+              src={produto.imagem}
+              alt={produto.titulo}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+
+            {/* Badge da Zona */}
+            <div
+              className="absolute top-6 right-6 px-4 py-2 rounded-full text-white font-bold text-sm shadow-lg backdrop-blur-sm"
+              style={{ backgroundColor: corPrincipal }}
+            >
+              {produto.zona || "VENDA"}
+            </div>
+
+            {/* Vendedor - CANTO SUPERIOR ESQUERDO */}
+            <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
-                src={coment.avatar}
-                alt={coment.nome}
-                className="w-10 h-10 rounded-full object-cover"
+                src={produto.fotoAutor || "https://i.pravatar.cc/80"}
+                alt={produto.autor}
+                className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
               />
               <div>
-                <p className="text-sm font-semibold text-gray-800">
-                  {coment.nome}{" "}
-                  <span className="font-normal text-gray-500">
-                    comentou às {coment.hora}
-                  </span>
+                <p className="text-sm font-medium text-black">Vendido por</p>
+                <p className="text-lg font-bold text-black">
+                  {nomeAutor || "Carregando..."}
                 </p>
               </div>
             </div>
-            <div className="bg-white text-gray-800 rounded-md p-3 text-sm">
-              {coment.texto}
-            </div>
+
+            {/* Botão Excluir - CANTO INFERIOR DIREITO */}
+            {podeExcluirProduto && (
+              <div className="absolute bottom-6 right-6">
+                <button
+                  onClick={() => setModalDeletarProduto(true)}
+                  className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-all duration-200 transform hover:scale-110"
+                  title="Excluir produto"
+                >
+                  <FaTrash size={16} />
+                </button>
+              </div>
+            )}
           </div>
-        ))}
+
+          {/* Conteúdo */}
+          <div className="p-6 lg:p-10">
+            {/* Título */}
+            <h1 className="text-3xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
+              {produto.titulo}
+            </h1>
+
+            {/* Texto/Resumo do Produto - ACIMA DOS METADADOS */}
+            <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed">
+              {produto.resumo || produto.descricao || produto.descricaoCompleta || produto.texto || "Sem descrição disponível."}
+            </p>
+
+            {/* Metadados - COM PREÇO, LOCAL E HORÁRIO */}
+            <div className="flex flex-wrap items-center gap-4 pb-6 mb-6 border-b border-gray-200">
+              {/* Preço */}
+              <div className="flex items-center gap-2 text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span className="text-2xl font-bold" style={{ color: corPrincipal }}>
+                  {produto.preco || produto.valor ? `R$ ${produto.preco || produto.valor}` : "Preço a combinar"}
+                </span>
+              </div>
+
+              {/* Local */}
+              {produto.local && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  <span className="text-sm font-medium">{produto.local}</span>
+                </div>
+              )}
+
+              {/* Data e Hora */}
+              <div className="flex items-center gap-2 text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <span className="text-sm font-medium">
+                  {produto.dataHoraCriacao
+                    ? `Publicado em ${new Date(produto.dataHoraCriacao).toLocaleDateString("pt-BR")} às ${new Date(produto.dataHoraCriacao).toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })}`
+                    : "Hoje"
+                  }
+                </span>
+              </div>
+            </div>
+
+            {/* Descrição Completa (se houver) */}
+            {produto.descricaoCompleta && produto.descricaoCompleta !== produto.resumo && (
+              <div className="prose prose-lg max-w-none mb-8">
+                <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-line">
+                  {produto.descricaoCompleta}
+                </p>
+              </div>
+            )}
+
+            {/* Botão de Contato WhatsApp */}
+            {produto.telefone && (
+              <a
+                href={`https://wa.me/55${produto.telefone.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-all duration-200 transform hover:scale-105"
+              >
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                </svg>
+                Contatar vendedor
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Modal de Confirmação para Excluir Produto */}
+        <ModalConfirmacao
+          isOpen={modalDeletarProduto}
+          onClose={() => setModalDeletarProduto(false)}
+          onConfirm={handleDeletarProduto}
+          titulo="Excluir Produto"
+          mensagem="Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita."
+          textoBotaoConfirmar="Excluir"
+          textoBotaoCancelar="Cancelar"
+          corBotaoConfirmar="#ef4444"
+        />
       </div>
     </div>
   );

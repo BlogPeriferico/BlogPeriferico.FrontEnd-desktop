@@ -10,6 +10,7 @@ import VendasService from "../../services/AnuncioService";
 export default function Vendas() {
   const [modalAberto, setModalAberto] = useState(false);
   const [produtos, setProdutos] = useState([]);
+  const [loadingProdutos, setLoadingProdutos] = useState(true);
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
@@ -17,17 +18,19 @@ export default function Vendas() {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
   }, [modalAberto]);
 
-  const carregarProdutos = async () => {
-    try {
-      const data = await VendasService.listarProdutos();
-      setProdutos(data);
-    } catch (err) {
-      console.error("Erro ao carregar produtos:", err);
-    }
-  };
-
+  // Busca produtos (igual QuebradaInforma)
   useEffect(() => {
-    carregarProdutos();
+    const fetchProdutos = async () => {
+      try {
+        const response = await VendasService.getAnuncios();
+        setProdutos(response);
+      } catch (err) {
+        console.error("❌ Erro ao carregar produtos:", err);
+      } finally {
+        setLoadingProdutos(false);
+      }
+    };
+    fetchProdutos();
   }, []);
 
   return (
@@ -50,7 +53,9 @@ export default function Vendas() {
           modalAberto={modalAberto}
           setModalAberto={setModalAberto}
           corPrincipal={corPrincipal}
-          atualizarProdutos={carregarProdutos}
+          atualizarProdutos={(novoProduto) =>
+            setProdutos([novoProduto, ...produtos])
+          }
         />
       )}
 
