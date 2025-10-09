@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import ComentariosService from "../../services/ComentariosService";
 import AnuncioService from "../../services/AnuncioService";
 import api from "../../services/Api";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
-import { FaTrash } from "react-icons/fa";
+import { FaTimes, FaTrash } from "react-icons/fa";
 import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
 
 export default function ProdutoInfo() {
@@ -17,8 +18,15 @@ export default function ProdutoInfo() {
 
   const [produto, setProduto] = useState(location.state || null);
   const [loading, setLoading] = useState(!location.state);
+  const [comentarios, setComentarios] = useState([]);
+  const [novoComentario, setNovoComentario] = useState("");
+  const [comentLoading, setComentLoading] = useState(false);
   const [usuarioLogado, setUsuarioLogado] = useState({ id: null, email: null, nome: "Visitante", papel: null });
   const [modalDeletarProduto, setModalDeletarProduto] = useState(false);
+  const [modalDeletar, setModalDeletar] = useState({
+    isOpen: false,
+    comentarioId: null,
+  });
   const [nomeAutor, setNomeAutor] = useState(null);
 
   // Carregar perfil do usuário
@@ -89,6 +97,18 @@ export default function ProdutoInfo() {
       console.log("🔍 PRODUTO VIA STATE:", produto);
       console.log("📝 Campos disponíveis:", Object.keys(produto));
     }
+
+    const carregarComentarios = async () => {
+      try {
+        const dados = await ComentariosService.listarComentariosProduto(id);
+        setComentarios(dados);
+      } catch (err) {
+        console.error("❌ Erro ao buscar comentários:", err);
+        setComentarios([]);
+      }
+    };
+
+    carregarComentarios();
   }, [id, produto]);
 
   // Buscar nome do autor do produto
@@ -180,6 +200,58 @@ export default function ProdutoInfo() {
       } else {
         alert("Não foi possível excluir o produto. Tente novamente.");
       }
+    }
+  };
+
+  // Publicar comentário
+  const handlePublicarComentario = async () => {
+    if (!novoComentario.trim()) return;
+
+    // Aguardar o carregamento do ID do usuário
+    if (!usuarioLogado.id) {
+      alert("Aguarde o carregamento do perfil ou faça login novamente.");
+      return;
+    }
+
+    setComentLoading(true);
+
+    try {
+      const dto = {
+        texto: novoComentario,
+        idVenda: Number(id),
+        idUsuario: usuarioLogado.id,
+        tipo: "VENDA"
+      };
+
+      console.log("📤 Enviando comentário:", dto);
+
+      const comentarioCriado = await ComentariosService.criarComentario(dto);
+
+      if (!comentarioCriado.nomeUsuario) {
+        comentarioCriado.nomeUsuario = usuarioLogado.nome || "Você";
+        comentarioCriado.dataHoraCriacao = new Date().toISOString();
+      }
+
+      setComentarios((prev) => [...prev, comentarioCriado]);
+      setNovoComentario("");
+    } catch (err) {
+      console.error("❌ Erro ao publicar comentário:", err);
+      alert("Erro ao publicar comentário, tente novamente.");
+    } finally {
+      setComentLoading(false);
+    }
+  };
+
+  // Deletar comentário
+  const handleDeletarComentario = async () => {
+    try {
+      await ComentariosService.excluirComentario(modalDeletar.comentarioId);
+      setComentarios((prev) =>
+        prev.filter((c) => c.id !== modalDeletar.comentarioId)
+      );
+    } catch (err) {
+      console.error("Erro ao deletar comentário:", err);
+      alert("Não foi possível excluir o comentário.");
     }
   };
 
@@ -349,6 +421,178 @@ export default function ProdutoInfo() {
           </div>
         </div>
 
+        {/* Comentários */}
+        <div className="mt-12 bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-200">
+          <div className="flex items-center gap-3 mb-6">
+            <div
+              className="w-1 h-8 rounded-full"
+              style={{ backgroundColor: corPrincipal }}
+            ></div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Comentários ({comentarios.length})
+            </h2>
+          </div>
+
+          {/* Formulário de Comentário */}
+          <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
+              <img
+                src="https://i.pravatar.cc/40"
+                alt="Seu avatar"
+                className="w-10 h-10 rounded-full border-2 hidden sm:block"
+                style={{ borderColor: corPrincipal }}
+              />
+              <div className="flex-1 w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <input
+                  type="text"
+                  placeholder="Escreva um comentário..."
+                  value={novoComentario}
+                  onChange={(e) => setNovoComentario(e.target.value)}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" &&
+                    !comentLoading &&
+                    !e.shiftKey &&
+                    handlePublicarComentario()
+                  }
+                  className="flex-1 px-4 py-3 bg-gray-50 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 transition-all duration-200"
+                  style={{
+                    focusRingColor: corPrincipal,
+                  }}
+                />
+                <button
+                  onClick={handlePublicarComentario}
+                  disabled={comentLoading || !novoComentario.trim()}
+                  className="w-full sm:w-auto px-6 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-md"
+                  style={{
+                    backgroundColor: corPrincipal,
+                  }}
+                >
+                  {comentLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Enviando...
+                    </span>
+                  ) : (
+                    "Publicar"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Lista de Comentários */}
+          {comentarios.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                <svg
+                  className="w-8 h-8 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  ></path>
+                </svg>
+              </div>
+              <p className="text-gray-500 text-lg font-medium">
+                Nenhum comentário ainda
+              </p>
+              <p className="text-gray-400 text-sm mt-1">
+                Seja o primeiro a comentar!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {comentarios.map((coment) => (
+                <div
+                  key={coment.id}
+                  className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300 relative group"
+                >
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={coment.avatar || "https://i.pravatar.cc/40"}
+                      alt={coment.nomeUsuario || "Usuário"}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="text-base font-bold text-gray-800">
+                            {coment.nomeUsuario || "Usuário"}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {coment.dataHoraCriacao
+                              ? new Date(coment.dataHoraCriacao).toLocaleString(
+                                  "pt-BR",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )
+                              : "agora"}
+                          </p>
+                        </div>
+                        {(coment.idUsuario === usuarioLogado.id ||
+                          coment.emailUsuario === usuarioLogado.email) && (
+                          <button
+                            onClick={() =>
+                              setModalDeletar({
+                                isOpen: true,
+                                comentarioId: coment.id,
+                              })
+                            }
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200"
+                            title="Excluir comentário"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              ></path>
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-4 text-gray-700 text-sm leading-relaxed break-words">
+                        {coment.texto}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Modal de Confirmação para Excluir Produto */}
         <ModalConfirmacao
           isOpen={modalDeletarProduto}
@@ -356,6 +600,18 @@ export default function ProdutoInfo() {
           onConfirm={handleDeletarProduto}
           titulo="Excluir Produto"
           mensagem="Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita."
+          textoBotaoConfirmar="Excluir"
+          textoBotaoCancelar="Cancelar"
+          corBotaoConfirmar="#ef4444"
+        />
+
+        {/* Modal de Confirmação de Exclusão de Comentário */}
+        <ModalConfirmacao
+          isOpen={modalDeletar.isOpen}
+          onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}
+          onConfirm={handleDeletarComentario}
+          titulo="Excluir Comentário"
+          mensagem="Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
           textoBotaoConfirmar="Excluir"
           textoBotaoCancelar="Cancelar"
           corBotaoConfirmar="#ef4444"

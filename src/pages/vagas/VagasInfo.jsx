@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import ComentariosService from "../../services/ComentariosService";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
-import { FaTrash } from "react-icons/fa";
+import { FaTimes, FaTrash } from "react-icons/fa";
 import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
 import CorreCertoService from "../../services/CorreCertoService";
 import api from "../../services/Api";
@@ -17,8 +18,14 @@ export default function VagaInfo() {
 
   const [vaga, setVaga] = useState(location.state || null);
   const [loading, setLoading] = useState(!location.state);
-  const [modalDeletarVaga, setModalDeletarVaga] = useState(false);
+  const [comentarios, setComentarios] = useState([]);
   const [novoComentario, setNovoComentario] = useState("");
+  const [comentLoading, setComentLoading] = useState(false);
+  const [modalDeletarVaga, setModalDeletarVaga] = useState(false);
+  const [modalDeletar, setModalDeletar] = useState({
+    isOpen: false,
+    comentarioId: null,
+  });
   const [usuarioLogado, setUsuarioLogado] = useState({
     id: null,
     email: null,
@@ -88,7 +95,19 @@ export default function VagaInfo() {
         })
         .finally(() => setLoading(false));
     }
-  }, [id]);
+
+    const carregarComentarios = async () => {
+      try {
+        const dados = await ComentariosService.listarComentariosVaga(id);
+        setComentarios(dados);
+      } catch (err) {
+        console.error("❌ Erro ao buscar comentários:", err);
+        setComentarios([]);
+      }
+    };
+
+    carregarComentarios();
+  }, [id, vaga]);
 
   // Buscar nome do autor da vaga
   useEffect(() => {
@@ -198,6 +217,59 @@ export default function VagaInfo() {
       } else {
         alert("Não foi possível excluir a vaga. Tente novamente.");
       }
+    }
+  };
+
+  // Publicar comentário
+  const handlePublicarComentario = async () => {
+    if (!novoComentario.trim()) return;
+
+    // Aguardar o carregamento do ID do usuário
+    if (!usuarioLogado.id) {
+      alert("Aguarde o carregamento do perfil ou faça login novamente.");
+      return;
+    }
+
+    setComentLoading(true);
+
+    try {
+      const dto = {
+        texto: novoComentario,
+        idVaga: Number(id),
+        idUsuario: usuarioLogado.id,
+        tipo: "VAGA"
+      };
+
+      console.log("📤 Enviando comentário:", dto);
+
+      const comentarioCriado = await ComentariosService.criarComentario(dto);
+
+      if (!comentarioCriado.nomeUsuario) {
+        comentarioCriado.nomeUsuario = usuarioLogado.nome || "Você";
+        comentarioCriado.dataHoraCriacao = new Date().toISOString();
+      }
+
+      setComentarios((prev) => [...prev, comentarioCriado]);
+      setNovoComentario("");
+    } catch (err) {
+      console.error("❌ Erro ao publicar comentário:", err);
+      alert("Erro ao publicar comentário, tente novamente.");
+    } finally {
+      setComentLoading(false);
+    }
+  };
+
+  // Deletar comentário
+  const handleDeletarComentario = async () => {
+    try {
+      await ComentariosService.excluirComentario(modalDeletar.comentarioId);
+      setComentarios((prev) =>
+        prev.filter((c) => c.id !== modalDeletar.comentarioId)
+      );
+      setModalDeletar({ isOpen: false, comentarioId: null });
+    } catch (err) {
+      console.error("Erro ao deletar comentário:", err);
+      alert("Não foi possível excluir o comentário.");
     }
   };
 
@@ -401,7 +473,7 @@ export default function VagaInfo() {
               style={{ backgroundColor: corPrincipal }}
             ></div>
             <h2 className="text-2xl font-bold text-gray-800">
-              Comentários ({vaga.comentarios?.length || 0})
+              Comentários ({comentarios.length})
             </h2>
           </div>
 
@@ -420,23 +492,55 @@ export default function VagaInfo() {
                   placeholder="Escreva um comentário..."
                   value={novoComentario}
                   onChange={(e) => setNovoComentario(e.target.value)}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" &&
+                    !comentLoading &&
+                    !e.shiftKey &&
+                    handlePublicarComentario()
+                  }
                   className="flex-1 px-4 py-3 bg-gray-50 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 transition-all duration-200"
+                  style={{
+                    focusRingColor: corPrincipal,
+                  }}
                 />
                 <button
-                  disabled={!novoComentario.trim()}
+                  onClick={handlePublicarComentario}
+                  disabled={comentLoading || !novoComentario.trim()}
                   className="w-full sm:w-auto px-6 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-md"
                   style={{
                     backgroundColor: corPrincipal,
                   }}
                 >
-                  Publicar
+                  {comentLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Enviando...
+                    </span>
+                  ) : (
+                    "Publicar"
+                  )}
                 </button>
               </div>
             </div>
           </div>
 
           {/* Lista de Comentários */}
-          {!vaga.comentarios || vaga.comentarios.length === 0 ? (
+          {comentarios.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
                 <svg
@@ -462,27 +566,65 @@ export default function VagaInfo() {
             </div>
           ) : (
             <div className="space-y-4">
-              {vaga.comentarios.map((coment, idx) => (
+              {comentarios.map((coment) => (
                 <div
-                  key={idx}
-                  className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300"
+                  key={coment.id}
+                  className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300 relative group"
                 >
                   <div className="flex items-start gap-4">
                     <img
                       src={coment.avatar || "https://i.pravatar.cc/40"}
-                      alt={coment.nome}
+                      alt={coment.nomeUsuario || "Usuário"}
                       className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <p className="text-base font-bold text-gray-800">
-                            {coment.nome}
+                            {coment.nomeUsuario || "Usuário"}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
-                            {coment.hora}
+                            {coment.dataHoraCriacao
+                              ? new Date(coment.dataHoraCriacao).toLocaleString(
+                                  "pt-BR",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )
+                              : "agora"}
                           </p>
                         </div>
+                        {(coment.idUsuario === usuarioLogado.id ||
+                          coment.emailUsuario === usuarioLogado.email) && (
+                          <button
+                            onClick={() =>
+                              setModalDeletar({
+                                isOpen: true,
+                                comentarioId: coment.id,
+                              })
+                            }
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200"
+                            title="Excluir comentário"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              ></path>
+                            </svg>
+                          </button>
+                        )}
                       </div>
                       <div className="bg-gray-50 rounded-lg p-4 text-gray-700 text-sm leading-relaxed break-words">
                         {coment.texto}
@@ -502,6 +644,18 @@ export default function VagaInfo() {
           onConfirm={handleDeletarVaga}
           titulo="Excluir Vaga"
           mensagem="Tem certeza que deseja excluir esta vaga? Esta ação não pode ser desfeita."
+          textoBotaoConfirmar="Excluir"
+          textoBotaoCancelar="Cancelar"
+          corBotaoConfirmar="#ef4444"
+        />
+
+        {/* Modal de Confirmação de Exclusão de Comentário */}
+        <ModalConfirmacao
+          isOpen={modalDeletar.isOpen}
+          onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}
+          onConfirm={handleDeletarComentario}
+          titulo="Excluir Comentário"
+          mensagem="Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
           textoBotaoConfirmar="Excluir"
           textoBotaoCancelar="Cancelar"
           corBotaoConfirmar="#ef4444"
