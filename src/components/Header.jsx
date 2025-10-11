@@ -3,7 +3,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaSearch, FaMapMarkerAlt, FaBars } from "react-icons/fa";
 import RegionSelector from "./RegionSelector";
 import { useRegiao } from "../contexts/RegionContext";
+import { useUser } from "../contexts/UserContext.jsx";
 import { regionColors } from "../utils/regionColors";
+import NoPicture from "../assets/images/NoPicture.webp";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -11,6 +13,7 @@ export default function Header() {
   const [showRegionSelector, setShowRegionSelector] = useState(false);
   const location = useLocation();
   const { regiao, setRegiao } = useRegiao();
+  const { user } = useUser();
 
   const navLinks = [
     { path: "/quebrada-informa", label: "Quebrada Informa" },
@@ -111,7 +114,7 @@ export default function Header() {
         </button>
 
         <img
-          src="https://i.pravatar.cc/32"
+          src={NoPicture}
           alt="Usuário"
           className="w-8 h-8 ml-4 rounded-full border border-gray-300 duration-300 hover:scale-105 cursor-pointer"
           onClick={() => navigate("/perfil")}
