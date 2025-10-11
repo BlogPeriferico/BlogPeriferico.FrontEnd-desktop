@@ -114,7 +114,7 @@ export default function Header() {
           src="https://i.pravatar.cc/32"
           alt="Usuário"
           className="w-8 h-8 ml-4 rounded-full border border-gray-300 duration-300 hover:scale-105 cursor-pointer"
-          onClick={() => navigate("/editar-perfil")}
+          onClick={() => navigate("/perfil")}
         />
 
         {/* Seletor de Região */}
