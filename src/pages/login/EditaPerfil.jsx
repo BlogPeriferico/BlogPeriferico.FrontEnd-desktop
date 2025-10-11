@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaTimes, FaEdit, FaCamera, FaUser, FaEnvelope, FaLock, FaCheck } from "react-icons/fa";
+import { FaTimes, FaEdit, FaCamera, FaUser, FaEnvelope, FaLock, FaCheck, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useUser } from "../../contexts/UserContext.jsx";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
@@ -24,6 +24,11 @@ export default function EditaPerfil() {
   const [erroToast, setErroToast] = useState("");
   const [usuarioLogado, setUsuarioLogado] = useState(null);
   const [successToast, setSuccessToast] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingField, setEditingField] = useState(null); // 'nome', 'email', 'senha'
+  const [tempValue, setTempValue] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
@@ -122,6 +127,52 @@ export default function EditaPerfil() {
     navigate("/perfil");
   };
 
+  const openEditModal = (field, currentValue) => {
+    setEditingField(field);
+    setTempValue(currentValue);
+    setIsModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setIsModalOpen(false);
+    setEditingField(null);
+    setTempValue("");
+  };
+
+  const handleSaveField = async () => {
+    if (!editingField) return;
+
+    setLoading(true);
+    setErroToast("");
+
+    try {
+      const updateData = {};
+      if (editingField === 'senha' && tempValue) {
+        updateData.senha = tempValue;
+      } else if (editingField !== 'senha') {
+        updateData[editingField] = tempValue;
+      }
+
+      await AuthService.updatePerfil({ dto: updateData });
+
+      // Atualizar o usuário localmente
+      if (updateUser) {
+        updateUser({ ...usuarioLogado, [editingField]: tempValue });
+      }
+
+      setUsuarioLogado(prev => ({ ...prev, [editingField]: tempValue }));
+      setSuccessToast(`${editingField.charAt(0).toUpperCase() + editingField.slice(1)} atualizado com sucesso!`);
+      setTimeout(() => setSuccessToast(""), 3000);
+      closeEditModal();
+    } catch (err) {
+      console.error("Erro ao atualizar campo:", err);
+      setErroToast("Erro ao salvar alterações. Tente novamente.");
+      setTimeout(() => setErroToast(""), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!usuarioLogado) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
@@ -134,14 +185,14 @@ export default function EditaPerfil() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 pt-20 px-4 md:px-10">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+        <div className="text-center mb-8 lg:mb-12 xl:mb-16">
+          <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
             Editar Perfil
           </h1>
-          <p className="text-gray-600">Personalize suas informações pessoais</p>
+          <p className="text-gray-600 text-sm lg:text-base xl:text-lg">Personalize suas informações pessoais</p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8 xl:gap-10">
           {/* Foto de Perfil */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
@@ -190,8 +241,8 @@ export default function EditaPerfil() {
             </div>
           </div>
 
-          {/* Formulário */}
-          <div className="lg:col-span-2">
+          {/* Informações Estáticas */}
+          <div className="lg:col-span-2 xl:col-span-3">
             <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
               {/* Toast Messages */}
               {erroToast && (
@@ -215,109 +266,174 @@ export default function EditaPerfil() {
                 </div>
               )}
 
-              <form className="space-y-6">
+              <div className="space-y-6">
                 {/* Nome */}
-                <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 group-focus-within:text-blue-600 transition-colors">
-                    <FaUser className="inline w-4 h-4 mr-2" />
-                    Nome Completo
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="nome"
-                      value={formData.nome}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 bg-gray-50 focus:bg-white"
-                      placeholder="Digite seu nome completo"
-                    />
-                    <FaUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nome Completo</label>
+                    <p className="text-gray-900 text-lg">{usuarioLogado.nome}</p>
                   </div>
+                  <button
+                    onClick={() => openEditModal('nome', usuarioLogado.nome)}
+                    className="ml-4 p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                    title="Editar Nome"
+                  >
+                    <FaEdit size={16} />
+                  </button>
                 </div>
 
                 {/* Email */}
-                <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 group-focus-within:text-blue-600 transition-colors">
-                    <FaEnvelope className="inline w-4 h-4 mr-2" />
-                    Email
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 bg-gray-50 focus:bg-white"
-                      placeholder="seu.email@exemplo.com"
-                    />
-                    <FaEnvelope className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <p className="text-gray-900 text-lg">{usuarioLogado.email}</p>
+                  </div>
+                  <button
+                    onClick={() => openEditModal('email', usuarioLogado.email)}
+                    className="ml-4 p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                    title="Editar Email"
+                  >
+                    <FaEdit size={16} />
+                  </button>
+                </div>
+
+                {/* Senha */}
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Senha</label>
+                    <p className="text-gray-900 text-lg">••••••••</p>
+                  </div>
+                  <div className="flex items-center ml-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors mr-2"
+                      title={showCurrentPassword ? "Ocultar Senha" : "Mostrar Senha"}
+                    >
+                      {showCurrentPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                    </button>
+                    <button
+                      onClick={() => openEditModal('senha', '')}
+                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      title="Editar Senha"
+                    >
+                      <FaEdit size={16} />
+                    </button>
                   </div>
                 </div>
 
-                {/* Nova Senha */}
-                <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 group-focus-within:text-blue-600 transition-colors">
-                    <FaLock className="inline w-4 h-4 mr-2" />
-                    Nova Senha
-                    <span className="text-xs text-gray-500 font-normal ml-2">(opcional)</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      name="senha"
-                      value={formData.senha}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 pl-12 pr-12 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 bg-gray-50 focus:bg-white"
-                      placeholder="Deixe em branco para manter a atual"
-                    />
-                    <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  </div>
+                {/* Botão de Voltar */}
+                <div className="pt-6">
+                  <button
+                    onClick={handleCancelar}
+                    className="w-full bg-gray-100 text-gray-700 py-4 px-8 rounded-xl font-semibold hover:bg-gray-200 focus:ring-4 focus:ring-gray-200 outline-none transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg"
+                  >
+                    Voltar ao Perfil
+                  </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                {/* Confirmar Senha */}
-                <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 group-focus-within:text-blue-600 transition-colors">
-                    <FaLock className="inline w-4 h-4 mr-2" />
-                    Confirmar Nova Senha
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      name="confirmarSenha"
-                      value={formData.confirmarSenha}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 pl-12 pr-12 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 bg-gray-50 focus:bg-white"
-                      placeholder="Confirme a nova senha"
-                    />
-                    <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        {/* Modal de Edição */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Editar {editingField.charAt(0).toUpperCase() + editingField.slice(1)}
+                </h2>
+                <button
+                  onClick={closeEditModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <FaTimes size={24} />
+                </button>
+              </div>
+
+              <form className="space-y-6">
+                {editingField === 'senha' ? (
+                  <>
+                    <div className="group">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Nova Senha
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={tempValue}
+                          onChange={(e) => setTempValue(e.target.value)}
+                          className="w-full px-4 py-3 pl-12 pr-12 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 bg-gray-50 focus:bg-white"
+                          placeholder="Digite a nova senha"
+                        />
+                        <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="group">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Confirmar Nova Senha
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="password"
+                          value={formData.confirmarSenha}
+                          onChange={(e) => setFormData(prev => ({ ...prev, confirmarSenha: e.target.value }))}
+                          className="w-full px-4 py-3 pl-12 pr-12 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 bg-gray-50 focus:bg-white"
+                          placeholder="Confirme a nova senha"
+                        />
+                        <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="group">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Novo {editingField.charAt(0).toUpperCase() + editingField.slice(1)}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={editingField === 'email' ? 'email' : 'text'}
+                        value={tempValue}
+                        onChange={(e) => setTempValue(e.target.value)}
+                        className="w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-300 bg-gray-50 focus:bg-white"
+                        placeholder={`Digite o novo ${editingField}`}
+                      />
+                      {editingField === 'nome' && <FaUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />}
+                      {editingField === 'email' && <FaEnvelope className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Botões */}
+                {/* Botões do Modal */}
                 <div className="flex gap-4 pt-6">
                   <button
                     type="button"
-                    onClick={handleSubmit}
+                    onClick={handleSaveField}
                     disabled={loading}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 px-8 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:ring-4 focus:ring-blue-200 outline-none transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg hover:shadow-xl"
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:ring-4 focus:ring-blue-200 outline-none transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg hover:shadow-xl"
                   >
                     {loading ? (
                       <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                         Salvando...
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center">
-                        <FaCheck className="w-5 h-5 mr-2" />
-                        Salvar Alterações
-                      </div>
+                      'Salvar'
                     )}
                   </button>
 
                   <button
                     type="button"
-                    onClick={handleCancelar}
-                    className="flex-1 bg-gray-100 text-gray-700 py-4 px-8 rounded-xl font-semibold hover:bg-gray-200 focus:ring-4 focus:ring-gray-200 outline-none transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg"
+                    onClick={closeEditModal}
+                    className="flex-1 bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-200 focus:ring-4 focus:ring-gray-200 outline-none transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg"
                   >
                     Cancelar
                   </button>
@@ -325,7 +441,7 @@ export default function EditaPerfil() {
               </form>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

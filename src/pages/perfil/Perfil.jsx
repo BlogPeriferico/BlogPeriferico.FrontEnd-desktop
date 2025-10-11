@@ -190,90 +190,93 @@ export default function Perfil() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 pt-24 px-4 md:px-10 max-w-4xl mx-auto">
-      {/* Header do perfil */}
-      <div className="bg-white rounded-xl shadow-xl p-8 mb-8 border border-gray-200 bg-gradient-to-br from-white to-gray-50">
-        <div className="flex flex-col md:flex-row items-center gap-8">
-          <div className="relative flex-shrink-0">
-            <img
-              src={usuarioLogado.fotoPerfil || NoPicture}
-              alt={usuarioLogado.nome}
-              className="w-32 h-32 rounded-full border-4 border-gray-300 object-cover shadow-lg"
-              style={{ borderColor: corPrincipal }}
-            />
-            <Link
-              to="/editar-perfil"
-              className="absolute -bottom-2 -right-2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
-              style={{ color: corPrincipal }}
-            >
-              <FaEdit size={18} />
-            </Link>
+    <main className="min-h-screen bg-gray-50 pt-24 px-4 md:px-8">
+      {/* Header e Abas juntos */}
+      <div className="bg-white rounded-lg shadow-xl max-w-none mx-0">
+        {/* Header do perfil */}
+        <div className="p-8 border-b border-gray-200">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="relative flex-shrink-0">
+              <img
+                src={usuarioLogado.fotoPerfil || NoPicture}
+                alt={usuarioLogado.nome}
+                className="w-32 h-32 rounded-full border-4 border-gray-300 object-cover shadow-lg"
+                style={{ borderColor: corPrincipal }}
+              />
+              <Link
+                to="/editar-perfil"
+                className="absolute -bottom-2 -right-2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
+                style={{ color: corPrincipal }}
+              >
+                <FaEdit size={18} />
+              </Link>
+            </div>
+
+            <div className="text-center md:text-left flex-1 space-y-2">
+              <h1 className="text-3xl font-bold text-gray-900">
+                {usuarioLogado.nome}
+              </h1>
+              <p className="text-gray-500 text-base">@{usuarioLogado.username || usuarioLogado.email}</p>
+              {usuarioLogado.bio && (
+                <p className="text-gray-700 text-sm leading-relaxed max-w-md">{usuarioLogado.bio}</p>
+              )}
+              <div className="flex items-center justify-center md:justify-start gap-2 mt-4">
+                <FaMapMarkerAlt style={{ color: corPrincipal }} size={16} />
+                <span className="text-gray-500 capitalize font-medium text-sm">
+                  {regiao || "Centro"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center space-y-4">
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl p-6 min-w-[120px] shadow-sm border border-gray-300 mx-auto">
+                <p className="text-2xl font-bold text-gray-900 mb-1 text-center">
+                  {Object.values(postsUsuario).flat().length}
+                </p>
+                <p className="text-gray-600 font-medium text-sm text-center">Posts</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Abas */}
+        <div className="bg-white">
+          <div className="border-b">
+            <div className="flex justify-center overflow-x-auto">
+              {abas.map((aba) => {
+                const IconComponent = aba.icon;
+                return (
+                  <button
+                    key={aba.id}
+                    onClick={() => setAbaAtiva(aba.id)}
+                    className={`px-6 py-4 font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${abaAtiva === aba.id
+                        ? "border-b-2 text-gray-900 bg-gray-100"
+                        : "text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50"
+                    }`}
+                    style={{
+                      borderColor: abaAtiva === aba.id ? aba.cor : "transparent",
+                      color: abaAtiva === aba.id ? aba.cor : undefined
+                    }}
+                  >
+                    <IconComponent size={16} />
+                    {aba.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="text-center md:text-left flex-1 space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {usuarioLogado.nome}
-            </h1>
-            <p className="text-gray-500 text-base">@{usuarioLogado.username || usuarioLogado.email}</p>
-            {usuarioLogado.bio && (
-              <p className="text-gray-700 text-sm leading-relaxed max-w-md">{usuarioLogado.bio}</p>
+          {/* Conteúdo das abas */}
+          <div className="p-6 bg-white">
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                <p className="ml-4 text-gray-600">Carregando posts...</p>
+              </div>
+            ) : (
+              renderizarPosts()
             )}
-            <div className="flex items-center justify-center md:justify-start gap-2 mt-4">
-              <FaMapMarkerAlt style={{ color: corPrincipal }} size={16} />
-              <span className="text-gray-500 capitalize font-medium text-sm">
-                {regiao || "Centro"}
-              </span>
-            </div>
           </div>
-
-          <div className="flex flex-col items-center space-y-4">
-            <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl p-6 min-w-[120px] shadow-sm border border-gray-300 mx-auto">
-              <p className="text-2xl font-bold text-gray-900 mb-1 text-center">
-                {Object.values(postsUsuario).flat().length}
-              </p>
-              <p className="text-gray-600 font-medium text-sm text-center">Posts</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Abas */}
-      <div className="bg-white rounded-lg shadow-md max-w-6xl mx-auto">
-        <div className="border-b">
-          <div className="flex justify-center overflow-x-auto">
-            {abas.map((aba) => {
-              const IconComponent = aba.icon;
-              return (
-                <button
-                  key={aba.id}
-                  onClick={() => setAbaAtiva(aba.id)}
-                  className={`px-6 py-4 font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${abaAtiva === aba.id
-                      ? "border-b-2 text-gray-900 bg-gray-100"
-                      : "text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50"
-                  }`}
-                  style={{
-                    borderColor: abaAtiva === aba.id ? aba.cor : "transparent",
-                    color: abaAtiva === aba.id ? aba.cor : undefined
-                  }}
-                >
-                  <IconComponent size={16} />
-                  {aba.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Conteúdo das abas */}
-        <div className="p-6 bg-white">
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              <p className="ml-4 text-gray-600">Carregando posts...</p>
-            </div>
-          ) : (
-            renderizarPosts()
-          )}
         </div>
       </div>
     </main>
