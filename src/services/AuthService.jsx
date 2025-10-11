@@ -44,12 +44,22 @@ const AuthService = {
     return token;
   },
 
-  getPerfilUsuario: async () => {
+  updatePerfil: async (perfilData) => {
     try {
-      const response = await api.get("/usuarios/perfil");
+      const formData = new FormData();
+      formData.append("dto", JSON.stringify(perfilData.dto));
+      if (perfilData.fotoPerfil) {
+        formData.append("file", perfilData.fotoPerfil);
+      }
+
+      const response = await api.put("/usuarios/perfil", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       return response.data;
     } catch (err) {
-      console.error("Erro ao buscar perfil do usuário:", err);
+      console.error("Erro ao atualizar perfil:", err);
       throw err;
     }
   },

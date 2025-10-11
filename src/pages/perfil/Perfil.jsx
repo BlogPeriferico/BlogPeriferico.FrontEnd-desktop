@@ -10,6 +10,7 @@ import DoacaoService from "../../services/DoacaoService";
 import VagaService from "../../services/VagaService";
 import { jwtDecode } from "jwt-decode";
 import api from "../../services/Api";
+import NoPicture from "../../assets/images/NoPicture.webp";
 
 export default function Perfil() {
   const { user } = useUser();
@@ -191,7 +192,7 @@ export default function Perfil() {
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="relative">
             <img
-              src={usuarioLogado.fotoPerfil || "https://i.pravatar.cc/150"}
+              src={usuarioLogado.fotoPerfil || NoPicture}
               alt={usuarioLogado.nome}
               className="w-24 h-24 rounded-full border-4 border-gray-200"
               style={{ borderColor: corPrincipal }}
