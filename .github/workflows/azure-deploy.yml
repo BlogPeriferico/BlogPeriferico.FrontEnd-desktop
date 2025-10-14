@@ -1,0 +1,32 @@
+name: Deploy Blog Periférico Front-End
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 📦 Instalar dependências
+        run: npm ci
+
+      - name: 🏗️ Build do projeto
+        run: npm run build
+
+      - name: 🚀 Deploy para Azure
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "BlogPeriferico"
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE  }}
+          package: .
