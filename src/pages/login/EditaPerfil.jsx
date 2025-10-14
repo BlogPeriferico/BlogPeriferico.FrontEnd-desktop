@@ -281,7 +281,7 @@ export default function EditaPerfil() {
             <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900">
-                  Editar {editingField?.charAt(0).toUpperCase() + editingField?.slice(1)}
+                  Redefinir  {editingField?.charAt(0).toUpperCase() + editingField?.slice(1)}
                 </h2>
                 <button onClick={closeEditModal} className="text-gray-400 hover:text-gray-600">
                   <FaTimes size={24} />

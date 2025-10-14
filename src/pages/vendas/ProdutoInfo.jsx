@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import ComentariosService from "../../services/ComentariosService";
 import AnuncioService from "../../services/AnuncioService";
 import api from "../../services/Api";
 import { useRegiao } from "../../contexts/RegionContext";
+import { useUser } from "../../contexts/UserContext.jsx";
 import { regionColors } from "../../utils/regionColors";
 import { FaTimes, FaTrash } from "react-icons/fa";
 import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
@@ -14,6 +14,7 @@ export default function ProdutoInfo() {
   const location = useLocation();
   const navigate = useNavigate();
   const { regiao } = useRegiao();
+  const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
   const [produto, setProduto] = useState(location.state || null);
@@ -29,79 +30,83 @@ export default function ProdutoInfo() {
   });
   const [nomeAutor, setNomeAutor] = useState(null);
 
-  // Carregar perfil do usuário
+  // Carregar perfil do usuário usando UserContext
   useEffect(() => {
-    const carregarPerfil = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Usuário não está logado");
-        return;
-      }
-
-      try {
-        const decoded = jwtDecode(token);
-        const email = decoded.sub;
-        const papel =
-          decoded.role ||
-          decoded.authorities ||
-          localStorage.getItem("role") ||
-          null;
-        console.log("📧 Email do token:", email);
-        console.log("🔑 Papel do usuário:", papel);
-
-        // Buscar usuário na lista de todos os usuários
-        try {
-          const response = await api.get("/usuarios/listar");
-          const usuarios = response.data;
-          const usuarioEncontrado = usuarios.find((u) => u.email === email);
-
-          if (usuarioEncontrado) {
-            setUsuarioLogado({
-              id: usuarioEncontrado.id,
-              email: email,
-              nome: usuarioEncontrado.nome,
-              papel: papel || usuarioEncontrado.papel || usuarioEncontrado.role,
-            });
-            console.log("✅ Usuário encontrado:", usuarioEncontrado);
-          } else {
-            console.error("⚠️ Usuário não encontrado na lista");
-          }
-        } catch (err) {
-          console.error("❌ Erro ao buscar lista de usuários:", err);
-        }
-      } catch (err) {
-        console.error("❌ Erro geral ao carregar perfil:", err);
-      }
-    };
-    carregarPerfil();
-  }, []);
-
-  // Carregar produto se não vier via state
-  useEffect(() => {
-    window.scrollTo(0, 0);
-
-    if (!produto && id) {
-      setLoading(true);
-      AnuncioService.buscarAnuncioPorId(id)
-        .then((data) => {
-          console.log("🔍 PRODUTO RECEBIDO DO BACKEND:", data);
-          console.log("📝 Campos disponíveis:", Object.keys(data));
-          setProduto(data);
-        })
-        .catch((err) => {
-          console.error("❌ Erro ao buscar produto:", err);
-          setProduto(null);
-        })
-        .finally(() => setLoading(false));
-    } else if (produto) {
-      console.log("🔍 PRODUTO VIA STATE:", produto);
-      console.log("📝 Campos disponíveis:", Object.keys(produto));
+    if (user && user.id) {
+      setUsuarioLogado({
+        id: user.id,
+        email: user.email,
+        nome: user.nome,
+        papel: user.role || user.papel,
+        fotoPerfil: user.fotoPerfil,
+      });
     }
+  }, [user]);
 
+  const [lastSyncTimestamp, setLastSyncTimestamp] = useState(Date.now());
+
+  // Atualiza fotoAutor do produto quando foto do usuário muda
+  useEffect(() => {
+    if (produto && user?.id && produto.idUsuario === user.id) {
+      console.log("🔄 ProdutoInfo - Atualizando fotoAutor do produto:", produto.id);
+      console.log("📷 Foto antes:", produto.fotoAutor);
+      console.log("📷 Foto depois:", user.fotoPerfil);
+
+      setProduto(prevProduto => ({
+        ...prevProduto,
+        fotoAutor: user.fotoPerfil || "https://i.pravatar.cc/80"
+      }));
+
+      console.log("✅ ProdutoInfo - fotoAutor atualizada");
+    }
+  }, [user?.fotoPerfil, produto?.id]);
+
+  // Atualiza avatar dos comentários existentes quando foto do usuário muda
+  useEffect(() => {
+    console.log("🔄 ProdutoInfo - User mudou:", {
+      id: user?.id,
+      fotoPerfil: user?.fotoPerfil,
+      comentariosCount: comentarios.length
+    });
+
+    if (user?.id && comentarios.length > 0) {
+      console.log("🔄 ProdutoInfo - Atualizando comentários existentes...");
+
+      setComentarios(prevComentarios => {
+        const updated = prevComentarios.map(coment => {
+          const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
+
+          if (isUserComment) {
+            console.log(`✅ ProdutoInfo - Atualizando comentário ${coment.id}:`, {
+              de: coment.avatar,
+              para: user.fotoPerfil || "https://i.pravatar.cc/40"
+            });
+            return { ...coment, avatar: user.fotoPerfil || "https://i.pravatar.cc/40" };
+          }
+          return coment;
+        });
+
+        console.log("✅ ProdutoInfo - Comentários atualizados:", updated.length);
+        return updated;
+      });
+
+      setLastSyncTimestamp(Date.now());
+    }
+  }, [user?.fotoPerfil, user?.id, comentarios.length]);
+
+  // Carrega comentários apenas se não foram atualizados recentemente
+  useEffect(() => {
     const carregarComentarios = async () => {
       try {
         const dados = await ComentariosService.listarComentariosProduto(id);
-        setComentarios(dados);
+
+        // Só atualiza se não houve sincronização recente (últimos 2 segundos)
+        if (Date.now() - lastSyncTimestamp > 2000) {
+          console.log("🔄 ProdutoInfo - Carregando comentários do backend:", dados.length);
+          setComentarios(dados);
+        } else {
+          console.log("🔄 ProdutoInfo - Pulando reload - sincronização recente");
+        }
       } catch (err) {
         console.error("❌ Erro ao buscar comentários:", err);
         setComentarios([]);
@@ -139,17 +144,22 @@ export default function ProdutoInfo() {
     buscarAutor();
   }, [produto]);
 
-  // Verificação de propriedade do produto (IGUAL AO NOTICIASINFO)
+  // Verificação de propriedade do produto (SIMPLE E FUNCIONAL)
+  const papel = usuarioLogado.papel || "";
+  const papelStr = String(papel).toUpperCase();
+
   const podeExcluirProduto = Boolean(
     produto &&
       usuarioLogado &&
-      // ADMIN pode deletar qualquer produto
-      (usuarioLogado.papel === "ADMINISTRADOR" ||
-        usuarioLogado.papel === "ADMIN" ||
-        // Autor pode deletar apenas seu próprio produto
+      (
+        // ✅ ADMIN pode deletar qualquer produto
+        papelStr.includes("ADMINISTRADOR") ||
+        papelStr.includes("ADMIN") ||
+        // ✅ Autor pode deletar apenas seu próprio produto
         produto.idUsuario === usuarioLogado.id ||
         produto.emailUsuario === usuarioLogado.email ||
-        produto.autor === usuarioLogado.nome)
+        produto.autor === usuarioLogado.nome
+      )
   );
 
   // Debug: log de permissões (IGUAL AO NOTICIASINFO)
@@ -157,16 +167,17 @@ export default function ProdutoInfo() {
     if (produto && usuarioLogado.id) {
       console.log("🔍 Verificação de permissões:");
       console.log("  - Papel do usuário:", usuarioLogado.papel);
+      console.log("  - Papel (string):", papelStr);
       console.log(
         "  - É ADMIN?",
-        usuarioLogado.papel === "ADMINISTRADOR" ||
-          usuarioLogado.papel === "ADMIN"
+        papelStr.includes("ADMINISTRADOR") ||
+          papelStr.includes("ADMIN")
       );
       console.log("  - ID do autor do produto:", produto.idUsuario);
       console.log("  - Nome do autor:", nomeAutor);
       console.log("  - ID do usuário logado:", usuarioLogado.id);
       console.log("  - Nome do usuário:", usuarioLogado.nome);
-      console.log("  - Pode excluir?", podeExcluirProduto);
+      console.log("  - Pode excluir produto?", podeExcluirProduto);
     }
   }, [produto, usuarioLogado, podeExcluirProduto, nomeAutor]);
 
@@ -175,7 +186,7 @@ export default function ProdutoInfo() {
     try {
       // ✅ USA O ID DO PRODUTO OU DA URL
       const produtoId = produto?.id || id;
-      
+
       console.log("🗑️ Tentando excluir produto ID:", produtoId);
       console.log("🔑 Token no localStorage:", localStorage.getItem("token"));
       console.log("👤 Usuário logado:", usuarioLogado);
@@ -193,7 +204,7 @@ export default function ProdutoInfo() {
       console.error("❌ Erro ao excluir produto:", err);
       console.error("❌ Status HTTP:", err.response?.status);
       console.error("❌ Dados do erro:", err.response?.data);
-      
+
       const status = err?.response?.status;
       if (status === 403 || status === 401) {
         alert("Você não tem permissão para excluir este produto.");
@@ -228,8 +239,9 @@ export default function ProdutoInfo() {
       const comentarioCriado = await ComentariosService.criarComentario(dto);
 
       if (!comentarioCriado.nomeUsuario) {
-        comentarioCriado.nomeUsuario = usuarioLogado.nome || "Você";
+        comentarioCriado.nomeUsuario = user.nome || "Você";
         comentarioCriado.dataHoraCriacao = new Date().toISOString();
+        comentarioCriado.avatar = user.fotoPerfil || "https://i.pravatar.cc/40";
       }
 
       setComentarios((prev) => [...prev, comentarioCriado]);
@@ -437,7 +449,7 @@ export default function ProdutoInfo() {
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img
-                src="https://i.pravatar.cc/40"
+                src={user?.fotoPerfil || "https://i.pravatar.cc/40"}
                 alt="Seu avatar"
                 className="w-10 h-10 rounded-full border-2 hidden sm:block"
                 style={{ borderColor: corPrincipal }}
@@ -554,8 +566,11 @@ export default function ProdutoInfo() {
                               : "agora"}
                           </p>
                         </div>
-                        {(coment.idUsuario === usuarioLogado.id ||
-                          coment.emailUsuario === usuarioLogado.email) && (
+                        {((coment.idUsuario === usuarioLogado.id ||
+                          coment.emailUsuario === usuarioLogado.email) ||
+                          // ✅ ADMIN pode deletar qualquer comentário
+                          (papelStr.includes("ADMINISTRADOR") ||
+                           papelStr.includes("ADMIN"))) && (
                           <button
                             onClick={() =>
                               setModalDeletar({

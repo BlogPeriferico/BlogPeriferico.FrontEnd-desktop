@@ -47,18 +47,34 @@ const ComentariosService = {
     }
   },
 
-  criarComentarioProduto: async (comentarioData) => {
-    console.log("📤 Criando comentário no produto:", comentarioData);
+  criarComentarioDoacao: async (comentarioData) => {
+    console.log("📤 Criando comentário na doação:", comentarioData);
 
     const token = localStorage.getItem("token");
     if (!token) throw new Error("Usuário não está logado.");
 
     try {
-      const response = await api.post("/comentarios/produto", comentarioData);
-      console.log("✅ Comentário criado no produto:", response.data);
+      const response = await api.post("/comentarios/doacao", comentarioData);
+      console.log("✅ Comentário criado na doação:", response.data);
       return response.data;
     } catch (err) {
-      console.error("❌ Erro ao criar comentário no produto:", err.response?.data || err);
+      console.error("❌ Erro ao criar comentário na doação:", err.response?.data || err);
+      throw err;
+    }
+  },
+
+  criarComentarioVaga: async (comentarioData) => {
+    console.log("📤 Criando comentário na vaga:", comentarioData);
+
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Usuário não está logado.");
+
+    try {
+      const response = await api.post("/comentarios/vaga", comentarioData);
+      console.log("✅ Comentário criado na vaga:", response.data);
+      return response.data;
+    } catch (err) {
+      console.error("❌ Erro ao criar comentário na vaga:", err.response?.data || err);
       throw err;
     }
   },

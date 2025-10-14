@@ -8,7 +8,6 @@ import NoticiaService from "../../services/NoticiasService";
 import AnuncioService from "../../services/AnuncioService";
 import DoacaoService from "../../services/DoacaoService";
 import VagaService from "../../services/VagaService";
-import { jwtDecode } from "jwt-decode";
 import api from "../../services/Api";
 import NoPicture from "../../assets/images/NoPicture.webp";
 
@@ -33,41 +32,12 @@ export default function Perfil() {
     { id: "vagas", label: "Corre Certo", cor: corPrincipal, icon: FaBriefcase }
   ];
 
-  // Carregar perfil do usuário logado
+  // Carregar perfil do usuário usando UserContext
   useEffect(() => {
-    const carregarPerfil = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Usuário não está logado");
-        return;
-      }
-
-      try {
-        const decoded = jwtDecode(token);
-        const email = decoded.sub;
-        console.log("📧 Email do token:", email);
-
-        // Buscar usuário na lista de todos os usuários
-        try {
-          const response = await api.get("/usuarios/listar");
-          const usuarios = response.data;
-          const usuarioEncontrado = usuarios.find((u) => u.email === email);
-
-          if (usuarioEncontrado) {
-            setUsuarioLogado(usuarioEncontrado);
-            console.log("✅ Usuário encontrado:", usuarioEncontrado);
-          } else {
-            console.error("⚠️ Usuário não encontrado na lista");
-          }
-        } catch (err) {
-          console.error("❌ Erro ao buscar lista de usuários:", err);
-        }
-      } catch (err) {
-        console.error("❌ Erro geral ao carregar perfil:", err);
-      }
-    };
-    carregarPerfil();
-  }, []);
+    if (user && user.id) {
+      setUsuarioLogado(user);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (usuarioLogado?.id) {

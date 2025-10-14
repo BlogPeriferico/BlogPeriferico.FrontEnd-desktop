@@ -1,19 +1,21 @@
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
-import ComentariosService from "../../services/ComentariosService";
-import { useRegiao } from "../../contexts/RegionContext";
-import { regionColors } from "../../utils/regionColors";
-import { FaTimes, FaTrash } from "react-icons/fa";
-import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
+ import React, { useEffect, useState } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import CorreCertoService from "../../services/CorreCertoService";
+import ComentariosService from "../../services/ComentariosService";
+import AuthService from "../../services/AuthService";
 import api from "../../services/Api";
+import { useRegiao } from "../../contexts/RegionContext";
+import { useUser } from "../../contexts/UserContext.jsx";
+import { regionColors } from "../../utils/regionColors";
+import { FaTrash } from "react-icons/fa";
+import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
 
 export default function VagaInfo() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { regiao } = useRegiao();
+  const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
   const [vaga, setVaga] = useState(location.state || null);
@@ -21,65 +23,26 @@ export default function VagaInfo() {
   const [comentarios, setComentarios] = useState([]);
   const [novoComentario, setNovoComentario] = useState("");
   const [comentLoading, setComentLoading] = useState(false);
-  const [modalDeletarVaga, setModalDeletarVaga] = useState(false);
+  const [usuarioLogado, setUsuarioLogado] = useState({ id: null, email: null, nome: "Visitante", papel: null });
   const [modalDeletar, setModalDeletar] = useState({
     isOpen: false,
     comentarioId: null,
   });
-  const [usuarioLogado, setUsuarioLogado] = useState({
-    id: null,
-    email: null,
-    nome: "Visitante",
-    papel: null,
-  });
+  const [modalDeletarVaga, setModalDeletarVaga] = useState(false);
   const [nomeAutor, setNomeAutor] = useState(null);
 
-  // Carregar perfil do usuário
+  // Carregar perfil do usuário usando UserContext
   useEffect(() => {
-    const carregarPerfil = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Usuário não está logado");
-        return;
-      }
-
-      try {
-        const decoded = jwtDecode(token);
-        const email = decoded.sub;
-        const papel =
-          decoded.role ||
-          decoded.authorities ||
-          localStorage.getItem("role") ||
-          null;
-        console.log("📧 Email do token:", email);
-        console.log("🔑 Papel do usuário:", papel);
-
-        // Buscar usuário na lista de todos os usuários
-        try {
-          const response = await api.get("/usuarios/listar");
-          const usuarios = response.data;
-          const usuarioEncontrado = usuarios.find((u) => u.email === email);
-
-          if (usuarioEncontrado) {
-            setUsuarioLogado({
-              id: usuarioEncontrado.id,
-              email: email,
-              nome: usuarioEncontrado.nome,
-              papel: papel || usuarioEncontrado.papel || usuarioEncontrado.role,
-            });
-            console.log("✅ Usuário encontrado:", usuarioEncontrado);
-          } else {
-            console.error("⚠️ Usuário não encontrado na lista");
-          }
-        } catch (err) {
-          console.error("❌ Erro ao buscar lista de usuários:", err);
-        }
-      } catch (err) {
-        console.error("❌ Erro geral ao carregar perfil:", err);
-      }
-    };
-    carregarPerfil();
-  }, []);
+    if (user && user.id) {
+      setUsuarioLogado({
+        id: user.id,
+        email: user.email,
+        nome: user.nome,
+        papel: user.role || user.papel,
+        fotoPerfil: user.fotoPerfil,
+      });
+    }
+  }, [user]);
 
   // Carregar vaga se não veio pelo state
   useEffect(() => {
@@ -95,19 +58,7 @@ export default function VagaInfo() {
         })
         .finally(() => setLoading(false));
     }
-
-    const carregarComentarios = async () => {
-      try {
-        const dados = await ComentariosService.listarComentariosVaga(id);
-        setComentarios(dados);
-      } catch (err) {
-        console.error("❌ Erro ao buscar comentários:", err);
-        setComentarios([]);
-      }
-    };
-
-    carregarComentarios();
-  }, [id, vaga]);
+  }, [id]);
 
   // Buscar nome do autor da vaga
   useEffect(() => {
@@ -129,60 +80,85 @@ export default function VagaInfo() {
     buscarAutor();
   }, [vaga]);
 
-  // Verificação de propriedade da vaga (robusta)
-  const possiveisIdsAutor = [
-    vaga?.idUsuario,
-    vaga?.usuarioId,
-    vaga?.idAutor,
-    vaga?.criadorId,
-    vaga?.usuario?.id,
-  ].filter((v) => v !== undefined && v !== null);
+  // Carregar comentários
+  useEffect(() => {
+    const carregarComentarios = async () => {
+      try {
+        const dados = await ComentariosService.listarComentariosVaga(id);
+        setComentarios(dados);
+      } catch (err) {
+        console.error("❌ Erro ao buscar comentários:", err);
+        setComentarios([]);
+      }
+    };
 
-  const possiveisEmailsAutor = [
-    vaga?.emailUsuario,
-    vaga?.usuario?.email,
-    vaga?.autorEmail,
-    vaga?.criadorEmail,
-  ].filter((v) => !!v);
+    carregarComentarios();
+  }, [id]);
 
-  const possiveisNomesAutor = [
-    vaga?.autor,
-    vaga?.usuario,
-    vaga?.usuario?.nome,
-  ].filter((v) => !!v);
+  // Atualiza avatar dos comentários existentes quando foto do usuário muda
+  useEffect(() => {
+    console.log("🔄 VagasInfo - User mudou:", {
+      id: user?.id,
+      fotoPerfil: user?.fotoPerfil,
+      comentariosCount: comentarios.length
+    });
 
-  const idsMatch = possiveisIdsAutor.some(
-    (id) => Number(id) === Number(usuarioLogado?.id)
+    if (user?.id && comentarios.length > 0) {
+      console.log("🔄 VagasInfo - Atualizando comentários existentes...");
+
+      setComentarios(prevComentarios => {
+        const updated = prevComentarios.map(coment => {
+          const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
+
+          if (isUserComment) {
+            console.log(`✅ VagasInfo - Atualizando comentário ${coment.id}:`, {
+              de: coment.avatar,
+              para: user.fotoPerfil || "https://i.pravatar.cc/40"
+            });
+            return { ...coment, avatar: user.fotoPerfil || "https://i.pravatar.cc/40" };
+          }
+          return coment;
+        });
+
+        console.log("✅ VagasInfo - Comentários atualizados:", updated.length);
+        return updated;
+      });
+    }
+  }, [user?.fotoPerfil, user?.id, comentarios.length]);
+
+  // Verificação de propriedade da vaga (SIMPLE E FUNCIONAL - igual ao ProdutoInfo)
+  const papel = usuarioLogado.papel || "";
+  const papelStr = String(papel).toUpperCase();
+
+  const podeExcluirVaga = Boolean(
+    vaga &&
+      usuarioLogado &&
+      (
+        // ✅ ADMIN pode deletar qualquer vaga
+        papelStr.includes("ADMINISTRADOR") ||
+        papelStr.includes("ADMIN") ||
+        // ✅ Autor pode deletar apenas sua própria vaga
+        vaga.idUsuario === usuarioLogado.id ||
+        vaga.emailUsuario === usuarioLogado.email ||
+        vaga.autor === usuarioLogado.nome
+      )
   );
-  const emailsMatch = possiveisEmailsAutor.some(
-    (e) => e?.toLowerCase() === (usuarioLogado?.email || "").toLowerCase()
-  );
-  const nomesMatch = possiveisNomesAutor.some(
-    (n) => (n || "").toString().toLowerCase() === (usuarioLogado?.nome || "").toLowerCase()
-  );
-
-  const isAdmin =
-    usuarioLogado?.papel === "ADMINISTRADOR" || usuarioLogado?.papel === "ADMIN";
-
-  const podeExcluirVaga = Boolean(vaga && (isAdmin || idsMatch || emailsMatch || nomesMatch));
 
   // Debug: log de permissões
   useEffect(() => {
     if (vaga && usuarioLogado.id) {
       console.log("🔍 Verificação de permissões:");
       console.log("  - Papel do usuário:", usuarioLogado.papel);
+      console.log("  - Papel (string):", papelStr);
       console.log(
         "  - É ADMIN?",
-        isAdmin
+        papelStr.includes("ADMINISTRADOR") ||
+          papelStr.includes("ADMIN")
       );
       console.log("  - ID do autor da vaga:", vaga.idUsuario);
       console.log("  - Nome do autor:", nomeAutor);
       console.log("  - ID do usuário logado:", usuarioLogado.id);
       console.log("  - Nome do usuário:", usuarioLogado.nome);
-      console.log("  - Possíveis IDs do autor:", possiveisIdsAutor);
-      console.log("  - Possíveis e-mails do autor:", possiveisEmailsAutor);
-      console.log("  - Possíveis nomes do autor:", possiveisNomesAutor);
-      console.log("  - idsMatch:", idsMatch, "emailsMatch:", emailsMatch, "nomesMatch:", nomesMatch, "(nome também autoriza)");
       console.log("  - Pode excluir?", podeExcluirVaga);
     }
   }, [vaga, usuarioLogado, podeExcluirVaga]);
@@ -237,16 +213,21 @@ export default function VagaInfo() {
         texto: novoComentario,
         idVaga: Number(id),
         idUsuario: usuarioLogado.id,
-        tipo: "VAGA"
+        tipo: "VAGA",
       };
 
-      console.log("📤 Enviando comentário:", dto);
+      console.log("📤 VagasInfo - DTO antes de enviar:", dto);
+      console.log("📤 VagasInfo - ID do parâmetro:", id);
+      console.log("📤 VagasInfo - ID convertido:", Number(id));
+      console.log("📤 VagasInfo - Usuario logado:", usuarioLogado);
+      console.log("📤 VagasInfo - Novo comentário:", novoComentario);
 
-      const comentarioCriado = await ComentariosService.criarComentario(dto);
+      const comentarioCriado = await ComentariosService.criarComentarioVaga(dto);
 
       if (!comentarioCriado.nomeUsuario) {
-        comentarioCriado.nomeUsuario = usuarioLogado.nome || "Você";
+        comentarioCriado.nomeUsuario = user.nome || "Você";
         comentarioCriado.dataHoraCriacao = new Date().toISOString();
+        comentarioCriado.avatar = user.fotoPerfil || "https://i.pravatar.cc/40";
       }
 
       setComentarios((prev) => [...prev, comentarioCriado]);
@@ -481,7 +462,7 @@ export default function VagaInfo() {
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img
-                src="https://i.pravatar.cc/40"
+                src={user?.fotoPerfil || "https://i.pravatar.cc/40"}
                 alt="Seu avatar"
                 className="w-10 h-10 rounded-full border-2 hidden sm:block"
                 style={{ borderColor: corPrincipal }}
@@ -492,16 +473,7 @@ export default function VagaInfo() {
                   placeholder="Escreva um comentário..."
                   value={novoComentario}
                   onChange={(e) => setNovoComentario(e.target.value)}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" &&
-                    !comentLoading &&
-                    !e.shiftKey &&
-                    handlePublicarComentario()
-                  }
                   className="flex-1 px-4 py-3 bg-gray-50 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 transition-all duration-200"
-                  style={{
-                    focusRingColor: corPrincipal,
-                  }}
                 />
                 <button
                   onClick={handlePublicarComentario}
@@ -511,29 +483,7 @@ export default function VagaInfo() {
                     backgroundColor: corPrincipal,
                   }}
                 >
-                  {comentLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Enviando...
-                    </span>
-                  ) : (
-                    "Publicar"
-                  )}
+                  Publicar
                 </button>
               </div>
             </div>
@@ -598,8 +548,10 @@ export default function VagaInfo() {
                               : "agora"}
                           </p>
                         </div>
-                        {(coment.idUsuario === usuarioLogado.id ||
-                          coment.emailUsuario === usuarioLogado.email) && (
+                        {((coment.idUsuario === usuarioLogado.id ||
+                          coment.emailUsuario === usuarioLogado.email) ||
+                          (papelStr.includes("ADMINISTRADOR") ||
+                            papelStr.includes("ADMIN"))) && (
                           <button
                             onClick={() =>
                               setModalDeletar({
@@ -637,6 +589,18 @@ export default function VagaInfo() {
           )}
         </div>
 
+        {/* Modal de Confirmação para Excluir Comentário */}
+        <ModalConfirmacao
+          isOpen={modalDeletar.isOpen}
+          onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}
+          onConfirm={handleDeletarComentario}
+          titulo="Excluir Comentário"
+          mensagem="Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
+          textoBotaoConfirmar="Excluir"
+          textoBotaoCancelar="Cancelar"
+          corBotaoConfirmar="#ef4444"
+        />
+
         {/* Modal de Confirmação para Excluir Vaga */}
         <ModalConfirmacao
           isOpen={modalDeletarVaga}
@@ -644,18 +608,6 @@ export default function VagaInfo() {
           onConfirm={handleDeletarVaga}
           titulo="Excluir Vaga"
           mensagem="Tem certeza que deseja excluir esta vaga? Esta ação não pode ser desfeita."
-          textoBotaoConfirmar="Excluir"
-          textoBotaoCancelar="Cancelar"
-          corBotaoConfirmar="#ef4444"
-        />
-
-        {/* Modal de Confirmação de Exclusão de Comentário */}
-        <ModalConfirmacao
-          isOpen={modalDeletar.isOpen}
-          onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}
-          onConfirm={handleDeletarComentario}
-          titulo="Excluir Comentário"
-          mensagem="Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
           textoBotaoConfirmar="Excluir"
           textoBotaoCancelar="Cancelar"
           corBotaoConfirmar="#ef4444"

@@ -13,20 +13,18 @@ export default function Login() {
   const [senha, setSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
 
+  // Login normal
   const handleLogin = async () => {
     try {
-      // Faz login e salva token
       const data = await AuthService.login({ email, senha });
       console.log("Login realizado:", data);
 
-      // Salva informações no localStorage usando "userToken"
+      // Salva informações no localStorage
       localStorage.setItem("userToken", data.token);
       localStorage.setItem("email", email);
-      localStorage.setItem("role", "ADMINISTRADOR");
+      localStorage.setItem("userRole", data.role || "ROLE_USUARIO");
 
       setMensagem("Login realizado com sucesso!");
-
-      // Volta para a página principal
       navigate("/quebrada-informa");
     } catch (err) {
       console.error("Erro no login:", err.response ? err.response.data : err.message);
@@ -34,8 +32,17 @@ export default function Login() {
     }
   };
 
+  // Entrar como visitante
   const entrarComoVisitante = () => {
-    localStorage.setItem("userRole", "visitante");
+    // Remove qualquer token antigo
+    localStorage.removeItem("userToken");
+    localStorage.removeItem("token"); // remove token antigo usado pelo Api.jsx
+    localStorage.removeItem("email");
+    localStorage.removeItem("role");
+
+    // Define role visitante
+    localStorage.setItem("userRole", "ROLE_VISITANTE");
+
     navigate("/quebrada-informa");
   };
 
@@ -61,10 +68,7 @@ export default function Login() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full mb-5 px-5 py-3 rounded-md text-black placeholder-gray-400 
-                       border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 
-                       outline-none transition-all duration-400 ease-in-out transform 
-                       hover:scale-[1.01] focus:scale-[1.02]"
+            className="w-full mb-5 px-5 py-3 rounded-md text-black placeholder-gray-400 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 outline-none transition-all duration-400 ease-in-out transform hover:scale-[1.01] focus:scale-[1.02]"
           />
 
           <div className="relative mb-6">
@@ -73,10 +77,7 @@ export default function Login() {
               placeholder="Senha"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="w-full px-5 py-3 rounded-md text-black placeholder-gray-400 pr-10
-                         border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 
-                         outline-none transition-all duration-400 ease-in-out transform 
-                         hover:scale-[1.01] focus:scale-[1.02]"
+              className="w-full px-5 py-3 rounded-md text-black placeholder-gray-400 pr-10 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 outline-none transition-all duration-400 ease-in-out transform hover:scale-[1.01] focus:scale-[1.02]"
             />
             <button
               type="button"

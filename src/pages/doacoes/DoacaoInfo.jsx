@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import DoacaoService from "../../services/DoacaoService";
 import ComentariosService from "../../services/ComentariosService";
 import AuthService from "../../services/AuthService";
 import api from "../../services/Api";
 import { useRegiao } from "../../contexts/RegionContext";
+import { useUser } from "../../contexts/UserContext.jsx";
 import { regionColors } from "../../utils/regionColors";
 import { FaTrash } from "react-icons/fa";
 import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
@@ -15,6 +15,7 @@ export default function DoacaoInfo() {
   const location = useLocation();
   const navigate = useNavigate();
   const { regiao } = useRegiao();
+  const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
   const [doacao, setDoacao] = useState(location.state || null);
@@ -35,52 +36,18 @@ export default function DoacaoInfo() {
   const [modalDeletarDoacao, setModalDeletarDoacao] = useState(false);
   const [nomeAutor, setNomeAutor] = useState(null);
 
-  // Carregar perfil do usuário
+  // Carregar perfil do usuário usando UserContext
   useEffect(() => {
-    const carregarPerfil = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Usuário não está logado");
-        return;
-      }
-
-      try {
-        const decoded = jwtDecode(token);
-        const email = decoded.sub;
-        const papel =
-          decoded.role ||
-          decoded.authorities ||
-          localStorage.getItem("role") ||
-          null;
-        console.log("📧 Email do token:", email);
-        console.log("🔑 Papel do usuário:", papel);
-
-        // Buscar usuário na lista de todos os usuários
-        try {
-          const response = await api.get("/usuarios/listar");
-          const usuarios = response.data;
-          const usuarioEncontrado = usuarios.find((u) => u.email === email);
-
-          if (usuarioEncontrado) {
-            setUsuarioLogado({
-              id: usuarioEncontrado.id,
-              email: email,
-              nome: usuarioEncontrado.nome,
-              papel: papel || usuarioEncontrado.papel || usuarioEncontrado.role,
-            });
-            console.log("✅ Usuário encontrado:", usuarioEncontrado);
-          } else {
-            console.error("⚠️ Usuário não encontrado na lista");
-          }
-        } catch (err) {
-          console.error("❌ Erro ao buscar lista de usuários:", err);
-        }
-      } catch (err) {
-        console.error("❌ Erro geral ao carregar perfil:", err);
-      }
-    };
-    carregarPerfil();
-  }, []);
+    if (user && user.id) {
+      setUsuarioLogado({
+        id: user.id,
+        email: user.email,
+        nome: user.nome,
+        papel: user.role || user.papel,
+        fotoPerfil: user.fotoPerfil,
+      });
+    }
+  }, [user]);
 
   // Carregar doação e comentários
   useEffect(() => {
@@ -109,6 +76,37 @@ export default function DoacaoInfo() {
 
     carregarComentarios();
   }, [id]);
+
+  // Atualiza avatar dos comentários existentes quando foto do usuário muda
+  useEffect(() => {
+    console.log("🔄 DoacaoInfo - User mudou:", {
+      id: user?.id,
+      fotoPerfil: user?.fotoPerfil,
+      comentariosCount: comentarios.length
+    });
+
+    if (user?.id && comentarios.length > 0) {
+      console.log("🔄 DoacaoInfo - Atualizando comentários existentes...");
+
+      setComentarios(prevComentarios => {
+        const updated = prevComentarios.map(coment => {
+          const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
+
+          if (isUserComment) {
+            console.log(`✅ DoacaoInfo - Atualizando comentário ${coment.id}:`, {
+              de: coment.avatar,
+              para: user.fotoPerfil || "https://i.pravatar.cc/40"
+            });
+            return { ...coment, avatar: user.fotoPerfil || "https://i.pravatar.cc/40" };
+          }
+          return coment;
+        });
+
+        console.log("✅ DoacaoInfo - Comentários atualizados:", updated.length);
+        return updated;
+      });
+    }
+  }, [user?.fotoPerfil, user?.id, comentarios.length]);
 
   // Buscar nome do autor da doação
   useEffect(() => {
@@ -159,11 +157,12 @@ export default function DoacaoInfo() {
 
       console.log("📤 Enviando comentário:", dto);
 
-      const comentarioCriado = await ComentariosService.criarComentario(dto);
+      const comentarioCriado = await ComentariosService.criarComentarioDoacao(dto);
 
       if (!comentarioCriado.nomeUsuario) {
-        comentarioCriado.nomeUsuario = usuarioLogado.nome || "Você";
+        comentarioCriado.nomeUsuario = user.nome || "Você";
         comentarioCriado.dataHoraCriacao = new Date().toISOString();
+        comentarioCriado.avatar = user.fotoPerfil || "https://i.pravatar.cc/40";
       }
 
       setComentarios((prev) => [...prev, comentarioCriado]);
@@ -189,17 +188,22 @@ export default function DoacaoInfo() {
     }
   };
 
-  // Verificação de propriedade da doação
+  // Verificação de propriedade da doação (SIMPLE E FUNCIONAL - igual ao ProdutoInfo)
+  const papel = usuarioLogado.papel || "";
+  const papelStr = String(papel).toUpperCase();
+
   const podeExcluirDoacao = Boolean(
     doacao &&
       usuarioLogado &&
-      // ADMIN pode deletar qualquer doação
-      (usuarioLogado.papel === "ADMINISTRADOR" ||
-        usuarioLogado.papel === "ADMIN" ||
-        // Autor pode deletar apenas sua própria doação
+      (
+        // ✅ ADMIN pode deletar qualquer doação
+        papelStr.includes("ADMINISTRADOR") ||
+        papelStr.includes("ADMIN") ||
+        // ✅ Autor pode deletar apenas sua própria doação
         doacao.idUsuario === usuarioLogado.id ||
         doacao.emailUsuario === usuarioLogado.email ||
-        doacao.autor === usuarioLogado.nome)
+        doacao.autor === usuarioLogado.nome
+      )
   );
 
   // Deletar doação
@@ -414,7 +418,7 @@ export default function DoacaoInfo() {
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img
-                src="https://i.pravatar.cc/40"
+                src={user?.fotoPerfil || "https://i.pravatar.cc/40"}
                 alt="Seu avatar"
                 className="w-10 h-10 rounded-full border-2 hidden sm:block"
                 style={{ borderColor: corPrincipal }}
@@ -531,8 +535,11 @@ export default function DoacaoInfo() {
                               : "agora"}
                           </p>
                         </div>
-                        {(coment.idUsuario === usuarioLogado.id ||
-                          coment.emailUsuario === usuarioLogado.email) && (
+                        {((coment.idUsuario === usuarioLogado.id ||
+                          coment.emailUsuario === usuarioLogado.email) ||
+                          // ✅ ADMIN pode deletar qualquer comentário
+                          (papelStr.includes("ADMINISTRADOR") ||
+                           papelStr.includes("ADMIN"))) && (
                           <button
                             onClick={() =>
                               setModalDeletar({

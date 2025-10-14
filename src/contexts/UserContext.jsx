@@ -34,6 +34,7 @@ export function UserProvider({ children }) {
         if (usuarioEncontrado) {
           // garante campo fotoPerfil
           if (!usuarioEncontrado.fotoPerfil) usuarioEncontrado.fotoPerfil = NoPicture;
+          console.log("🔄 UserContext - Inicializando usuário:", usuarioEncontrado);
           setUser(usuarioEncontrado);
           localStorage.setItem("user", JSON.stringify(usuarioEncontrado));
         } else {
@@ -81,6 +82,10 @@ export function UserProvider({ children }) {
   // updateProfile (usado no EditaPerfil)
   const updateProfile = async (updates) => {
     try {
+      if (!user || !user.id) {
+        throw new Error("Usuário não está logado");
+      }
+
       // envia atualização para backend
       const response = await api.put(`/usuarios/${user.id}`, updates);
       const updatedUser = response.data;
@@ -89,10 +94,12 @@ export function UserProvider({ children }) {
       if (!updatedUser.fotoPerfil) updatedUser.fotoPerfil = NoPicture;
 
       // atualiza contexto e localStorage
+      console.log("🔄 UserContext - Atualizando usuário:", updatedUser);
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
+      throw error; // Re-throw para que o componente possa lidar com o erro
     }
   };
 
