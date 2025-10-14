@@ -1,119 +1,76 @@
 import api from "./Api";
-import { jwtDecode } from "jwt-decode";
+import {jwtDecode} from "jwt-decode";  
 
 const AuthService = {
-  register: (userData) => {
-    console.log("Tentando registrar usuário:", userData);
-    return api
-      .post("/usuarios/salvar", userData)
-      .then((response) => {
-        console.log("Resposta do backend ao registrar:", response.data);
-        return response.data;
-      })
-      .catch((err) => {
-        console.error("Erro ao registrar usuário:", err);
-        throw err;
-      });
+  register: async (userData) => {
+    const response = await api.post("/usuarios/salvar", userData);
+    return response.data;
   },
 
-  login: (credentials) => {
-    console.log("Tentando login com:", credentials);
-    return api
-      .post("/auth/login", credentials)
-      .then((response) => {
-        console.log("Resposta do backend ao logar:", response.data);
-        if (response.data.token) {
-          localStorage.setItem("token", response.data.token);
-          console.log("Token armazenado no localStorage:", response.data.token);
-        }
-        return response.data;
-      })
-      .catch((err) => {
-        console.error("Erro ao logar:", err);
-        throw err;
-      });
+  login: async (credentials) => {
+    const response = await api.post("/auth/login", credentials);
+    if (response.data.token) localStorage.setItem("token", response.data.token);
+    return response.data;
   },
 
   logout: () => {
-    console.log("Deslogando usuário");
     localStorage.removeItem("token");
   },
 
   getCurrentUser: () => {
     const token = localStorage.getItem("token");
-    console.log("Token atual no localStorage:", token);
-    return token;
+    if (!token) return null;
+    try {
+      return jwtDecode(token);
+    } catch {
+      return null;
+    }
   },
 
-  updatePerfil: async (perfilData) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("Token não encontrado. Faça login novamente.");
-      }
+  // Atualiza apenas campos como nome, email e senha
+  updatePerfil: async (userId, perfilData) => {
+    if (!userId) throw new Error("ID do usuário não informado.");
+    if (!perfilData || typeof perfilData !== "object") throw new Error("Dados do perfil inválidos.");
 
-      // Decodificar token para obter identificador
-      const decoded = jwtDecode(token);
-      console.log("Payload do token decodificado:", decoded); // Debug: veja o payload exato
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Usuário não autenticado.");
 
-      // 'sub' é o identificador principal (pode ser email ou ID)
-      let userId = decoded.sub;
-      if (typeof userId === 'string' && userId.includes('@')) {
-        // Se 'sub' for email, buscar ID via API
-        const response = await api.get("/usuarios/listar");
-        const usuarios = response.data;
-        const usuarioEncontrado = usuarios.find((u) => u.email === userId);
-        userId = usuarioEncontrado ? usuarioEncontrado.id : null;
-      } else if (typeof userId === 'number') {
-        // Se 'sub' for número, usar diretamente
-        userId = userId;
-      } else {
-        throw new Error("Identificador do usuário inválido no token.");
-      }
+    const payload = {
+      nome: perfilData.nome ?? undefined,
+      email: perfilData.email ?? undefined,
+      senhaAtual: perfilData.senhaAtual ?? undefined,
+      novaSenha: perfilData.novaSenha ?? undefined,
+    };
 
-      if (!userId || isNaN(userId)) {
-        console.error("ID inválido no token:", decoded);
-        throw new Error("ID do usuário não encontrado ou inválido no token. Verifique o payload do JWT.");
-      }
+    const response = await api.patch(`/usuarios/atualizar/${userId}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-      console.log("ID do usuário obtido:", userId); // Debug
+    return response.data; // Pode conter { usuario, token }
+  },
 
-      // Se houver foto, envie separadamente primeiro
-      if (perfilData.fotoPerfil) {
-        const fotoFormData = new FormData();
-        fotoFormData.append("file", perfilData.fotoPerfil);
-        await api.patch(`/usuarios/${userId}/foto`, fotoFormData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        console.log("Foto atualizada com sucesso");
-      }
+  // Atualiza apenas a foto
+  updateFoto: async (userId, file) => {
+    if (!userId) throw new Error("ID do usuário não informado.");
+    if (!file) throw new Error("Arquivo de foto inválido.");
 
-      // Preparar dados para atualização
-      const updateData = {
-        nome: perfilData.dto.nome,
-        email: perfilData.dto.email,
-      };
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Usuário não autenticado.");
 
-      // Só inclua senha se foi fornecida
-      if (perfilData.dto.senha && perfilData.dto.senha.trim()) {
-        updateData.senha = perfilData.dto.senha;
-      }
+    const formData = new FormData();
+    formData.append("file", file);
 
-      // Atualize os dados usando o endpoint correto
-      const response = await api.patch(`/usuarios/atualizar/${userId}`, updateData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+    const response = await api.patch(`/usuarios/${userId}/foto`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
-      console.log("Dados atualizados com sucesso");
-      return response.data;
-    } catch (err) {
-      console.error("Erro ao atualizar perfil:", err);
-      throw err;
-    }
+    return response.data; // Retorna o usuário atualizado
   },
 };
 
