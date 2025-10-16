@@ -77,6 +77,44 @@ export default function DoacaoInfo() {
     carregarComentarios();
   }, [id]);
 
+  // Atualiza fotoPerfil da doação quando foto do usuário muda
+  useEffect(() => {
+    if (doacao && user?.id && doacao.idUsuario === user.id) {
+      const novaFoto = user.fotoPerfil || "https://i.pravatar.cc/80";
+
+      // Só atualiza se a foto realmente mudou
+      if (novaFoto !== doacao.fotoPerfil) {
+        console.log("🔄 DoacaoInfo - Atualizando fotoPerfil da doação:", doacao.id);
+        console.log("📷 Foto antes:", doacao.fotoPerfil);
+        console.log("📷 Foto depois:", novaFoto);
+
+        setDoacao(prevDoacao => ({
+          ...prevDoacao,
+          fotoPerfil: novaFoto
+        }));
+
+        console.log("✅ DoacaoInfo - fotoPerfil atualizada");
+      } else {
+        console.log("🔄 DoacaoInfo - Foto já está atualizada:", novaFoto);
+      }
+    }
+  }, [user?.fotoPerfil, doacao?.id, doacao?.idUsuario, user?.id]);
+
+  // Sincroniza fotoPerfil inicial quando doação e usuário estão disponíveis
+  useEffect(() => {
+    if (doacao && user?.id && doacao.idUsuario === user.id && user.fotoPerfil && !doacao.fotoPerfil) {
+      console.log("🔄 DoacaoInfo - Sincronizando fotoPerfil inicial:", doacao.id);
+      console.log("📷 Foto do usuário:", user.fotoPerfil);
+
+      setDoacao(prevDoacao => ({
+        ...prevDoacao,
+        fotoPerfil: user.fotoPerfil
+      }));
+
+      console.log("✅ DoacaoInfo - fotoPerfil inicial sincronizada");
+    }
+  }, [doacao, user]);
+
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
     console.log("🔄 DoacaoInfo - User mudou:", {
@@ -290,13 +328,13 @@ export default function DoacaoInfo() {
             {/* Doador - MOVIDO PARA CANTO SUPERIOR ESQUERDO */}
             <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
-                src={doacao.fotoAutor || "https://i.pravatar.cc/80"}
+                src={doacao.fotoPerfil || "https://i.pravatar.cc/80"}
                 alt={doacao.autor}
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
               />
               <div>
-                <p className="text-sm font-medium text-black">Doado por</p>
-                <p className="text-lg font-bold text-black">
+                <p className="text-sm font-medium text-black" style={{ color: corPrincipal }}>Doado por</p>
+                <p className="text-lg font-bold text-black" style={{ color: corPrincipal }}>
                   {nomeAutor || "Carregando..."}
                 </p>
               </div>

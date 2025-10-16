@@ -58,6 +58,8 @@ export default function NoticiasInfo() {
       NoticiaService.buscarNoticiaPorId(id)
         .then((data) => {
           console.log("🔄 NoticiasInfo - Notícia carregada do backend:", data);
+          console.log("📷 Campos disponíveis na notícia:", Object.keys(data));
+          console.log("📷 fotoPerfil na notícia carregada:", data.fotoPerfil);
           console.log("📷 fotoAutor na notícia carregada:", data.fotoAutor);
           setNoticia(data);
         })
@@ -81,36 +83,41 @@ export default function NoticiasInfo() {
     carregarComentarios();
   }, [id]);
 
-  // Atualiza avatar dos comentários existentes quando foto do usuário muda
+  // Atualiza fotoPerfil da notícia quando foto do usuário muda
   useEffect(() => {
-    console.log("🔄 NoticiasInfo - User mudou:", {
-      id: user?.id,
-      fotoPerfil: user?.fotoPerfil,
-      comentariosCount: comentarios.length
-    });
+    if (noticia && user?.id && noticia.idUsuario === user.id) {
+      const novaFoto = user.fotoPerfil || "https://i.pravatar.cc/80";
 
-    if (user?.id && comentarios.length > 0) {
-      console.log("🔄 NoticiasInfo - Atualizando comentários existentes...");
+      // Só atualiza se a foto realmente mudou
+      if (novaFoto !== noticia.fotoPerfil) {
+        console.log("🔄 NoticiasInfo - Atualizando fotoPerfil da notícia:", noticia.id);
+        console.log("📷 Foto antes:", noticia.fotoPerfil);
+        console.log("📷 Foto depois:", novaFoto);
 
-      setComentarios(prevComentarios => {
-        const updated = prevComentarios.map(coment => {
-          const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
+        setNoticia(prevNoticia => ({
+          ...prevNoticia,
+          fotoPerfil: novaFoto
+        }));
 
-          if (isUserComment) {
-            console.log(`✅ NoticiasInfo - Atualizando comentário ${coment.id}:`, {
-              de: coment.avatar,
-              para: user.fotoPerfil || "https://i.pravatar.cc/40"
-            });
-            return { ...coment, avatar: user.fotoPerfil || "https://i.pravatar.cc/40" };
-          }
-          return coment;
-        });
-
-        console.log("✅ NoticiasInfo - Comentários atualizados:", updated.length);
-        return updated;
-      });
+        console.log("✅ NoticiasInfo - fotoPerfil atualizada");
+      } else {
+        console.log("🔄 NoticiasInfo - Foto já está atualizada:", novaFoto);
+      }
     }
-  }, [user?.fotoPerfil, user?.id, comentarios.length]);
+  // Sincroniza fotoPerfil inicial quando notícia e usuário estão disponíveis
+  useEffect(() => {
+    if (noticia && user?.id && noticia.idUsuario === user.id && user.fotoPerfil && !noticia.fotoPerfil) {
+      console.log("🔄 NoticiasInfo - Sincronizando fotoPerfil inicial:", noticia.id);
+      console.log("📷 Foto do usuário:", user.fotoPerfil);
+
+      setNoticia(prevNoticia => ({
+        ...prevNoticia,
+        fotoPerfil: user.fotoPerfil
+      }));
+
+      console.log("✅ NoticiasInfo - fotoPerfil inicial sincronizada");
+    }
+  }, [noticia, user]);
 
   // Buscar nome do autor da notícia
   useEffect(() => {
@@ -137,7 +144,7 @@ export default function NoticiasInfo() {
     if (noticia) {
       console.log("🔍 NoticiasInfo - Notícia mudou:", {
         id: noticia.id,
-        fotoAutor: noticia.fotoAutor,
+        fotoPerfil: noticia.fotoPerfil,
         idUsuario: noticia.idUsuario,
         titulo: noticia.titulo
       });
@@ -331,13 +338,13 @@ export default function NoticiasInfo() {
             {/* Autor - MOVIDO PARA CANTO SUPERIOR ESQUERDO */}
             <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
-                src={noticia.fotoAutor || "https://i.pravatar.cc/80"}
+                src={noticia.fotoPerfil || "https://i.pravatar.cc/80"}
                 alt={noticia.autor}
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
               />
               <div>
-                <p className="text-sm font-medium text-black">Publicado por</p>
-                <p className="text-lg font-bold text-black">
+                <p className="text-sm font-medium text-black" style={{ color: corPrincipal }}>Publicado por</p>
+                <p className="text-lg font-bold text-black" style={{ color: corPrincipal }}>
                   {nomeAutor || "Carregando..."}
                 </p>
               </div>

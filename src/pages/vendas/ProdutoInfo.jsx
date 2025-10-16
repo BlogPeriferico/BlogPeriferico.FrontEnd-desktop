@@ -42,24 +42,45 @@ export default function ProdutoInfo() {
       });
     }
   }, [user]);
-
   const [lastSyncTimestamp, setLastSyncTimestamp] = useState(Date.now());
 
-  // Atualiza fotoAutor do produto quando foto do usuário muda
+  // Atualiza fotoPerfil do produto quando foto do usuário muda
   useEffect(() => {
     if (produto && user?.id && produto.idUsuario === user.id) {
-      console.log("🔄 ProdutoInfo - Atualizando fotoAutor do produto:", produto.id);
-      console.log("📷 Foto antes:", produto.fotoAutor);
-      console.log("📷 Foto depois:", user.fotoPerfil);
+      const novaFoto = user.fotoPerfil || "https://i.pravatar.cc/80";
+
+      // Só atualiza se a foto realmente mudou
+      if (novaFoto !== produto.fotoPerfil) {
+        console.log("🔄 ProdutoInfo - Atualizando fotoPerfil do produto:", produto.id);
+        console.log("📷 Foto antes:", produto.fotoPerfil);
+        console.log("📷 Foto depois:", novaFoto);
+
+        setProduto(prevProduto => ({
+          ...prevProduto,
+          fotoPerfil: novaFoto
+        }));
+
+        console.log("✅ ProdutoInfo - fotoPerfil atualizada");
+      } else {
+        console.log("🔄 ProdutoInfo - Foto já está atualizada:", novaFoto);
+      }
+    }
+  }, [user?.fotoPerfil, produto?.id, produto?.idUsuario, user?.id]);
+
+  // Sincroniza fotoPerfil inicial quando produto e usuário estão disponíveis
+  useEffect(() => {
+    if (produto && user?.id && produto.idUsuario === user.id && user.fotoPerfil && !produto.fotoPerfil) {
+      console.log("🔄 ProdutoInfo - Sincronizando fotoPerfil inicial:", produto.id);
+      console.log("📷 Foto do usuário:", user.fotoPerfil);
 
       setProduto(prevProduto => ({
         ...prevProduto,
-        fotoAutor: user.fotoPerfil || "https://i.pravatar.cc/80"
+        fotoPerfil: user.fotoPerfil
       }));
 
-      console.log("✅ ProdutoInfo - fotoAutor atualizada");
+      console.log("✅ ProdutoInfo - fotoPerfil inicial sincronizada");
     }
-  }, [user?.fotoPerfil, produto?.id]);
+  }, [produto, user]);
 
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
@@ -332,13 +353,13 @@ export default function ProdutoInfo() {
             {/* Vendedor - CANTO SUPERIOR ESQUERDO */}
             <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
-                src={produto.fotoAutor || "https://i.pravatar.cc/80"}
+                src={produto.fotoPerfil || "https://i.pravatar.cc/80"}
                 alt={produto.autor}
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
               />
               <div>
-                <p className="text-sm font-medium text-black">Vendido por</p>
-                <p className="text-lg font-bold text-black">
+                <p className="text-sm font-medium text-black" style={{ color: corPrincipal }}>Vendido por</p>
+                <p className="text-lg font-bold text-black" style={{ color: corPrincipal }}>
                   {nomeAutor || "Carregando..."}
                 </p>
               </div>

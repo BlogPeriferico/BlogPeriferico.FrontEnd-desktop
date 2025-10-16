@@ -95,6 +95,44 @@ export default function VagaInfo() {
     carregarComentarios();
   }, [id]);
 
+  // Atualiza fotoPerfil da vaga quando foto do usuário muda
+  useEffect(() => {
+    if (vaga && user?.id && vaga.idUsuario === user.id) {
+      const novaFoto = user.fotoPerfil || "https://i.pravatar.cc/80";
+
+      // Só atualiza se a foto realmente mudou
+      if (novaFoto !== vaga.fotoPerfil) {
+        console.log("🔄 VagasInfo - Atualizando fotoPerfil da vaga:", vaga.id);
+        console.log("📷 Foto antes:", vaga.fotoPerfil);
+        console.log("📷 Foto depois:", novaFoto);
+
+        setVaga(prevVaga => ({
+          ...prevVaga,
+          fotoPerfil: novaFoto
+        }));
+
+        console.log("✅ VagasInfo - fotoPerfil atualizada");
+      } else {
+        console.log("🔄 VagasInfo - Foto já está atualizada:", novaFoto);
+      }
+    }
+  }, [user?.fotoPerfil, vaga?.id, vaga?.idUsuario, user?.id]);
+
+  // Sincroniza fotoPerfil inicial quando vaga e usuário estão disponíveis
+  useEffect(() => {
+    if (vaga && user?.id && vaga.idUsuario === user.id && user.fotoPerfil && !vaga.fotoPerfil) {
+      console.log("🔄 VagasInfo - Sincronizando fotoPerfil inicial:", vaga.id);
+      console.log("📷 Foto do usuário:", user.fotoPerfil);
+
+      setVaga(prevVaga => ({
+        ...prevVaga,
+        fotoPerfil: user.fotoPerfil
+      }));
+
+      console.log("✅ VagasInfo - fotoPerfil inicial sincronizada");
+    }
+  }, [vaga, user]);
+
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
     console.log("🔄 VagasInfo - User mudou:", {
@@ -321,14 +359,14 @@ export default function VagaInfo() {
             {/* Autor */}
             <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
-                src={vaga.fotoAutor || "https://i.pravatar.cc/80"}
+                src={vaga.fotoPerfil || "https://i.pravatar.cc/80"}
                 alt={vaga.usuario || vaga.autor}
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
               />
               <div>
-                <p className="text-sm font-medium text-white">Publicado por</p>
-                <p className="text-lg font-bold text-white">
-                  {nomeAutor || vaga.usuario || vaga.autor || "Empregador"}
+                <p className="text-sm font-medium text-white" style={{ color: corPrincipal }}>Publicado por</p>
+                <p className="text-lg font-bold text-black" style={{ color: corPrincipal }}>
+                  {nomeAutor || "Carregando..."}
                 </p>
               </div>
             </div>
