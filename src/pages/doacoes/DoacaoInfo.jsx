@@ -153,6 +153,7 @@ export default function DoacaoInfo() {
         texto: novoComentario,
         idDoacao: Number(id),
         idUsuario: usuarioLogado.id,
+        tipo: "DOACAO",  
       };
 
       console.log("📤 Enviando comentário:", dto);
@@ -329,7 +330,7 @@ export default function DoacaoInfo() {
               </p>
             )}
 
-            {/* Metadados - COM LOCAL E HORÁRIO */}
+            {/* Metadados - COM HORÁRIO */}
             <div className="flex flex-wrap items-center gap-4 pb-6 mb-6 border-b border-gray-200">
               <div className="flex items-center gap-2 text-gray-600">
                 <svg
@@ -342,17 +343,11 @@ export default function DoacaoInfo() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  ></path>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
                   ></path>
                 </svg>
                 <span className="text-sm font-medium">
-                  {doacao.local || "Local não informado"}
+                  {doacao.categoria || "Categoria não informada"}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
@@ -513,6 +508,9 @@ export default function DoacaoInfo() {
                       src={coment.avatar || "https://i.pravatar.cc/40"}
                       alt={coment.nomeUsuario || "Usuário"}
                       className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                      onError={(e) => {
+                        e.target.src = "https://i.pravatar.cc/40";
+                      }}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">

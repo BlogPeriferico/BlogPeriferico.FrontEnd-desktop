@@ -10,6 +10,7 @@ import CorreCertoService from "../../services/CorreCertoService";
 export default function CorreCerto() {
   const [modalAberto, setModalAberto] = useState(false);
   const [correcertos, setCorrecertos] = useState([]); // aqui vai o array do backend
+  const [loading, setLoading] = useState(true); // ✅ Estado de loading
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
@@ -20,10 +21,13 @@ export default function CorreCerto() {
   // Pegar lista de correcertos do backend
   const carregarCorrecertos = async () => {
     try {
+      setLoading(true); // ✅ Inicia loading
       const dados = await CorreCertoService.listarCorrecertos();
       setCorrecertos(dados);
     } catch (err) {
       console.error("Erro ao carregar vagas:", err);
+    } finally {
+      setLoading(false); // ✅ Finaliza loading
     }
   };
 
@@ -57,7 +61,7 @@ export default function CorreCerto() {
 
       <CarrosselCorreCerto />
       {/* Passa o array do backend */}
-      <SelecaoCorreCerto correcertos={correcertos} />
+      <SelecaoCorreCerto correcertos={correcertos} loading={loading} />
     </div>
   );
 }

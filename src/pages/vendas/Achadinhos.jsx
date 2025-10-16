@@ -60,7 +60,7 @@ export default function Vendas() {
       )}
 
       <CarrosselVendas produtos={produtos} />
-      <SelecaoAnuncios produtos={produtos} />
+      <SelecaoAnuncios produtos={produtos} loading={loadingProdutos} />
     </div>
   );
 }

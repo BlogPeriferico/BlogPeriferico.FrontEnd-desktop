@@ -11,6 +11,7 @@ import DoacaoService from "../../services/DoacaoService";
 export default function Doacoes() {
   const [modalAberto, setModalAberto] = useState(false);
   const [doacoes, setDoacoes] = useState([]);
+  const [loading, setLoading] = useState(true); // ✅ Estado de loading
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
@@ -23,10 +24,13 @@ export default function Doacoes() {
   // Função para carregar doações do backend
   const carregarDoacoes = async () => {
     try {
+      setLoading(true); // ✅ Inicia loading
       const data = await DoacaoService.listarDoacoes();
       setDoacoes(data);
     } catch (err) {
       console.error("Erro ao carregar doações:", err);
+    } finally {
+      setLoading(false); // ✅ Finaliza loading
     }
   };
 
@@ -73,7 +77,7 @@ export default function Doacoes() {
       <CarrosselDoacao doacoes={doacoes} />
 
       {/* Seleção */}
-      <SelecaoDoacoes doacoes={doacoes} />
+      <SelecaoDoacoes doacoes={doacoes} loading={loading} />
     </div>
   );
 }

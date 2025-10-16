@@ -4,6 +4,13 @@ import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 import { FaChevronDown } from "react-icons/fa";
 
+// Importação dos SVGs personalizados
+import jornalIcon from "../../assets/svgs/jornal.svg";
+import megafoneIcon from "../../assets/svgs/megafone.svg";
+import lojaIcon from "../../assets/svgs/loja.svg";
+import housesIcon from "../../assets/svgs/houses.svg";
+import maoIcon from "../../assets/svgs/mao.svg";
+
 export default function SobreNos() {
   const { regiao } = useRegiao();
   const navigate = useNavigate();
@@ -18,27 +25,27 @@ export default function SobreNos() {
 
   const funcionalidades = [
     {
-      icon: "📋",
+      icon: jornalIcon,
       title: "Quebrada Informa",
       desc: "Espaço de jornalismo comunitário: aqui publicamos fatos e histórias locais, greves, locais com trânsito e reportagens que impactam diretamente a vida da nossa comunidade.",
       link: "/quebrada-informa",
     },
     {
-      icon: "🤝",
+      icon: maoIcon,
       title: "Mão Amiga",
       desc: "Área de solidariedade e doações: ache e ofereça itens em bom estado. Roupas, calçados, brinquedos e utensílios domésticos ganham destaque aqui, incentivando o desapego consciente.",
       link: "/doacoes",
     },
     {
-      icon: "🛍️",
+      icon: lojaIcon,
       title: "Achadinhos",
-      desc: "Loja online: onde vendedores e empreendedores periféricos expõem seus produtos a preços acessíveis. Artesanato, moda, alimentos e serviços. Tudo facilitar a busca e fortalecer a economia da quebrada.",
+      desc: "Loja online: onde vendedores e empreendedores periféricos expõem seus produtos a preços acessíveis. Artesanato, moda, alimentos e serviços. Tudo para fortalecer a economia da quebrada.",
       link: "/achadinhos",
     },
     {
-      icon: "📢",
+      icon: megafoneIcon,
       title: "Corre Certo",
-      desc: "Painel de oportunidades: seção dedicada a vagas de emprego, bolsas de estudo e cursos. Cada anúncio é verificado e descrito de forma direta, para que você encontre a chance certa de crescer sem perder tempo.",
+      desc: "Painel de oportunidades: seção dedicada a vagas de emprego, bolsas de estudo e cursos. Cada anúncio é verificado e descrito de forma direta, para que você encontre a chance certa de crescer.",
       link: "/vagas",
     },
   ];
@@ -110,10 +117,10 @@ export default function SobreNos() {
           </a>
         </div>
       </div>
+
+      {/* Seção com imagem e texto */}
       <section className="relative w-full h-auto mb-16 mt-12">
-        {/* Container flex com responsividade */}
         <div className="flex flex-col md:flex-row items-center max-w-[1200px] mx-auto relative px-4">
-          {/* Imagem à esquerda */}
           <div
             className="w-full md:w-[60%] h-[300px] md:h-[400px] bg-cover bg-center shadow-lg"
             style={{
@@ -122,7 +129,6 @@ export default function SobreNos() {
             }}
           ></div>
 
-          {/* Caixa de texto */}
           <div className="bg-white shadow-lg p-6 md:p-10 md:absolute md:top-[65%] md:left-[55%] transform md:-translate-y-1/2 mt-6 md:mt-0 w-full md:w-[45%] max-w-[560px]">
             <h3 className="font-fraunces font-semibold text-2xl md:text-3xl mb-4">
               São Paulo estado do Movimento Constante
@@ -140,13 +146,13 @@ export default function SobreNos() {
       {/* Funcionalidades */}
       <section
         id="funcionalidades"
-        className="bg-white py-16 px-4 sm:px-6 md:px-12 xl:px-28 "
+        className="bg-white py-16 px-4 sm:px-6 md:px-12 xl:px-28"
       >
         <h2 className="text-center text-3xl font-fraunces font-semibold mb-12">
           Funcionalidades
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-screen-xl mx-auto ">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-screen-xl mx-auto">
           {funcionalidades.map((item, i) => (
             <div
               key={i}
@@ -157,17 +163,23 @@ export default function SobreNos() {
                 className="h-1 w-full absolute top-0 left-0 rounded-t"
                 style={{ backgroundColor: corPrincipal }}
               ></div>
+
               <div className="flex items-center gap-2 mb-4">
                 <div
-                  className="p-2 rounded-md"
+                  className="p-2 rounded-md flex items-center justify-center"
                   style={{ backgroundColor: corSecundaria }}
                 >
-                  <span className="text-lg">{item.icon}</span>
+                  <img
+                    src={item.icon}
+                    alt={item.title}
+                    className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
+                  />
                 </div>
                 <span className="font-semibold text-sm px-2 py-1 bg-white rounded">
                   {item.title}
                 </span>
               </div>
+
               <p className="text-sm text-gray-600 font-poppins leading-relaxed">
                 {item.desc}
               </p>

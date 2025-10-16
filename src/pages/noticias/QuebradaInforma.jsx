@@ -65,8 +65,12 @@ export default function QuebradaInforma() {
   useEffect(() => {
     const fetchNoticias = async () => {
       try {
-        const response = await NoticiaService.listarNoticias();
-        setNoticias(response);
+        const response = await NoticiaService.listarNoticias(regiao);
+        // Ordenar por data de criação (mais recentes primeiro)
+        const noticiasOrdenadas = response.sort((a, b) =>
+          new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
+        );
+        setNoticias(noticiasOrdenadas);
       } catch (err) {
         console.error("❌ Erro ao carregar notícias:", err);
       } finally {
@@ -74,7 +78,7 @@ export default function QuebradaInforma() {
       }
     };
     fetchNoticias();
-  }, []);
+  }, [regiao]);
 
   return (
     <main className="px-4 md:px-10 mt-24 max-w-[1600px] mx-auto relative">
@@ -176,48 +180,118 @@ export default function QuebradaInforma() {
       </div>
 
       {/* Notícias */}
-      <h2 className="text-4xl font-semibold mb-10 w-max mx-auto text-center">
-        Notícias
-      </h2>
-
-      {loadingNoticias ? (
-        <p className="text-center">Carregando notícias...</p>
-      ) : noticias.length === 0 ? (
-        <p className="text-center">Nenhuma notícia publicada ainda.</p>
-      ) : (
-        <div className="space-y-6">
-          {noticias.map((n) => (
-            <Link to={`/noticia/${n.id}`} key={n.id} className="block px-20">
-              <div className="flex flex-col sm:flex-row gap-4 border-b pb-4 hover:opacity-90 transition-all">
-                {n.imagem && (
-                  <img
-                    src={n.imagem}
-                    alt={n.titulo}
-                    className="w-full sm:w-48 h-32 object-cover rounded-md"
-                  />
-                )}
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {n.titulo}
-                  </h3>
-                  <p className="text-sm text-gray-700 line-clamp-3">
-                    {n.texto}
-                  </p>
-                  <div className="text-xs text-gray-400 mt-2 flex justify-between items-center">
-                    <span>{n.zona}</span>
-                    <span>
-                      Publicado em{" "}
-                      {new Date(n.dataHoraCriacao).toLocaleDateString("pt-BR")}{" "}
-                      às{" "}
-                      {new Date(n.dataHoraCriacao).toLocaleTimeString("pt-BR")}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative">
+            Últimas Notícias
+            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full" style={{ backgroundColor: corPrincipal }}></div>
+          </h2>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Fique por dentro das principais notícias e acontecimentos da sua região
+          </p>
         </div>
-      )}
+
+        {loadingNoticias ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: corPrincipal }}></div>
+            <span className="ml-3 text-gray-600">Carregando notícias...</span>
+          </div>
+        ) : noticias.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhuma notícia publicada ainda</h3>
+            <p className="text-gray-600">Seja o primeiro a compartilhar uma notícia da sua região!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+            {noticias.map((n, index) => (
+              <Link
+                to={`/noticia/${n.id}`}
+                key={n.id}
+                className="group block animate-slideInUp"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <article className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden hover:-translate-y-2" onMouseEnter={(e) => e.currentTarget.style.borderColor = corPrincipal} onMouseLeave={(e) => e.currentTarget.style.borderColor = ''}>
+                  {/* Imagem */}
+                  {/* Imagem */}
+                  <div className="relative h-48 overflow-hidden">
+                    {n.imagem ? (
+                      <img
+                        src={n.imagem}
+                        alt={n.titulo}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          e.target.src = "https://via.placeholder.com/400x200?text=Imagem+indisponível";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* Badge da Zona */}
+                    <div className="absolute top-4 right-4">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 backdrop-blur-sm text-gray-800 shadow-lg">
+                        {n.zona}
+                      </span>
+                    </div>
+
+                    {/* Overlay Gradiente */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
+
+                  {/* Conteúdo */}
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-gray-500 flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        {new Date(n.dataHoraCriacao).toLocaleDateString("pt-BR")}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {new Date(n.dataHoraCriacao).toLocaleTimeString("pt-BR", {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 transition-colors duration-200">
+                      {n.titulo}
+                    </h3>
+
+                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
+                      {n.texto}
+                    </p>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <span className="text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+                        Ler mais →
+                      </span>
+                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path>
+                        </svg>
+                        <span>Comentários</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Efeito de hover */}
+                </article>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </main>
   );
 }

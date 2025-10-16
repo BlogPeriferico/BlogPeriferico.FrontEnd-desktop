@@ -50,11 +50,11 @@ const ComentariosService = {
   criarComentarioDoacao: async (comentarioData) => {
     console.log("📤 Criando comentário na doação:", comentarioData);
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("userToken");
     if (!token) throw new Error("Usuário não está logado.");
 
     try {
-      const response = await api.post("/comentarios/doacao", comentarioData);
+      const response = await api.post("/comentarios", comentarioData);
       console.log("✅ Comentário criado na doação:", response.data);
       return response.data;
     } catch (err) {
@@ -66,11 +66,11 @@ const ComentariosService = {
   criarComentarioVaga: async (comentarioData) => {
     console.log("📤 Criando comentário na vaga:", comentarioData);
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("userToken");
     if (!token) throw new Error("Usuário não está logado.");
 
     try {
-      const response = await api.post("/comentarios/vaga", comentarioData);
+      const response = await api.post("/comentarios", comentarioData);
       console.log("✅ Comentário criado na vaga:", response.data);
       return response.data;
     } catch (err) {

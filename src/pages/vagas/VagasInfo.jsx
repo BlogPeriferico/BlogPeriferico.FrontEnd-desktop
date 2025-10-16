@@ -213,7 +213,7 @@ export default function VagaInfo() {
         texto: novoComentario,
         idVaga: Number(id),
         idUsuario: usuarioLogado.id,
-        tipo: "VAGA",
+        tipo: "VAGA", // ✅ Especifica o tipo de comentário
       };
 
       console.log("📤 VagasInfo - DTO antes de enviar:", dto);

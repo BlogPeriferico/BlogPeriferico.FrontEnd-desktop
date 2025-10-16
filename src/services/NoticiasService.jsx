@@ -61,10 +61,14 @@ const NoticiaService = {
     }
   },
 
-  listarNoticias: async () => {
+  listarNoticias: async (regiao = null) => {
     console.log("📥 Carregando lista de notícias...");
     try {
-      const response = await api.get("/noticias");
+      const params = {};
+      if (regiao) {
+        params.regiao = regiao;
+      }
+      const response = await api.get("/noticias", { params });
       console.log("✅ Lista de notícias recebida:", response.data);
       return response.data;
     } catch (err) {
