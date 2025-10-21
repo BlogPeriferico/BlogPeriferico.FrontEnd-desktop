@@ -1,7 +1,7 @@
 import CarrosselVendas from "../../components/carrossels/CarrosselVendas";
 import SelecaoAnuncios from "../../components/selecoes/SelecaoAnuncios";
 import { FiPlus } from "react-icons/fi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ModalProduto from "../../components/modals/ModalProduto";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
@@ -18,20 +18,58 @@ export default function Vendas() {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
   }, [modalAberto]);
 
-  // Busca produtos (igual QuebradaInforma)
-  useEffect(() => {
-    const fetchProdutos = async () => {
-      try {
-        const response = await VendasService.getAnuncios();
-        setProdutos(response);
-      } catch (err) {
-        console.error("❌ Erro ao carregar produtos:", err);
-      } finally {
-        setLoadingProdutos(false);
+  // Função para normalizar os dados do produto
+  const mapProdutoFromDTO = (p) => ({
+    id: String(p.id),
+    titulo: p.titulo || "",
+    descricao: p.descricao || "",
+    preco: p.preco || 0,
+    regiao: p.regiao || p.zona || p.local || "Centro",
+    dataHoraCriacao: p.dataHoraCriacao || new Date().toISOString(),
+    contato: p.contato || "",
+    imagem: p.imagem || "",
+    categoria: p.categoria || "Outros"
+  });
+
+  // Busca os produtos baseado na região atual
+  const fetchProdutos = useCallback(async () => {
+    try {
+      setLoadingProdutos(true);
+      console.log(`Buscando produtos para a região: ${regiao || 'Todas as regiões'}`);
+      
+      // Busca todos os produtos
+      const response = await VendasService.getAnuncios();
+      const dados = Array.isArray(response) ? response : [];
+      
+      // Normaliza os dados dos produtos
+      const produtosNormalizados = dados.map(mapProdutoFromDTO);
+      
+      // Ordena por data de criação (mais recentes primeiro)
+      const produtosOrdenados = [...produtosNormalizados].sort((a, b) => 
+        new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
+      );
+      
+      // Filtra por região se necessário
+      let produtosFiltrados = produtosOrdenados;
+      if (regiao) {
+        produtosFiltrados = produtosOrdenados.filter(produto => 
+          produto.regiao && produto.regiao.toLowerCase() === regiao.toLowerCase()
+        );
       }
-    };
+      
+      setProdutos(produtosFiltrados);
+      console.log(`✅ ${produtosFiltrados.length} produtos carregados`);
+    } catch (err) {
+      console.error("❌ Erro ao carregar produtos:", err);
+    } finally {
+      setLoadingProdutos(false);
+    }
+  }, [regiao]);
+  
+  // Atualiza quando a região mudar
+  useEffect(() => {
     fetchProdutos();
-  }, []);
+  }, [fetchProdutos]);
 
   return (
     <div className="max-w-6xl mx-auto pt-24 px-6 relative">

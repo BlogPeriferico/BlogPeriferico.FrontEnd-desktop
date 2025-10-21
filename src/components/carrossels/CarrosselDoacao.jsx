@@ -4,7 +4,7 @@ import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 
-export default function CarrosselDoacoes() {
+export default function CarrosselDoacao() {
   const doacoes = DoacaoData.slice(0, 3);
   const [index, setIndex] = useState(0);
   const total = doacoes.length;
@@ -74,13 +74,29 @@ export default function CarrosselDoacoes() {
               </div>
 
               {/* Imagem */}
-              <div className="flex-1 mt-8 md:mt-34 flex justify-center items-center relative">
+              <div className="flex-1 mt-8 md:mt-34 flex justify-center items-center">
                 <div className="relative w-[280px] h-[280px] flex items-center justify-center">
                   <img
                     src={doacao.imagem}
                     alt={doacao.titulo}
                     className="max-h-full max-w-full object-contain"
                   />
+                  
+                  {/* Badge da Região */}
+                  {doacao.regiao && (
+                    <div className="absolute top-0 right-0">
+                      <span 
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200"
+                        style={{ 
+                          backgroundColor: `${corPrincipal}20`,
+                          color: corPrincipal,
+                          borderColor: corPrincipal
+                        }}
+                      >
+                        {doacao.regiao}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -91,12 +107,19 @@ export default function CarrosselDoacoes() {
       {/* Indicadores */}
       <div className="flex justify-center mt-8 gap-2">
         {doacoes.map((_, i) => (
-          <div
+          <button
             key={i}
+            onClick={() => setIndex(i)}
             className={`transition-all h-2 rounded-full ${
               i === index ? "w-8" : "w-4"
             }`}
-            style={{ backgroundColor: i === index ? corSecundaria : "#ccc" }}
+            style={{ 
+              backgroundColor: i === index ? corSecundaria : "#ccc",
+              border: 'none',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
+            aria-label={`Ir para o slide ${i + 1}`}
           />
         ))}
       </div>

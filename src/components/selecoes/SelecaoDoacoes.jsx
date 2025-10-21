@@ -127,12 +127,21 @@ export default function SelecaoDoacoes({ doacoes, loading = false }) {
                   }}
                 />
 
-                {/* Badge */}
-                <div className="absolute top-4 right-4">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 backdrop-blur-sm text-gray-800 shadow-lg">
-                    {doacao.zona || "SP"}
-                  </span>
-                </div>
+                {/* Badge da Região */}
+                {doacao.regiao && (
+                  <div className="absolute top-4 right-4">
+                    <span 
+                      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200"
+                      style={{ 
+                        backgroundColor: `${corPrincipal}20`,
+                        color: corPrincipal,
+                        borderColor: corPrincipal
+                      }}
+                    >
+                      {doacao.regiao}
+                    </span>
+                  </div>
+                )}
 
                 {/* Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

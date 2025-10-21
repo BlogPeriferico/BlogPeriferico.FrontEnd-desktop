@@ -165,73 +165,166 @@ export default function ProdutoInfo() {
     buscarAutor();
   }, [produto]);
 
-  // Verificação de propriedade do produto (SIMPLE E FUNCIONAL)
-  const papel = usuarioLogado.papel || "";
-  const papelStr = String(papel).toUpperCase();
+  // Verificação de permissões baseada no token JWT
+  console.log('\n🔍 VERIFICAÇÃO DE PERMISSÕES (PRODUTO)');
+  
+  // Função para extrair o papel do token
+  const getUserRoleFromToken = () => {
+    try {
+      const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+      if (!token) return '';
+      
+      const decoded = JSON.parse(atob(token.split('.')[1]));
+      console.log('🔐 Token decodificado:', decoded);
+      
+      // Verifica em várias possíveis localizações do papel
+      if (decoded.role) return decoded.role;
+      if (decoded.roles && decoded.roles.length > 0) return decoded.roles[0];
+      if (decoded.authorities && decoded.authorities.length > 0) {
+        const authority = typeof decoded.authorities[0] === 'string' 
+          ? decoded.authorities[0] 
+          : decoded.authorities[0].authority;
+        return authority;
+      }
+      if (decoded.scope) return decoded.scope;
+      
+      return '';
+    } catch (error) {
+      console.error('❌ Erro ao decodificar token:', error);
+      return '';
+    }
+  };
+  
+  // Obtém o papel do usuário do token JWT
+  const userRole = getUserRoleFromToken();
+  const roleNormalized = userRole ? userRole.toUpperCase() : '';
+  
+  // Verifica se o usuário é admin
+  const isAdmin = roleNormalized.includes('ADMIN');
+  const podeExcluirProduto = isAdmin;
+  
+  console.log('🔑 Dados de permissão (Produto):', {
+    'Token Role': userRole,
+    'Normalizado': roleNormalized,
+    'É admin?': isAdmin,
+    'Pode excluir?': podeExcluirProduto
+  });
+  
+  // Log do usuário logado para debug
+  console.log('👤 Dados do usuário logado (Produto):', {
+    id: usuarioLogado?.id,
+    nome: usuarioLogado?.nome,
+    email: usuarioLogado?.email,
+    role: userRole,
+    isAdmin,
+    podeExcluirProduto
+  });
 
-  const podeExcluirProduto = Boolean(
-    produto &&
-      usuarioLogado &&
-      (
-        // ✅ ADMIN pode deletar qualquer produto
-        papelStr.includes("ADMINISTRADOR") ||
-        papelStr.includes("ADMIN") ||
-        // ✅ Autor pode deletar apenas seu próprio produto
-        produto.idUsuario === usuarioLogado.id ||
-        produto.emailUsuario === usuarioLogado.email ||
-        produto.autor === usuarioLogado.nome
-      )
-  );
-
-  // Debug: log de permissões (IGUAL AO NOTICIASINFO)
+  // Efeito para depuração
   useEffect(() => {
     if (produto && usuarioLogado.id) {
-      console.log("🔍 Verificação de permissões:");
-      console.log("  - Papel do usuário:", usuarioLogado.papel);
-      console.log("  - Papel (string):", papelStr);
-      console.log(
-        "  - É ADMIN?",
-        papelStr.includes("ADMINISTRADOR") ||
-          papelStr.includes("ADMIN")
-      );
-      console.log("  - ID do autor do produto:", produto.idUsuario);
-      console.log("  - Nome do autor:", nomeAutor);
-      console.log("  - ID do usuário logado:", usuarioLogado.id);
-      console.log("  - Nome do usuário:", usuarioLogado.nome);
-      console.log("  - Pode excluir produto?", podeExcluirProduto);
+      console.log("📌 DETALHES DO PRODUTO:", {
+        id: produto.id,
+        titulo: produto.titulo,
+        idUsuario: produto.idUsuario,
+        emailUsuario: produto.emailUsuario,
+        autor: produto.autor
+      });
     }
-  }, [produto, usuarioLogado, podeExcluirProduto, nomeAutor]);
+  }, [produto, usuarioLogado]);
 
-  // Deletar produto (IGUAL AO NOTICIASINFO)
+  // Deletar produto
   const handleDeletarProduto = async () => {
     try {
-      // ✅ USA O ID DO PRODUTO OU DA URL
-      const produtoId = produto?.id || id;
+      console.log("\n🗑️ === TENTANDO EXCLUIR PRODUTO ===");
+      console.log("📌 DETALHES DA EXCLUSÃO:");
+      console.log("ID do produto:", id);
+      console.log("👤 USUÁRIO LOGADO:", {
+        id: usuarioLogado?.id,
+        nome: usuarioLogado?.nome,
+        email: usuarioLogado?.email,
+        role: userRole,
+        isAdmin: isAdmin
+      });
 
-      console.log("🗑️ Tentando excluir produto ID:", produtoId);
-      console.log("🔑 Token no localStorage:", localStorage.getItem("token"));
-      console.log("👤 Usuário logado:", usuarioLogado);
+      // Verificação de segurança adicional
+      if (!podeExcluirProduto) {
+        throw new Error("Usuário não tem permissão para excluir este produto");
+      }
 
-      if (!produtoId) {
-        alert("Erro: ID do produto não encontrado.");
+      // Mostra um diálogo de confirmação
+      const confirmacao = window.confirm(
+        `Tem certeza que deseja excluir o produto "${produto?.titulo || 'sem título'}"?\n` +
+        "Esta ação não pode ser desfeita."
+      );
+      
+      if (!confirmacao) {
+        console.log("❌ Exclusão cancelada pelo usuário");
         return;
       }
 
-      await AnuncioService.excluirAnuncio(produtoId);
+      // Mostra um indicador de carregamento
+      setLoading(true);
+      
+      // Chama o serviço de exclusão
+      await AnuncioService.excluirAnuncio(id);
+      
+      console.log("✅ Produto excluído com sucesso!");
       setModalDeletarProduto(false);
-      alert("Produto excluído com sucesso.");
-      navigate("/achadinhos");
-    } catch (err) {
-      console.error("❌ Erro ao excluir produto:", err);
-      console.error("❌ Status HTTP:", err.response?.status);
-      console.error("❌ Dados do erro:", err.response?.data);
-
-      const status = err?.response?.status;
-      if (status === 403 || status === 401) {
-        alert("Você não tem permissão para excluir este produto.");
+      
+      // Mostra mensagem de sucesso
+      alert("✅ Produto excluído com sucesso!");
+      
+      // Redireciona para a página de achadinhos após um pequeno delay
+      setTimeout(() => {
+        navigate("/achadinhos");
+      }, 500);
+      
+    } catch (error) {
+      console.error("❌ ERRO AO EXCLUIR PRODUTO:", error);
+      console.error("❌ Status:", error.status || error.response?.status);
+      console.error("❌ Código:", error.code);
+      console.error("❌ Dados da resposta:", error.response?.data);
+      
+      let mensagemErro = "Não foi possível excluir o produto.\n\n";
+      
+      // Mensagens de erro mais amigáveis
+      const status = error.status || error.response?.status;
+      
+      if (status === 401) {
+        mensagemErro += "Sua sessão expirou. Por favor, faça login novamente.";
+        // Limpa os dados de autenticação
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        // Redireciona para a página de login
+        setTimeout(() => window.location.href = "/login", 1000);
+      } else if (status === 403) {
+        mensagemErro += "❌ Acesso negado!\n\n";
+        mensagemErro += `Você não tem permissão para excluir este produto.\n\n`;
+        mensagemErro += `Detalhes para diagnóstico:\n`;
+        mensagemErro += `- ID do usuário: ${usuarioLogado?.id || 'N/A'}\n`;
+        mensagemErro += `- Nome: ${usuarioLogado?.nome || 'N/A'}\n`;
+        mensagemErro += `- Papel: ${userRole || 'N/A'}\n`;
+        mensagemErro += `- ID do produto: ${produto?.id || 'N/A'}\n`;
+        mensagemErro += `- Autor do produto: ${produto?.usuario?.nome || produto?.autor || 'N/A'}\n`;
+        mensagemErro += `- ID do autor: ${produto?.usuario?.id || produto?.idUsuario || 'N/A'}\n\n`;
+        mensagemErro += `Se você acredita que isso é um erro, entre em contato com o suporte.`;
+      } else if (status === 404) {
+        mensagemErro += "O produto não foi encontrado ou já foi excluído.";
+        // Atualiza a página para refletir as mudanças
+        setTimeout(() => window.location.reload(), 1500);
       } else {
-        alert("Não foi possível excluir o produto. Tente novamente.");
+        mensagemErro += `${error.message || 'Erro desconhecido'}.\n`;
+        mensagemErro += "Por favor, tente novamente mais tarde.";
       }
+      
+      // Mostra a mensagem de erro
+      alert(mensagemErro);
+      
+    } finally {
+      // Esconde o indicador de carregamento
+      setLoading(false);
     }
   };
 
@@ -589,9 +682,7 @@ export default function ProdutoInfo() {
                         </div>
                         {((coment.idUsuario === usuarioLogado.id ||
                           coment.emailUsuario === usuarioLogado.email) ||
-                          // ✅ ADMIN pode deletar qualquer comentário
-                          (papelStr.includes("ADMINISTRADOR") ||
-                           papelStr.includes("ADMIN"))) && (
+                          isAdmin) && (
                           <button
                             onClick={() =>
                               setModalDeletar({

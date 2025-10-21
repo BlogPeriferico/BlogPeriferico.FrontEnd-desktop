@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useUser } from "../../contexts/UserContext.jsx";
 import { useRegiao } from "../../contexts/RegionContext";
@@ -23,6 +24,7 @@ export default function Perfil() {
   });
   const [loading, setLoading] = useState(false);
   const [usuarioLogado, setUsuarioLogado] = useState(null);
+  const [fotoAtual, setFotoAtual] = useState(NoPicture);
 
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const abas = [
@@ -38,6 +40,15 @@ export default function Perfil() {
       setUsuarioLogado(user);
     }
   }, [user]);
+
+  // Atualiza a foto quando o usuarioLogado mudar
+  useEffect(() => {
+    if (usuarioLogado?.fotoPerfil) {
+      setFotoAtual(usuarioLogado.fotoPerfil);
+    } else {
+      setFotoAtual(NoPicture);
+    }
+  }, [usuarioLogado?.fotoPerfil]);
 
   useEffect(() => {
     if (usuarioLogado?.id) {
@@ -93,6 +104,7 @@ export default function Perfil() {
     return (
       <main className="min-h-screen bg-gray-50 pt-24 px-4 md:px-10 max-w-4xl mx-auto">
         <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4" style={{ borderColor: corPrincipal }}></div>
           <p className="text-gray-600">Carregando perfil...</p>
         </div>
       </main>
@@ -103,7 +115,12 @@ export default function Perfil() {
     const posts = postsUsuario[abaAtiva] || [];
 
     if (loading) {
-      return <p className="text-center py-8">Carregando...</p>;
+      return (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mr-3" style={{ borderColor: corPrincipal }}></div>
+          <p className="text-gray-600">Carregando posts...</p>
+        </div>
+      );
     }
 
     if (posts.length === 0) {
@@ -168,10 +185,13 @@ export default function Perfil() {
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="relative flex-shrink-0">
               <img
-                src={usuarioLogado.fotoPerfil || NoPicture}
+                src={fotoAtual}
                 alt={usuarioLogado.nome}
                 className="w-32 h-32 rounded-full border-4 border-gray-300 object-cover shadow-lg"
                 style={{ borderColor: corPrincipal }}
+                onError={(e) => {
+                  e.target.src = NoPicture;
+                }}
               />
               <Link
                 to="/editar-perfil"
@@ -240,7 +260,7 @@ export default function Perfil() {
           <div className="p-6 bg-white">
             {loading ? (
               <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: corPrincipal }}></div>
                 <p className="ml-4 text-gray-600">Carregando posts...</p>
               </div>
             ) : (

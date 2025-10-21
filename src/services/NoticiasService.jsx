@@ -61,19 +61,21 @@ const NoticiaService = {
     }
   },
 
-  listarNoticias: async (regiao = null) => {
-    console.log("📥 Carregando lista de notícias...");
+  listarNoticias: async (regiao) => {
+    console.log(`📥 Buscando notícias${regiao ? ` para a região: ${regiao}` : ' de todas as regiões'}...`);
     try {
       const params = {};
       if (regiao) {
         params.regiao = regiao;
       }
+      
       const response = await api.get("/noticias", { params });
-      console.log("✅ Lista de notícias recebida:", response.data);
-      return response.data;
+      console.log(`✅ ${response.data?.length || 0} notícias encontradas`);
+      return response.data || [];
     } catch (err) {
-      console.error("❌ Erro ao listar notícias:", err.response?.data || err);
-      throw err;
+      console.error("❌ Erro ao buscar notícias:", err.response?.data || err);
+      // Se der erro, retorna array vazio para não quebrar a interface
+      return [];
     }
   },
 

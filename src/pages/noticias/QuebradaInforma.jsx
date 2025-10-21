@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useRegiao } from "../../contexts/RegionContext";
+import api from "../../services/Api";
 import { regionColors } from "../../utils/regionColors";
 import { Link } from "react-router-dom";
 import { FiPlus } from "react-icons/fi";
@@ -61,24 +62,97 @@ export default function QuebradaInforma() {
     return () => clearInterval(horaTimer);
   }, []);
 
-  // Busca notícias
-  useEffect(() => {
-    const fetchNoticias = async () => {
-      try {
-        const response = await NoticiaService.listarNoticias(regiao);
-        // Ordenar por data de criação (mais recentes primeiro)
-        const noticiasOrdenadas = response.sort((a, b) =>
-          new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
+  // Estados para gerenciar as notícias e paginação
+  const [todasNoticias, setTodasNoticias] = useState([]);
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 5;
+  const [totalPaginas, setTotalPaginas] = useState(1);
+
+  // Função para obter os itens da página atual
+  const getItensPaginados = (itens, pagina, itensPorPag) => {
+    const inicio = (pagina - 1) * itensPorPag;
+    return itens.slice(0, inicio + itensPorPag);
+  };
+
+  // Função para normalizar os dados da notícia
+  const mapNoticiaFromDTO = (n) => ({
+    id: String(n.id),
+    titulo: n.titulo || "",
+    texto: n.texto || "",
+    imagem: n.imagem || "",
+    regiao: n.regiao || n.zona || n.local || "Centro",
+    dataHoraCriacao: n.dataHoraCriacao || new Date().toISOString(),
+    views: n.views || 0,
+    comments: n.comments || 0,
+  });
+
+  // Busca as notícias baseado na região atual
+  const buscarNoticias = useCallback(async () => {
+    try {
+      setLoadingNoticias(true);
+      console.log(`Buscando notícias para a região: ${regiao || 'Todas as regiões'}`);
+      
+      // Busca todas as notícias
+      const response = await api.get("/noticias");
+      const dados = Array.isArray(response.data) ? response.data : [];
+      
+      // Normaliza os dados das notícias
+      const noticiasNormalizadas = dados.map(mapNoticiaFromDTO);
+      
+      // Ordena por data de criação (mais recentes primeiro)
+      const noticiasOrdenadas = [...noticiasNormalizadas].sort((a, b) => 
+        new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
+      );
+      
+      // Filtra por região se necessário
+      let noticiasFiltradas = noticiasOrdenadas;
+      if (regiao) {
+        noticiasFiltradas = noticiasOrdenadas.filter(noticia => 
+          noticia.regiao && noticia.regiao.toLowerCase() === regiao.toLowerCase()
         );
-        setNoticias(noticiasOrdenadas);
-      } catch (err) {
-        console.error("❌ Erro ao carregar notícias:", err);
-      } finally {
-        setLoadingNoticias(false);
       }
-    };
-    fetchNoticias();
+      
+      setTodasNoticias(noticiasFiltradas);
+      setPaginaAtual(1); // Resetar para a primeira página
+      console.log(`✅ ${noticiasFiltradas.length} notícias carregadas`);
+    } catch (err) {
+      console.error("❌ Erro ao carregar notícias:", err);
+      return [];
+    } finally {
+      setLoadingNoticias(false);
+    }
   }, [regiao]);
+  
+  // Busca as notícias quando o componente é montado ou quando a região muda
+  useEffect(() => {
+    buscarNoticias();
+  }, [buscarNoticias]);
+
+  // Atualiza a lista de notícias exibidas quando a página ou as notícias mudam
+  useEffect(() => {
+    // Aplica a paginação
+    const noticiasPaginadas = getItensPaginados(todasNoticias, paginaAtual, itensPorPagina);
+    setNoticias(noticiasPaginadas);
+    
+    // Atualiza o total de páginas
+    const total = Math.ceil(todasNoticias.length / itensPorPagina);
+    setTotalPaginas(total > 0 ? total : 1);
+    
+    // Se a página atual for maior que o total, volta para a primeira
+    if (paginaAtual > total && total > 0) {
+      setPaginaAtual(1);
+    }
+    
+    // Debug: Mostra as regiões das notícias carregadas
+    console.log('Regiões encontradas:', [...new Set(todasNoticias.map(n => n.regiao))]);
+  }, [todasNoticias, paginaAtual]);
+  
+  // Função para carregar mais itens (scroll infinito)
+  const carregarMais = () => {
+    if (paginaAtual < totalPaginas) {
+      setPaginaAtual(paginaAtual + 1);
+    }
+  };
 
   return (
     <main className="px-4 md:px-10 mt-24 max-w-[1600px] mx-auto relative">
@@ -213,7 +287,10 @@ export default function QuebradaInforma() {
                 to={`/noticia/${n.id}`}
                 key={n.id}
                 className="group block animate-slideInUp"
-                style={{ animationDelay: `${index * 100}ms` }}
+                style={{ 
+                  animationDelay: `${index * 100}ms`,
+                  display: index >= paginaAtual * itensPorPagina ? 'none' : 'block' 
+                }}
               >
                 <article className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden hover:-translate-y-2" onMouseEnter={(e) => e.currentTarget.style.borderColor = corPrincipal} onMouseLeave={(e) => e.currentTarget.style.borderColor = ''}>
                   {/* Imagem */}
@@ -236,12 +313,21 @@ export default function QuebradaInforma() {
                       </div>
                     )}
 
-                    {/* Badge da Zona */}
-                    <div className="absolute top-4 right-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 backdrop-blur-sm text-gray-800 shadow-lg">
-                        {n.zona}
-                      </span>
-                    </div>
+                    {/* Badge da Região */}
+                    {n.regiao && (
+                      <div className="absolute top-4 right-4">
+                        <span 
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 backdrop-blur-sm text-gray-800 shadow-lg border border-gray-200"
+                          style={{ 
+                            backgroundColor: `${corPrincipal}20`,
+                            color: corPrincipal,
+                            borderColor: corPrincipal
+                          }}
+                        >
+                          {n.regiao}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Overlay Gradiente */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -289,6 +375,25 @@ export default function QuebradaInforma() {
                 </article>
               </Link>
             ))}
+            
+            {/* Botão Carregar Mais */}
+            {paginaAtual * itensPorPagina < noticias.length && (
+              <div className="col-span-full flex justify-center mt-10">
+                <button
+                  onClick={carregarMais}
+                  className="px-6 py-3 rounded-full text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  style={{ backgroundColor: corPrincipal }}
+                >
+                  Carregar mais notícias
+                </button>
+              </div>
+            )}
+            
+            {/* Contador de notícias */}
+            <div className="col-span-full text-center mt-6 text-sm text-gray-500">
+              Mostrando {Math.min(noticias.length, paginaAtual * itensPorPagina)} de {noticias.length} notícias
+              {regiao && ` na região ${regiao}`}
+            </div>
           </div>
         )}
       </div>

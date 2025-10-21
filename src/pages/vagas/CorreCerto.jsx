@@ -1,5 +1,6 @@
 import { FiPlus } from "react-icons/fi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import api from "../../services/Api";
 import ModalCorreCerto from "../../components/modals/ModalCorreCerto";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
@@ -18,22 +19,59 @@ export default function CorreCerto() {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
   }, [modalAberto]);
 
-  // Pegar lista de correcertos do backend
-  const carregarCorrecertos = async () => {
-    try {
-      setLoading(true); // ✅ Inicia loading
-      const dados = await CorreCertoService.listarCorrecertos();
-      setCorrecertos(dados);
-    } catch (err) {
-      console.error("Erro ao carregar vagas:", err);
-    } finally {
-      setLoading(false); // ✅ Finaliza loading
-    }
-  };
+  // Função para normalizar os dados da vaga
+  const mapVagaFromDTO = (v) => ({
+    id: String(v.id),
+    titulo: v.titulo || "",
+    descricao: v.descricao || "",
+    empresa: v.empresa || "",
+    salario: v.salario || "A combinar",
+    tipo: v.tipo || "CLT",
+    regiao: v.regiao || v.zona || v.local || "Centro",
+    dataHoraCriacao: v.dataHoraCriacao || new Date().toISOString(),
+    contato: v.contato || "",
+    imagem: v.imagem || ""
+  });
 
+  // Busca as vagas baseado na região atual
+  const carregarCorrecertos = useCallback(async () => {
+    try {
+      setLoading(true);
+      console.log(`Buscando vagas para a região: ${regiao || 'Todas as regiões'}`);
+      
+      // Busca todas as vagas
+      const response = await api.get("/vagas");
+      const dados = Array.isArray(response.data) ? response.data : [];
+      
+      // Normaliza os dados das vagas
+      const vagasNormalizadas = dados.map(mapVagaFromDTO);
+      
+      // Ordena por data de criação (mais recentes primeiro)
+      const vagasOrdenadas = [...vagasNormalizadas].sort((a, b) => 
+        new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
+      );
+      
+      // Filtra por região se necessário
+      let vagasFiltradas = vagasOrdenadas;
+      if (regiao) {
+        vagasFiltradas = vagasOrdenadas.filter(vaga => 
+          vaga.regiao && vaga.regiao.toLowerCase() === regiao.toLowerCase()
+        );
+      }
+      
+      setCorrecertos(vagasFiltradas);
+      console.log(`✅ ${vagasFiltradas.length} vagas carregadas`);
+    } catch (err) {
+      console.error("❌ Erro ao carregar vagas:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [regiao]);
+  
+  // Atualiza quando a região mudar
   useEffect(() => {
     carregarCorrecertos();
-  }, []);
+  }, [carregarCorrecertos]);
 
   return (
     <div className="max-w-6xl mx-auto pt-24 px-6 relative">
