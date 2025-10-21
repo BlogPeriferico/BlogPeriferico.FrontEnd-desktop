@@ -39,42 +39,162 @@ export default function DoacaoInfo() {
   // Carregar perfil do usuário usando UserContext
   useEffect(() => {
     if (user && user.id) {
-      setUsuarioLogado({
+      const userData = {
         id: user.id,
         email: user.email,
         nome: user.nome,
-        papel: user.role || user.papel,
+        role: user.role || user.roles || user.papel,
+        roles: user.roles || user.role || user.papel,
+        papel: user.papel || user.role || user.roles,
         fotoPerfil: user.fotoPerfil,
-      });
+      };
+      
+      console.log('🔄 Dados do usuário do contexto:', user);
+      console.log('🔄 Dados normalizados do usuário:', userData);
+      
+      setUsuarioLogado(userData);
     }
   }, [user]);
 
   // Carregar doação e comentários
   useEffect(() => {
+    console.log('🚀 [1] - Iniciando carregamento da doação e comentários');
+    console.log('   - ID da doação:', id);
+    console.log('   - Doação atual no estado:', doacao);
     window.scrollTo(0, 0);
 
     if (!doacao) {
+      console.log('🔄 [2] - Doação não carregada ainda, iniciando carregamento...');
       setLoading(true);
-      DoacaoService.buscarDoacaoPorId(id)
-        .then((data) => setDoacao(data))
-        .catch((err) => {
-          console.error("❌ Erro ao buscar doação:", err);
+      
+      const carregarDoacao = async () => {
+        console.log('📡 [3] - Iniciando busca da doação no servidor...');
+        try {
+          console.log('🔎 [4] - Chamando DoacaoService.buscarDoacaoPorId com ID:', id);
+          const data = await DoacaoService.buscarDoacaoPorId(id);
+          console.log('✅ [5] - Dados da doação recebidos:');
+          console.log('   - Tipo:', typeof data);
+          console.log('   - Conteúdo:', data);
+          console.log('   - idUsuario:', data?.idUsuario);
+          console.log('   - autor:', data?.autor);
+          console.log('   - JSON:', JSON.stringify(data, null, 2));
+
+          // Buscar dados do usuário junto com a doação
+          if (data.idUsuario) {
+            console.log('👤 [6] - ID do usuário encontrado na doação:', data.idUsuario);
+            try {
+              console.log('🔍 [7] - Buscando dados do doador na API...');
+              const response = await api.get("/usuarios/listar");
+              console.log('👥 [8] - Lista de usuários recebida:');
+              console.log('   - Total de usuários:', response.data.length);
+              console.log('   - IDs dos usuários:', response.data.map(u => u.id).join(', '));
+              console.log('   - Buscando usuário com ID:', data.idUsuario);
+              
+              const doador = response.data.find((u) => u.id === data.idUsuario);
+              console.log('🔎 [9] - Resultado da busca:');
+              console.log('   - ID procurado:', data.idUsuario);
+              console.log('   - Doador encontrado:', doador ? 'Sim' : 'Não');
+              console.log('   - Dados do doador:', doador);
+
+              if (doador) {
+                console.log('✅ [10] - Dados do doador encontrados:', {
+                  id: doador.id,
+                  nome: doador.nome,
+                  temFoto: !!doador.fotoPerfil,
+                  zona: doador.zona || 'Não informada'
+                });
+
+                // Inclui fotoPerfil e nome do autor diretamente na doação
+                data.fotoPerfil = doador.fotoPerfil || 'https://i.pravatar.cc/80';
+                data.autor = doador.nome;
+                
+                console.log('🔄 [11] - Atualizando dados da doação com informações do doador');
+                console.log('   - fotoPerfil:', data.fotoPerfil ? 'Definida' : 'Não definida');
+                console.log('   - autor:', data.autor);
+
+                // Se a zona não estiver definida na doação, usa a do usuário
+                if (!data.zona && doador.zona) {
+                  console.log('📍 [12] - Usando zona do perfil do usuário:', doador.zona);
+                  data.zona = doador.zona;
+                }
+              } else {
+                console.warn('⚠️ [13] - Doador não encontrado na lista de usuários');
+              }
+            } catch (err) {
+              console.error('❌ [14] - Erro ao buscar dados do doador:', err);
+              console.error('Detalhes do erro:', {
+                status: err.response?.status,
+                data: err.response?.data,
+                message: err.message
+              });
+            }
+          } else {
+            console.warn('⚠️ [15] - Doação não possui idUsuario definido');
+          }
+
+          console.log('💾 [16] - Salvando doação no estado');
+          setDoacao(data);
+          console.log('✅ [17] - Estado da doação atualizado com sucesso');
+          
+        } catch (err) {
+          console.error('❌ [18] - Erro ao carregar doação:', err);
+          console.error('Detalhes do erro:', {
+            status: err.response?.status,
+            data: err.response?.data,
+            message: err.message
+          });
           setDoacao(null);
-        })
-        .finally(() => setLoading(false));
+        } finally {
+          console.log('🏁 [19] - Finalizando carregamento (loading = false)');
+          setLoading(false);
+        }
+      };
+      
+      carregarDoacao();
+    } else {
+      console.log('ℹ️ [20] - Doação já carregada, pulando busca');
     }
 
     const carregarComentarios = async () => {
+      console.log('💬 [21] - Iniciando carregamento de comentários');
       try {
         const dados = await ComentariosService.listarComentariosDoacao(id);
+        console.log('💬 [22] - Comentários carregados:', dados.length, 'comentários');
         setComentarios(dados);
       } catch (err) {
-        console.error("❌ Erro ao buscar comentários:", err);
+        console.error('❌ [23] - Erro ao buscar comentários:', err);
         setComentarios([]);
       }
     };
 
     carregarComentarios();
+  }, [id, doacao]);
+
+  // Monitora alterações no estado da doação
+  useEffect(() => {
+    console.log('🔍 [25] - Estado da doação alterado:', {
+      id: doacao?.id,
+      idUsuario: doacao?.idUsuario,
+      autor: doacao?.autor,
+      temFoto: !!doacao?.fotoPerfil,
+      zona: doacao?.zona
+    });
+  }, [doacao]);
+
+  console.log('🔄 [24] - Renderização do componente DoacaoInfo');
+  console.log('   - doacao:', doacao ? 'Carregada' : 'Não carregada');
+  if (doacao) {
+    console.log('   - idUsuario:', doacao.idUsuario);
+    console.log('   - autor:', doacao.autor);
+    console.log('   - zona:', doacao.zona);
+  }
+  console.log('   - loading:', loading);
+  console.log('   - comentarios:', comentarios.length, 'comentários');
+
+  // Força o recarregamento da doação quando o componente é montado
+  useEffect(() => {
+    console.log('🔄 [26] - Componente montado, forçando recarregamento da doação');
+    setDoacao(null); // Isso forçará um novo carregamento
   }, [id]);
 
   // Atualiza fotoPerfil da doação quando foto do usuário muda
@@ -227,23 +347,44 @@ export default function DoacaoInfo() {
     }
   };
 
-  // Verificação de propriedade da doação (SIMPLE E FUNCIONAL - igual ao ProdutoInfo)
-  const papel = usuarioLogado.papel || "";
-  const papelStr = String(papel).toUpperCase();
-
-  const podeExcluirDoacao = Boolean(
-    doacao &&
-      usuarioLogado &&
-      (
-        // ✅ ADMIN pode deletar qualquer doação
-        papelStr.includes("ADMINISTRADOR") ||
-        papelStr.includes("ADMIN") ||
-        // ✅ Autor pode deletar apenas sua própria doação
-        doacao.idUsuario === usuarioLogado.id ||
-        doacao.emailUsuario === usuarioLogado.email ||
-        doacao.autor === usuarioLogado.nome
-      )
+  // Verificação de propriedade da doação
+  // Verifica role, roles ou papel, em qualquer caso
+  const userRole = usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
+  const roleNormalizado = String(userRole).toUpperCase();
+  
+  // Verificação de permissões
+  const isAdmin = roleNormalizado.includes("ADMIN") || roleNormalizado.includes("ADMINISTRADOR");
+  const isDoador = doacao && (
+    doacao.idUsuario === usuarioLogado?.id ||
+    doacao.emailUsuario === usuarioLogado?.email ||
+    doacao.autor === usuarioLogado?.nome
   );
+  
+  const podeExcluirDoacao = Boolean(doacao && usuarioLogado && (isAdmin || isDoador));
+
+  // Debug: log detalhado
+  useEffect(() => {
+    if (doacao && usuarioLogado?.id) {
+      console.log("🔍 DETALHES DE PERMISSÕES:", {
+        usuario: usuarioLogado.nome,
+        role: userRole,
+        roleNormalizado,
+        isAdmin,
+        isDoador,
+        podeExcluirDoacao,
+        doacaoId: doacao.id,
+        doacaoDoador: doacao.autor || doacao.nomeAutor,
+        usuarioLogado: { 
+          id: usuarioLogado.id, 
+          nome: usuarioLogado.nome,
+          email: usuarioLogado.email,
+          role: usuarioLogado.role,
+          roles: usuarioLogado.roles,
+          papel: usuarioLogado.papel
+        }
+      });
+    }
+  }, [doacao, usuarioLogado, isAdmin, isDoador, podeExcluirDoacao, userRole, roleNormalizado]);
 
   // Deletar doação
   const handleDeletarDoacao = async () => {
@@ -254,9 +395,20 @@ export default function DoacaoInfo() {
       navigate("/doacoes");
     } catch (err) {
       console.error("❌ Erro ao excluir doação:", err);
+      console.error("❌ Resposta do servidor:", err.response?.data);
       const status = err?.response?.status;
       if (status === 403 || status === 401) {
-        alert("Você não tem permissão para excluir esta doação.");
+        alert(
+          "❌ ERRO DE AUTORIZAÇÃO NO BACKEND\n\n" +
+            "O servidor está negando a exclusão desta doação.\n\n" +
+            "Possíveis causas:\n" +
+            "1. Você não é o doador\n" +
+            "2. Seu token JWT não tem o papel ADMIN\n" +
+            "3. O backend precisa ajustar a lógica de autorização\n\n" +
+            "O endpoint DELETE /doacoes/{id} no backend precisa permitir:\n" +
+            "- ADMIN pode deletar qualquer doação\n" +
+            "- Doador pode deletar apenas sua própria doação"
+        );
       } else {
         alert("Não foi possível excluir a doação. Tente novamente.");
       }

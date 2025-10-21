@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import ComentariosService from "../../services/ComentariosService";
 import AnuncioService from "../../services/AnuncioService";
@@ -33,15 +33,19 @@ export default function ProdutoInfo() {
   // Carregar perfil do usuário usando UserContext
   useEffect(() => {
     if (user && user.id) {
-      setUsuarioLogado({
+      const userData = {
         id: user.id,
         email: user.email,
         nome: user.nome,
-        papel: user.role || user.papel,
+        role: user.role || user.roles || user.papel,
+        roles: user.roles || user.role || user.papel,
+        papel: user.papel || user.role || user.roles,
         fotoPerfil: user.fotoPerfil,
-      });
+      };
+      setUsuarioLogado(userData);
     }
   }, [user]);
+
   const [lastSyncTimestamp, setLastSyncTimestamp] = useState(Date.now());
 
   // Atualiza fotoPerfil do produto quando foto do usuário muda
@@ -137,32 +141,152 @@ export default function ProdutoInfo() {
     carregarComentarios();
   }, [id, produto]);
 
-  // Buscar nome do autor do produto
-  useEffect(() => {
-    const buscarAutor = async () => {
-      if (produto && produto.idUsuario) {
+  // Função para carregar os dados do autor do produto
+  const carregarAutor = useCallback(async (produtoData) => {
+    if (!produtoData) return null;
+    
+    console.log('🔍 Buscando autor para o produto:', {
+      id: produtoData.id,
+      idUsuario: produtoData.idUsuario,
+      emailUsuario: produtoData.emailUsuario,
+      autorAtual: produtoData.autor
+    });
+
+    // Tenta buscar por idUsuario primeiro (caso mais comum)
+    if (produtoData.idUsuario) {
+      try {
+        console.log(`🔍 Buscando usuário por ID: ${produtoData.idUsuario}`);
+        const response = await api.get(`/usuarios/${produtoData.idUsuario}`);
+        if (response.data) {
+          console.log('✅ Usuário encontrado por ID:', response.data.nome);
+          return {
+            id: response.data.id,
+            nome: response.data.nome,
+            fotoPerfil: response.data.fotoPerfil || 'https://i.pravatar.cc/80'
+          };
+        }
+      } catch (err) {
+        console.warn('❌ Erro ao buscar usuário por ID, tentando listar todos...', err);
+        
+        // Se falhar, tenta listar todos e filtrar localmente
         try {
-          const response = await api.get("/usuarios/listar");
-          const usuarios = response.data;
-          const autor = usuarios.find((u) => u.id === produto.idUsuario);
-          if (autor) {
-            setNomeAutor(autor.nome);
-            console.log("✅ Autor do produto:", autor.nome);
+          console.log('🔍 Listando todos os usuários para encontrar por ID...');
+          const response = await api.get('/usuarios/listar');
+          const usuario = response.data.find(u => u.id === produtoData.idUsuario);
+          if (usuario) {
+            console.log('✅ Usuário encontrado na lista:', usuario.nome);
+            return {
+              id: usuario.id,
+              nome: usuario.nome,
+              fotoPerfil: usuario.fotoPerfil || 'https://i.pravatar.cc/80'
+            };
+          }
+        } catch (listErr) {
+          console.error('❌ Erro ao listar usuários:', listErr);
+        }
+      }
+    }
+
+    // Se não encontrou por ID, tenta por email
+    if (produtoData.emailUsuario) {
+      try {
+        console.log(`📧 Buscando usuário por email: ${produtoData.emailUsuario}`);
+        const response = await api.get('/usuarios/listar');
+        const usuario = response.data.find(u => u.email === produtoData.emailUsuario);
+        if (usuario) {
+          console.log('✅ Usuário encontrado por email:', usuario.nome);
+          return {
+            id: usuario.id,
+            nome: usuario.nome,
+            fotoPerfil: usuario.fotoPerfil || 'https://i.pravatar.cc/80'
+          };
+        }
+      } catch (err) {
+        console.error('❌ Erro ao buscar usuário por email:', err);
+      }
+    }
+
+    // Se não encontrou de nenhuma forma, tenta usar o autor direto do produto
+    if (produtoData.autor) {
+      console.log('ℹ️ Usando nome do autor diretamente do produto');
+      return {
+        id: produtoData.idUsuario || null,
+        nome: produtoData.autor,
+        fotoPerfil: produtoData.fotoPerfil || 'https://i.pravatar.cc/80'
+      };
+    }
+
+    console.warn('⚠️ Não foi possível encontrar informações do autor');
+    return null;
+  }, []);
+
+  // Carregar produto e comentários
+  useEffect(() => {
+    let isMounted = true;
+    
+    const carregarDados = async () => {
+      try {
+        setLoading(true);
+        
+        // Carrega o produto
+        const produtoData = await AnuncioService.buscarAnuncioPorId(id);
+        
+        if (!isMounted) return;
+        
+        // Busca os dados do autor
+        const autorInfo = await carregarAutor(produtoData);
+        
+        if (autorInfo) {
+          // Atualiza os dados do produto com as informações do autor
+          produtoData.autor = autorInfo.nome;
+          produtoData.fotoPerfil = autorInfo.fotoPerfil;
+          produtoData.idUsuario = autorInfo.id;
+        } else {
+          // Se não encontrou o autor, limpa as informações
+          produtoData.autor = null;
+          produtoData.fotoPerfil = null;
+        }
+        
+        setProduto(produtoData);
+        
+        // Carrega os comentários
+        try {
+          const comentariosData = await ComentariosService.listarComentariosProduto(id);
+          if (isMounted) {
+            setComentarios(comentariosData);
           }
         } catch (err) {
-          console.error(
-            "❌ Erro ao buscar autor (403 - backend bloqueando):",
-            err
-          );
-          // Fallback: usa o campo autor se existir
-          setNomeAutor(produto.autor || "Vendedor");
+          console.error('Erro ao carregar comentários:', err);
+          if (isMounted) {
+            setComentarios([]);
+          }
         }
-      } else if (produto && produto.autor) {
-        // Se não tem idUsuario, usa o campo autor direto
-        setNomeAutor(produto.autor);
+      } catch (err) {
+        console.error('Erro ao carregar produto:', err);
+        if (isMounted) {
+          setProduto(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
-    buscarAutor();
+    
+    carregarDados();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [id, carregarAutor]);
+
+  // Atualiza o nome do autor quando o produto for carregado
+  useEffect(() => {
+    if (produto?.autor) {
+      setNomeAutor(produto.autor);
+    } else {
+      setNomeAutor(null);
+    }
   }, [produto]);
 
   // Verificação de permissões baseada no token JWT
@@ -435,12 +559,12 @@ export default function ProdutoInfo() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
 
-            {/* Badge da Zona */}
+            {/* Badge da Região */}
             <div
               className="absolute top-6 right-6 px-4 py-2 rounded-full text-white font-bold text-sm shadow-lg backdrop-blur-sm"
               style={{ backgroundColor: corPrincipal }}
             >
-              {produto.zona || "VENDA"}
+              {produto.regiao || produto.zona || regiao || 'Anúncio'}
             </div>
 
             {/* Vendedor - CANTO SUPERIOR ESQUERDO */}

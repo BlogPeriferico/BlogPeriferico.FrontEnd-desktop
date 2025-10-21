@@ -1,4 +1,4 @@
- import React, { useEffect, useState } from "react";
+ import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import CorreCertoService from "../../services/CorreCertoService";
 import ComentariosService from "../../services/ComentariosService";
@@ -34,66 +34,166 @@ export default function VagaInfo() {
   // Carregar perfil do usuário usando UserContext
   useEffect(() => {
     if (user && user.id) {
-      setUsuarioLogado({
+      const userData = {
         id: user.id,
         email: user.email,
         nome: user.nome,
-        papel: user.role || user.papel,
+        role: user.role || user.roles || user.papel,
+        roles: user.roles || user.role || user.papel,
+        papel: user.papel || user.role || user.roles,
         fotoPerfil: user.fotoPerfil,
-      });
+      };
+      setUsuarioLogado(userData);
     }
   }, [user]);
 
-  // Carregar vaga se não veio pelo state
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  // Função para carregar os dados do autor da vaga
+  const carregarAutor = useCallback(async (vagaData) => {
+    if (!vagaData) return null;
+    
+    console.log('🔍 Buscando autor para a vaga:', {
+      id: vagaData.id,
+      idUsuario: vagaData.idUsuario,
+      emailUsuario: vagaData.emailUsuario,
+      autorAtual: vagaData.autor
+    });
 
-    if (!vaga && id) {
-      setLoading(true);
-      CorreCertoService.buscarVagaPorId(id)
-        .then((data) => setVaga(data))
-        .catch((err) => {
-          console.error("❌ Erro ao buscar vaga:", err);
-          setVaga(null);
-        })
-        .finally(() => setLoading(false));
-    }
-  }, [id]);
-
-  // Buscar nome do autor da vaga
-  useEffect(() => {
-    const buscarAutor = async () => {
-      if (vaga && vaga.idUsuario) {
+    // Tenta buscar por idUsuario primeiro (caso mais comum)
+    if (vagaData.idUsuario) {
+      try {
+        console.log(`🔍 Buscando usuário por ID: ${vagaData.idUsuario}`);
+        const response = await api.get(`/usuarios/${vagaData.idUsuario}`);
+        if (response.data) {
+          console.log('✅ Usuário encontrado por ID:', response.data.nome);
+          return {
+            id: response.data.id,
+            nome: response.data.nome,
+            fotoPerfil: response.data.fotoPerfil || 'https://i.pravatar.cc/80'
+          };
+        }
+      } catch (err) {
+        console.warn('❌ Erro ao buscar usuário por ID, tentando listar todos...', err);
+        
+        // Se falhar, tenta listar todos e filtrar localmente
         try {
-          const response = await api.get("/usuarios/listar");
-          const usuarios = response.data;
-          const autor = usuarios.find((u) => u.id === vaga.idUsuario);
-          if (autor) {
-            setNomeAutor(autor.nome);
-            console.log("✅ Autor da vaga:", autor.nome);
+          console.log('🔍 Listando todos os usuários para encontrar por ID...');
+          const response = await api.get('/usuarios/listar');
+          const usuario = response.data.find(u => u.id === vagaData.idUsuario);
+          if (usuario) {
+            console.log('✅ Usuário encontrado na lista:', usuario.nome);
+            return {
+              id: usuario.id,
+              nome: usuario.nome,
+              fotoPerfil: usuario.fotoPerfil || 'https://i.pravatar.cc/80'
+            };
+          }
+        } catch (listErr) {
+          console.error('❌ Erro ao listar usuários:', listErr);
+        }
+      }
+    }
+
+    // Se não encontrou por ID, tenta por email
+    if (vagaData.emailUsuario) {
+      try {
+        console.log(`📧 Buscando usuário por email: ${vagaData.emailUsuario}`);
+        const response = await api.get('/usuarios/listar');
+        const usuario = response.data.find(u => u.email === vagaData.emailUsuario);
+        if (usuario) {
+          console.log('✅ Usuário encontrado por email:', usuario.nome);
+          return {
+            id: usuario.id,
+            nome: usuario.nome,
+            fotoPerfil: usuario.fotoPerfil || 'https://i.pravatar.cc/80'
+          };
+        }
+      } catch (err) {
+        console.error('❌ Erro ao buscar usuário por email:', err);
+      }
+    }
+
+    // Se não encontrou de nenhuma forma, tenta usar o autor direto da vaga
+    if (vagaData.autor) {
+      console.log('ℹ️ Usando nome do autor diretamente da vaga');
+      return {
+        id: vagaData.idUsuario || null,
+        nome: vagaData.autor,
+        fotoPerfil: vagaData.fotoPerfil || 'https://i.pravatar.cc/80'
+      };
+    }
+
+    console.warn('⚠️ Não foi possível encontrar informações do autor');
+    return null;
+  }, []);
+
+  // Carregar vaga e comentários
+  useEffect(() => {
+    let isMounted = true;
+    
+    const carregarDados = async () => {
+      try {
+        setLoading(true);
+        
+        // Carrega a vaga
+        const vagaData = await CorreCertoService.buscarCorrecertoPorId(id);
+        
+        if (!isMounted) return;
+        
+        // Busca os dados do autor
+        const autorInfo = await carregarAutor(vagaData);
+        
+        if (autorInfo) {
+          // Atualiza os dados da vaga com as informações do autor
+          vagaData.autor = autorInfo.nome;
+          vagaData.fotoPerfil = autorInfo.fotoPerfil;
+          vagaData.idUsuario = autorInfo.id;
+        } else {
+          // Se não encontrou o autor, limpa as informações
+          vagaData.autor = null;
+          vagaData.fotoPerfil = null;
+        }
+        
+        setVaga(vagaData);
+        
+        // Carrega os comentários
+        try {
+          const comentariosData = await ComentariosService.listarComentariosVaga(id);
+          if (isMounted) {
+            setComentarios(comentariosData);
           }
         } catch (err) {
-          console.error("❌ Erro ao buscar autor:", err);
+          console.error('Erro ao carregar comentários:', err);
+          if (isMounted) {
+            setComentarios([]);
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar vaga:', err);
+        if (isMounted) {
+          setVaga(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
     };
-    buscarAutor();
-  }, [vaga]);
-
-  // Carregar comentários
-  useEffect(() => {
-    const carregarComentarios = async () => {
-      try {
-        const dados = await ComentariosService.listarComentariosVaga(id);
-        setComentarios(dados);
-      } catch (err) {
-        console.error("❌ Erro ao buscar comentários:", err);
-        setComentarios([]);
-      }
+    
+    carregarDados();
+    
+    return () => {
+      isMounted = false;
     };
+  }, [id, carregarAutor]);
 
-    carregarComentarios();
-  }, [id]);
+  // Atualiza o nome do autor quando a vaga for carregada
+  useEffect(() => {
+    if (vaga?.autor) {
+      setNomeAutor(vaga.autor);
+    } else {
+      setNomeAutor(null);
+    }
+  }, [vaga]);
 
   // Atualiza fotoPerfil da vaga quando foto do usuário muda
   useEffect(() => {

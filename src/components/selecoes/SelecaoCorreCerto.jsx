@@ -61,10 +61,17 @@ export default function SelecaoCorreCerto({ correcertos, loading = false }) {
                 }}
               />
 
-              {/* Badge */}
+              {/* Badge de Região */}
               <div className="absolute top-4 right-4">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 backdrop-blur-sm text-gray-800 shadow-lg">
-                  {vaga.zona || "SP"}
+                <span 
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm shadow-lg border border-gray-200"
+                  style={{ 
+                    backgroundColor: `${corPrincipal}20`,
+                    color: corPrincipal,
+                    borderColor: corPrincipal
+                  }}
+                >
+                  {regiao || vaga.zona || "SP"}
                 </span>
               </div>
 

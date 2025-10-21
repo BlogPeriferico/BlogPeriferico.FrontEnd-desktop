@@ -91,16 +91,21 @@ const DoacaoService = {
   excluirDoacao: async (id) => {
     console.log("🗑️ Excluindo doação com ID:", id);
 
-    const token = localStorage.getItem("token");
+    // Usando a mesma lógica do UserContext para buscar o token
+    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
     if (!token) {
-      console.error("⚠️ Usuário não está logado.");
+      console.error("❌ Nenhum token encontrado no localStorage");
       throw new Error("Usuário não está logado.");
     }
 
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
     try {
-      const response = await api.delete(`/doacoes/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.delete(`/doacoes/${id}`, config);
       console.log(`✅ Doação ${id} excluída com sucesso.`, response.data);
       return response.data;
     } catch (err) {

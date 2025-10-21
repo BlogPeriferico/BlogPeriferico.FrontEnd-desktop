@@ -10,7 +10,7 @@ const AnuncioService = {
       delete anuncioData.id;
     }
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
     if (!token) {
       console.error("⚠️ Usuário não está logado.");
       throw new Error("Usuário não está logado.");
@@ -54,7 +54,7 @@ const AnuncioService = {
     console.log("🔍 Buscando anúncio com ID:", id);
     try {
       const response = await api.get(`/vendas/${id}`);
-      console.log("✅ Anúncio recebido:", response.data);
+      console.log("✅ Dados do anúncio recebidos:", response.data);
       return response.data;
     } catch (err) {
       console.error(`❌ Erro ao buscar anúncio ${id}:`, err.response?.data || err);
@@ -66,7 +66,7 @@ const AnuncioService = {
   atualizarAnuncio: async (id, anuncioData) => {
     console.log(`✏️ Atualizando anúncio ${id} com dados:`, anuncioData);
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
     if (!token) {
       console.error("⚠️ Usuário não está logado.");
       throw new Error("Usuário não está logado.");
@@ -96,20 +96,30 @@ const AnuncioService = {
   excluirAnuncio: async (id) => {
     console.log("🗑️ Excluindo anúncio com ID:", id);
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
     if (!token) {
-      console.error("⚠️ Usuário não está logado.");
+      console.error("❌ Nenhum token encontrado no localStorage");
       throw new Error("Usuário não está logado.");
     }
 
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    };
+
     try {
-      const response = await api.delete(`/vendas/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log(`✅ Anúncio ${id} excluído com sucesso.`, response.data);
+      const response = await api.delete(`/vendas/${id}`, config);
+      console.log(`✅ Anúncio ${id} excluído com sucesso`);
       return response.data;
     } catch (err) {
       console.error(`❌ Erro ao excluir anúncio ${id}:`, err.response?.data || err);
+      // Melhora a mensagem de erro para o usuário
+      if (err.response?.status === 403) {
+        throw new Error("Você não tem permissão para excluir este anúncio.");
+      } else if (err.response?.status === 404) {
+        throw new Error("Anúncio não encontrado ou já foi excluído.");
+      }
       throw err;
     }
   },
