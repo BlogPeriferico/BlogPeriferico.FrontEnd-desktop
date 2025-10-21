@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import NoticiaService from "../../services/NoticiasService";
@@ -17,6 +18,9 @@ export default function NoticiasInfo() {
   const { regiao } = useRegiao();
   const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
+  
+  // Log para depuração
+  console.log('🔍 UserContext - user:', user);
 
   const [noticia, setNoticia] = useState(location.state || null);
   const [loading, setLoading] = useState(!location.state);
@@ -39,13 +43,20 @@ export default function NoticiasInfo() {
   // Carregar perfil do usuário usando UserContext
   useEffect(() => {
     if (user && user.id) {
-      setUsuarioLogado({
+      const userData = {
         id: user.id,
         email: user.email,
         nome: user.nome,
-        papel: user.role || user.papel,
+        role: user.role || user.roles || user.papel,
+        roles: user.roles || user.role || user.papel,
+        papel: user.papel || user.role || user.roles,
         fotoPerfil: user.fotoPerfil,
-      });
+      };
+      
+      console.log('🔄 Dados do usuário do contexto:', user);
+      console.log('🔄 Dados normalizados do usuário:', userData);
+      
+      setUsuarioLogado(userData);
     }
   }, [user]);
 
@@ -55,100 +66,102 @@ export default function NoticiasInfo() {
 
     if (!noticia) {
       setLoading(true);
+      console.log("🔍 NoticiasInfo - Carregando notícia do backend...");
       NoticiaService.buscarNoticiaPorId(id)
-        .then((data) => {
-          console.log(" NoticiasInfo - Notícia carregada do backend:", data);
-          console.log(" Campos disponíveis na notícia:", Object.keys(data));
-          console.log(" fotoPerfil na notícia carregada:", data.fotoPerfil);
-          console.log(" fotoAutor na notícia carregada:", data.fotoAutor);
+        .then(async (data) => {
+          console.log("✅ NoticiasInfo - Notícia carregada:", data);
+
+          // ✅ Buscar dados do usuário junto com a notícia
+          if (data.idUsuario) {
+            try {
+              console.log("🔍 Buscando dados do autor ID:", data.idUsuario);
+              const response = await api.get("/usuarios/listar");
+              const usuarios = response.data;
+              const autor = usuarios.find((u) => u.id === data.idUsuario);
+
+              if (autor) {
+                // ✅ Inclui fotoPerfil diretamente na notícia
+                data.fotoPerfil = autor.fotoPerfil;
+                data.nomeAutor = autor.nome;
+                console.log("✅ Dados do autor incluídos:", {
+                  nome: autor.nome,
+                  fotoPerfil: autor.fotoPerfil ? "Presente" : "Ausente"
+                });
+              }
+            } catch (err) {
+              console.error("❌ Erro ao buscar autor:", err);
+            }
+          }
+
           setNoticia(data);
         })
         .catch((err) => {
-          console.error(" Erro ao buscar notícia:", err);
+          console.error("❌ Erro ao buscar notícia:", err);
           setNoticia(null);
         })
         .finally(() => setLoading(false));
     }
+  }, [id, noticia]);
 
-    const carregarComentarios = async () => {
-      try {
-        const dados = await ComentariosService.listarComentariosNoticia(id);
-        setComentarios(dados);
-      } catch (err) {
-        console.error(" Erro ao buscar comentários:", err);
-        setComentarios([]);
-      }
-    };
+  const carregarComentarios = async () => {
+    try {
+      const dados = await ComentariosService.listarComentariosNoticia(id);
+      setComentarios(dados);
+    } catch (err) {
+      console.error("❌ Erro ao buscar comentários:", err);
+      setComentarios([]);
+    }
+  };
 
+  // Carrega comentários apenas se não foram atualizados recentemente
+  useEffect(() => {
     carregarComentarios();
   }, [id]);
 
-  // Atualiza fotoPerfil da notícia quando foto do usuário muda
+  // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
-    if (noticia && user?.id && noticia.idUsuario === user.id) {
-      const novaFoto = user.fotoPerfil || "https://i.pravatar.cc/80";
+    if (user?.id && comentarios.length > 0) {
+      setComentarios(prevComentarios => {
+        const updated = prevComentarios.map(coment => {
+          const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
 
-      // Só atualiza se a foto realmente mudou
-      if (novaFoto !== noticia.fotoPerfil) {
-        console.log(" NoticiasInfo - Atualizando fotoPerfil da notícia:", noticia.id);
-        console.log(" Foto antes:", noticia.fotoPerfil);
-        console.log(" Foto depois:", novaFoto);
+          if (isUserComment) {
+            return { ...coment, avatar: user.fotoPerfil || "https://i.pravatar.cc/40" };
+          }
+          return coment;
+        });
 
-        setNoticia((prevNoticia) => ({
-          ...prevNoticia,
-          fotoPerfil: novaFoto,
-        }));
-
-        console.log(" NoticiasInfo - fotoPerfil atualizada");
-      } else {
-        console.log(" NoticiasInfo - Foto já está atualizada:", novaFoto);
-      }
+        return updated;
+      });
     }
-  }, [noticia, user]);
+  }, [user?.fotoPerfil, user?.id, comentarios.length]);
 
-  // Sincroniza fotoPerfil inicial quando notícia e usuário estão disponíveis
-  useEffect(() => {
-    if (noticia && user?.id && noticia.idUsuario === user.id && user.fotoPerfil && !noticia.fotoPerfil) {
-      console.log(" NoticiasInfo - Sincronizando fotoPerfil inicial:", noticia.id);
-      console.log(" Foto do usuário:", user.fotoPerfil);
-
-      setNoticia((prevNoticia) => ({
-        ...prevNoticia,
-        fotoPerfil: user.fotoPerfil,
-      }));
-
-      console.log(" NoticiasInfo - fotoPerfil inicial sincronizada");
-    }
-  }, [noticia, user]);
-
-  // Buscar nome do autor da notícia
+  // Buscar nome do autor da notícia (se não veio com a notícia)
   useEffect(() => {
     const buscarAutor = async () => {
-      if (noticia && noticia.idUsuario) {
+      if (noticia && noticia.idUsuario && !nomeAutor) {
         try {
           const response = await api.get("/usuarios/listar");
           const usuarios = response.data;
           const autor = usuarios.find((u) => u.id === noticia.idUsuario);
           if (autor) {
             setNomeAutor(autor.nome);
-            console.log(" Autor da notícia:", autor.nome);
           }
         } catch (err) {
-          console.error(" Erro ao buscar autor:", err);
+          console.error("❌ Erro ao buscar autor:", err);
         }
       }
     };
     buscarAutor();
-  }, [noticia]);
+  }, [noticia?.idUsuario, nomeAutor]); // Dependências corretas
 
   // Monitorar mudanças na notícia para debug
   useEffect(() => {
     if (noticia) {
-      console.log(" NoticiasInfo - Notícia mudou:", {
+      console.log("🔍 NoticiasInfo - Notícia mudou:", {
         id: noticia.id,
-        fotoPerfil: noticia.fotoPerfil,
         idUsuario: noticia.idUsuario,
-        titulo: noticia.titulo,
+        titulo: noticia.titulo
       });
     }
   }, [noticia]);
@@ -172,8 +185,6 @@ export default function NoticiasInfo() {
         idUsuario: usuarioLogado.id,
       };
 
-      console.log(" Enviando comentário:", dto);
-
       const comentarioCriado = await ComentariosService.criarComentario(dto);
 
       if (!comentarioCriado.nomeUsuario) {
@@ -185,7 +196,7 @@ export default function NoticiasInfo() {
       setComentarios((prev) => [...prev, comentarioCriado]);
       setNovoComentario("");
     } catch (err) {
-      console.error(" Erro ao publicar comentário:", err);
+      console.error("❌ Erro ao publicar comentário:", err);
       alert("Erro ao publicar comentário, tente novamente.");
     } finally {
       setComentLoading(false);
@@ -205,61 +216,60 @@ export default function NoticiasInfo() {
     }
   };
 
-  // Verificação de propriedade da notícia (SIMPLE E FUNCIONAL - igual ao ProdutoInfo)
-  const papel = usuarioLogado.papel || "";
-  const papelStr = String(papel).toUpperCase();
-
-  const podeExcluirNoticia = Boolean(
-    noticia &&
-      usuarioLogado &&
-      (
-        // ADMIN pode deletar qualquer notícia
-        papelStr.includes("ADMINISTRADOR") ||
-        papelStr.includes("ADMIN") ||
-        // Autor pode deletar apenas sua própria notícia
-        noticia.idUsuario === usuarioLogado.id ||
-        noticia.emailUsuario === usuarioLogado.email ||
-        noticia.autor === usuarioLogado.nome
-      )
+  // Verificação de propriedade da notícia
+  // Verifica role, roles ou papel, em qualquer caso
+  const userRole = usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
+  const roleNormalizado = String(userRole).toUpperCase();
+  const papelStr = roleNormalizado; // Adicionando papelStr para compatibilidade
+  
+  // Verificação de permissões
+  const isAdmin = roleNormalizado.includes("ADMIN") || roleNormalizado.includes("ADMINISTRADOR");
+  const isAutor = noticia && (
+    noticia.idUsuario === usuarioLogado?.id ||
+    noticia.emailUsuario === usuarioLogado?.email ||
+    noticia.autor === usuarioLogado?.nome
   );
+  
+  const podeExcluirNoticia = Boolean(noticia && usuarioLogado && (isAdmin || isAutor));
 
-  // Debug: log de permissões
+  // Debug: log detalhado
   useEffect(() => {
-    if (noticia && usuarioLogado.id) {
-      console.log(" Verificação de permissões:");
-      console.log("  - Papel do usuário:", usuarioLogado.papel);
-      console.log("  - Papel (string):", papelStr);
-      console.log(
-        "  - É ADMIN?",
-        papelStr.includes("ADMINISTRADOR") ||
-          papelStr.includes("ADMIN")
-      );
-      console.log("  - ID do autor da notícia:", noticia.idUsuario);
-      console.log("  - Nome do autor:", nomeAutor);
-      console.log("  - ID do usuário logado:", usuarioLogado.id);
-      console.log("  - Nome do usuário:", usuarioLogado.nome);
-      console.log("  - Pode excluir?", podeExcluirNoticia);
+    if (noticia && usuarioLogado?.id) {
+      console.log("🔍 DETALHES DE PERMISSÕES:", {
+        usuario: usuarioLogado.nome,
+        role: userRole,
+        roleNormalizado,
+        isAdmin,
+        isAutor,
+        podeExcluirNoticia,
+        noticiaId: noticia.id,
+        noticiaAutor: noticia.autor || noticia.nomeAutor,
+        usuarioLogado: { 
+          id: usuarioLogado.id, 
+          nome: usuarioLogado.nome,
+          email: usuarioLogado.email,
+          role: usuarioLogado.role,
+          roles: usuarioLogado.roles,
+          papel: usuarioLogado.papel
+        }
+      });
     }
-  }, [noticia, usuarioLogado, podeExcluirNoticia]);
+  }, [noticia, usuarioLogado, isAdmin, isAutor, podeExcluirNoticia, userRole, roleNormalizado]);
 
   // Deletar notícia
   const handleDeletarNoticia = async () => {
     try {
-      console.log(" Tentando excluir notícia ID:", id);
-      console.log(" Token no localStorage:", localStorage.getItem("token"));
-      console.log(" Usuário logado:", usuarioLogado);
-
       await NoticiaService.excluirNoticia(id);
       setModalDeletarNoticia(false);
       alert("Notícia excluída com sucesso.");
       navigate("/quebrada-informa");
     } catch (err) {
-      console.error(" Erro ao excluir notícia:", err);
-      console.error(" Resposta do servidor:", err.response?.data);
+      console.error("❌ Erro ao excluir notícia:", err);
+      console.error("❌ Resposta do servidor:", err.response?.data);
       const status = err?.response?.status;
       if (status === 403 || status === 401) {
         alert(
-          " ERRO DE AUTORIZAÇÃO NO BACKEND\n\n" +
+          "❌ ERRO DE AUTORIZAÇÃO NO BACKEND\n\n" +
             "O servidor está negando a exclusão desta notícia.\n\n" +
             "Possíveis causas:\n" +
             "1. Você não é o dono desta notícia\n" +
@@ -277,8 +287,45 @@ export default function NoticiasInfo() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-6 mt-[80px]">
-        <p className="text-gray-600">Carregando notícia...</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 mt-[80px]">
+          {/* Botão Voltar */}
+          <button
+            onClick={() => navigate("/quebrada-informa")}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
+          >
+            <svg
+              className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
+            </svg>
+            <span className="font-medium">Voltar para notícias</span>
+          </button>
+
+          {/* Loading Elaborado */}
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6" style={{ borderColor: corPrincipal }}></div>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Carregando notícia...</h2>
+              <p className="text-gray-600 text-lg max-w-md mx-auto">
+                Aguarde enquanto buscamos todos os detalhes desta notícia
+              </p>
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -341,15 +388,16 @@ export default function NoticiasInfo() {
             <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
                 src={noticia.fotoPerfil || "https://i.pravatar.cc/80"}
-                alt={noticia.autor}
+                alt={nomeAutor || noticia.autor}
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                onError={(e) => {
+                  e.target.src = "https://i.pravatar.cc/80";
+                }}
               />
               <div>
-                <p className="text-sm font-medium text-black" style={{ color: corPrincipal }}>
-                  Publicado por
-                </p>
-                <p className="text-lg font-bold text-black" style={{ color: corPrincipal }}>
-                  {nomeAutor || "Carregando..."}
+                <p className="text-sm font-medium" style={{ color: corPrincipal }}>Publicado por</p>
+                <p className="text-lg font-bold" style={{ color: corPrincipal }}>
+                  {nomeAutor || noticia.autor || "Carregando..."}
                 </p>
               </div>
             </div>
@@ -563,23 +611,24 @@ export default function NoticiasInfo() {
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {coment.dataHoraCriacao
-                              ? new Date(
-                                  coment.dataHoraCriacao
-                                ).toLocaleString("pt-BR", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
+                              ? new Date(coment.dataHoraCriacao).toLocaleString(
+                                  "pt-BR",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )
                               : "agora"}
                           </p>
                         </div>
                         {((coment.idUsuario === usuarioLogado.id ||
                           coment.emailUsuario === usuarioLogado.email) ||
-                          // ADMIN pode deletar qualquer comentário
+                          // ✅ ADMIN pode deletar qualquer comentário
                           (papelStr.includes("ADMINISTRADOR") ||
-                            papelStr.includes("ADMIN"))) && (
+                           papelStr.includes("ADMIN"))) && (
                           <button
                             onClick={() =>
                               setModalDeletar({
@@ -618,32 +667,28 @@ export default function NoticiasInfo() {
         </div>
 
         {/* Modal de Confirmação de Exclusão */}
-        {modalDeletar.isOpen && (
-          <ModalConfirmacao
-            isOpen={modalDeletar.isOpen}
-            onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}
-            onConfirm={handleDeletarComentario}
-            titulo="Excluir Comentário"
-            mensagem="Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
-            textoBotaoConfirmar="Excluir"
-            textoBotaoCancelar="Cancelar"
-            corBotaoConfirmar="#ef4444"
-          />
-        )}
+        <ModalConfirmacao
+          isOpen={modalDeletar.isOpen}
+          onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}
+          onConfirm={handleDeletarComentario}
+          titulo="Excluir Comentário"
+          mensagem="Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
+          textoBotaoConfirmar="Excluir"
+          textoBotaoCancelar="Cancelar"
+          corBotaoConfirmar="#ef4444"
+        />
 
         {/* Modal de Confirmação para Excluir Notícia */}
-        {modalDeletarNoticia && (
-          <ModalConfirmacao
-            isOpen={modalDeletarNoticia}
-            onClose={() => setModalDeletarNoticia(false)}
-            onConfirm={handleDeletarNoticia}
-            titulo="Excluir Notícia"
-            mensagem="Tem certeza que deseja excluir esta notícia? Esta ação não pode ser desfeita."
-            textoBotaoConfirmar="Excluir"
-            textoBotaoCancelar="Cancelar"
-            corBotaoConfirmar="#ef4444"
-          />
-        )}
+        <ModalConfirmacao
+          isOpen={modalDeletarNoticia}
+          onClose={() => setModalDeletarNoticia(false)}
+          onConfirm={handleDeletarNoticia}
+          titulo="Excluir Notícia"
+          mensagem="Tem certeza que deseja excluir esta notícia? Esta ação não pode ser desfeita."
+          textoBotaoConfirmar="Excluir"
+          textoBotaoCancelar="Cancelar"
+          corBotaoConfirmar="#ef4444"
+        />
       </div>
     </div>
   );

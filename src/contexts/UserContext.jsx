@@ -12,11 +12,15 @@ export function UserProvider({ children }) {
   // Carrega usuário do token/localStorage ao iniciar
   useEffect(() => {
     const loadUser = async () => {
-      const token = localStorage.getItem("token");
+      // Verifica tanto 'token' quanto 'userToken' para compatibilidade
+      const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+      
       if (!token) {
+        console.log("🔍 Nenhum token encontrado no localStorage");
         // fallback: tenta carregar do localStorage
         const savedUser = localStorage.getItem("user");
         if (savedUser) {
+          console.log("🔍 Carregando usuário do localStorage:", JSON.parse(savedUser));
           setUser(JSON.parse(savedUser));
         }
         return;
@@ -61,22 +65,35 @@ export function UserProvider({ children }) {
 
   // login
   const login = (userData) => {
+    // Obtém o papel do usuário, verificando todos os possíveis nomes de campo
+    const role = userData.role || userData.roles || userData.papel || "USUARIO";
+    const roleNormalizado = String(role).toUpperCase();
+    
     const userWithDefaults = {
       id: userData.id,
       nome: userData.nome || "Usuário",
-      email: userData.email || "",
+      email: userData.email,
+      token: userData.token,
       fotoPerfil: userData.fotoPerfil || NoPicture,
-      role: userData.role || "visitante",
+      role: roleNormalizado,          // Padroniza como 'role'
+      roles: roleNormalizado,         // Mantém compatibilidade com 'roles'
+      papel: roleNormalizado,         // Mantém compatibilidade com 'papel'
     };
+    
+    console.log(" Login realizado:", userWithDefaults);
     setUser(userWithDefaults);
     localStorage.setItem("user", JSON.stringify(userWithDefaults));
   };
 
   // logout
   const logout = () => {
+    console.log('🔒 Efetuando logout...');
     setUser(null);
+    // Remove todos os tokens possíveis
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.removeItem("userToken");
+    console.log('✅ Logout concluído. Dados removidos do localStorage.');
   };
 
   // updateProfile (usado no EditaPerfil)

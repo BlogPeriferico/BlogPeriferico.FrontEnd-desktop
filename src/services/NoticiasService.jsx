@@ -94,16 +94,21 @@ const NoticiaService = {
   excluirNoticia: async (id) => {
     console.log("🗑️ Excluindo notícia com ID:", id);
 
-    const token = localStorage.getItem("token");
+    // Usando a mesma lógica do UserContext para buscar o token
+    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
     if (!token) {
+      console.error("❌ Nenhum token encontrado no localStorage");
       throw new Error("Usuário não está logado.");
     }
 
-    console.log("🔑 Token sendo enviado:", token.substring(0, 50) + "...");
+    console.log("🔑 Token sendo enviado:", token.substring(0, 10) + "...");
 
     try {
       const response = await api.delete(`/noticias/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
       });
       console.log(`✅ Notícia ${id} excluída.`, response.data);
       return response.data;
