@@ -33,6 +33,16 @@ export default function SelecaoCorreCerto({ correcertos, loading = false }) {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: corPrincipal }}></div>
           <span className="ml-3 text-gray-600">Carregando vagas...</span>
         </div>
+      ) : ultimasVagas.length === 0 ? (
+        <div className="text-center py-20">
+          <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M12 18h.01M12 15a3 3 0 100-6 3 3 0 000 6z"></path>
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhuma vaga publicada ainda</h3>
+          <p className="text-gray-600">Seja o primeiro a compartilhar uma vaga da sua região!</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
           {ultimasVagas.map((vaga) => (
@@ -70,7 +80,7 @@ export default function SelecaoCorreCerto({ correcertos, loading = false }) {
                       borderColor: corPrincipal
                     }}
                   >
-                    {regiao || vaga.zona || "SP"}
+                    {vaga.regiao || vaga.zona || "SP"}
                   </span>
                 </div>
 

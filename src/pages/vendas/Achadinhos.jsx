@@ -23,10 +23,15 @@ export default function Vendas() {
     id: String(p.id),
     titulo: p.titulo || "",
     descricao: p.descricao || "",
-    preco: p.preco || 0,
+    // Preço e valor: mantém ambos para compatibilidade na listagem
+    preco: p.preco ?? p.valor ?? null,
+    valor: p.valor ?? p.preco ?? null,
+    // Região/Zona
     regiao: p.regiao || p.zona || p.local || "Centro",
     dataHoraCriacao: p.dataHoraCriacao || new Date().toISOString(),
-    contato: p.contato || "",
+    // Contatos: preserva diferentes possíveis chaves
+    telefone: p.telefone || p.contato || p.celular || p.whatsapp || "",
+    contato: p.contato || p.telefone || "",
     imagem: p.imagem || "",
     categoria: p.categoria || "Outros"
   });
@@ -49,11 +54,12 @@ export default function Vendas() {
         new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
       
-      // Filtra por região se necessário
+      // Filtra por região se necessário (trata Central vs Centro)
       let produtosFiltrados = produtosOrdenados;
       if (regiao) {
+        const regiaoFiltro = regiao.toLowerCase() === 'central' ? 'Centro' : regiao;
         produtosFiltrados = produtosOrdenados.filter(produto => 
-          produto.regiao && produto.regiao.toLowerCase() === regiao.toLowerCase()
+          produto.regiao && produto.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
         );
       }
       
@@ -97,6 +103,8 @@ export default function Vendas() {
       )}
 
       <CarrosselVendas produtos={produtos} />
+
+      {/* SelecaoAnuncios cuida do cabeçalho, loading e estado vazio */}
       <SelecaoAnuncios produtos={produtos} loading={loadingProdutos} />
     </div>
   );

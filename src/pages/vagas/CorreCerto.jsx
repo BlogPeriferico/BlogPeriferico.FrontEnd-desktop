@@ -29,7 +29,9 @@ export default function CorreCerto() {
     tipo: v.tipo || "CLT",
     regiao: v.regiao || v.zona || v.local || "Centro",
     dataHoraCriacao: v.dataHoraCriacao || new Date().toISOString(),
-    contato: v.contato || "",
+    // Contatos normalizados: garante que `telefone` seja preenchido para a listagem
+    telefone: v.telefone || v.contato || v.celular || v.whatsapp || "",
+    contato: v.contato || v.telefone || "",
     imagem: v.imagem || ""
   });
 
@@ -51,11 +53,12 @@ export default function CorreCerto() {
         new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
       
-      // Filtra por região se necessário
+      // Filtra por região se necessário (trata Central vs Centro)
       let vagasFiltradas = vagasOrdenadas;
       if (regiao) {
+        const regiaoFiltro = regiao.toLowerCase() === 'central' ? 'Centro' : regiao;
         vagasFiltradas = vagasOrdenadas.filter(vaga => 
-          vaga.regiao && vaga.regiao.toLowerCase() === regiao.toLowerCase()
+          vaga.regiao && vaga.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
         );
       }
       

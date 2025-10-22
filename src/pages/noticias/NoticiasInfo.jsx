@@ -10,6 +10,7 @@ import { useUser } from "../../contexts/UserContext.jsx";
 import { regionColors } from "../../utils/regionColors";
 import { FaTimes, FaTrash } from "react-icons/fa";
 import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
+import NoPicture from "../../assets/images/NoPicture.webp";
 
 export default function NoticiasInfo() {
   const { id } = useParams();
@@ -126,7 +127,7 @@ export default function NoticiasInfo() {
           const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
 
           if (isUserComment) {
-            return { ...coment, avatar: user.fotoPerfil || "https://i.pravatar.cc/40" };
+            return { ...coment, avatar: user.fotoPerfil || NoPicture };
           }
           return coment;
         });
@@ -190,7 +191,7 @@ export default function NoticiasInfo() {
       if (!comentarioCriado.nomeUsuario) {
         comentarioCriado.nomeUsuario = user.nome || "Você";
         comentarioCriado.dataHoraCriacao = new Date().toISOString();
-        comentarioCriado.avatar = user.fotoPerfil || "https://i.pravatar.cc/40";
+        comentarioCriado.avatar = user.fotoPerfil || NoPicture;
       }
 
       setComentarios((prev) => [...prev, comentarioCriado]);
@@ -387,11 +388,11 @@ export default function NoticiasInfo() {
             {/* Autor - MOVIDO PARA CANTO SUPERIOR ESQUERDO */}
             <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
-                src={noticia.fotoPerfil || "https://i.pravatar.cc/80"}
+                src={noticia.fotoPerfil || NoPicture}
                 alt={nomeAutor || noticia.autor}
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
                 onError={(e) => {
-                  e.target.src = "https://i.pravatar.cc/80";
+                  e.target.src = NoPicture;
                 }}
               />
               <div>
@@ -507,7 +508,7 @@ export default function NoticiasInfo() {
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img
-                src={user?.fotoPerfil || "https://i.pravatar.cc/40"}
+                src={user?.fotoPerfil || NoPicture}
                 alt="Seu avatar"
                 className="w-10 h-10 rounded-full border-2 hidden sm:block"
                 style={{ borderColor: corPrincipal }}
@@ -599,7 +600,7 @@ export default function NoticiasInfo() {
                 >
                   <div className="flex items-start gap-4">
                     <img
-                      src={coment.avatar || "https://i.pravatar.cc/40"}
+                      src={coment.avatar || NoPicture}
                       alt={coment.nomeUsuario || "Usuário"}
                       className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
                     />

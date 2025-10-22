@@ -104,11 +104,12 @@ export default function QuebradaInforma() {
         new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
       
-      // Filtra por região se necessário
+      // Filtra por região se necessário (trata Central vs Centro)
       let noticiasFiltradas = noticiasOrdenadas;
       if (regiao) {
+        const regiaoFiltro = regiao.toLowerCase() === 'central' ? 'Centro' : regiao;
         noticiasFiltradas = noticiasOrdenadas.filter(noticia => 
-          noticia.regiao && noticia.regiao.toLowerCase() === regiao.toLowerCase()
+          noticia.regiao && noticia.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
         );
       }
       

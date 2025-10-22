@@ -51,11 +51,12 @@ export default function Doacoes() {
         new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
       
-      // Filtra por região se necessário
+      // Filtra por região se necessário (trata Central vs Centro)
       let doacoesFiltradas = doacoesOrdenadas;
       if (regiao) {
+        const regiaoFiltro = regiao.toLowerCase() === 'central' ? 'Centro' : regiao;
         doacoesFiltradas = doacoesOrdenadas.filter(doacao => 
-          doacao.regiao && doacao.regiao.toLowerCase() === regiao.toLowerCase()
+          doacao.regiao && doacao.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
         );
       }
       

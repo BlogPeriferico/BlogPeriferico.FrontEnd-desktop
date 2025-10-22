@@ -8,6 +8,7 @@ import { useUser } from "../../contexts/UserContext.jsx";
 import { regionColors } from "../../utils/regionColors";
 import { FaTimes, FaTrash } from "react-icons/fa";
 import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
+import NoPicture from "../../assets/images/NoPicture.webp";
 
 export default function ProdutoInfo() {
   const { id } = useParams();
@@ -51,7 +52,7 @@ export default function ProdutoInfo() {
   // Atualiza fotoPerfil do produto quando foto do usuário muda
   useEffect(() => {
     if (produto && user?.id && produto.idUsuario === user.id) {
-      const novaFoto = user.fotoPerfil || "https://i.pravatar.cc/80";
+      const novaFoto = user.fotoPerfil || NoPicture;
 
       // Só atualiza se a foto realmente mudou
       if (novaFoto !== produto.fotoPerfil) {
@@ -104,9 +105,9 @@ export default function ProdutoInfo() {
           if (isUserComment) {
             console.log(`✅ ProdutoInfo - Atualizando comentário ${coment.id}:`, {
               de: coment.avatar,
-              para: user.fotoPerfil || "https://i.pravatar.cc/40"
+              para: user.fotoPerfil || NoPicture
             });
-            return { ...coment, avatar: user.fotoPerfil || "https://i.pravatar.cc/40" };
+            return { ...coment, avatar: user.fotoPerfil || NoPicture };
           }
           return coment;
         });
@@ -459,7 +460,7 @@ export default function ProdutoInfo() {
       if (!comentarioCriado.nomeUsuario) {
         comentarioCriado.nomeUsuario = user.nome || "Você";
         comentarioCriado.dataHoraCriacao = new Date().toISOString();
-        comentarioCriado.avatar = user.fotoPerfil || "https://i.pravatar.cc/40";
+        comentarioCriado.avatar = user.fotoPerfil || NoPicture;
       }
 
       setComentarios((prev) => [...prev, comentarioCriado]);

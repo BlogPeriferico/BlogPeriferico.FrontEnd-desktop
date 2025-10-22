@@ -58,6 +58,16 @@ const ComentariosService = {
     }
   },
 
+  listarComentariosVaga: async (idVaga) => {
+    try {
+      const response = await api.get(`/comentarios/vaga/${idVaga}`);
+      return response.data;
+    } catch (err) {
+      console.error("❌ Erro ao listar comentários da vaga:", err.response?.data || err);
+      throw err;
+    }
+  },
+
   criarComentarioDoacao: async (comentarioData) => {
     console.log("📤 Criando comentário na doação:", comentarioData);
 
