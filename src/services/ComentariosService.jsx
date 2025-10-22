@@ -4,11 +4,10 @@ const ComentariosService = {
   criarComentario: async (comentarioData) => {
     console.log("📤 Criando comentário:", comentarioData);
 
-    // Usando a mesma lógica do UserContext para buscar o token
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
     console.log("🔑 Token sendo usado:", token.substring(0, 10) + "...");
@@ -62,8 +61,8 @@ const ComentariosService = {
   criarComentarioDoacao: async (comentarioData) => {
     console.log("📤 Criando comentário na doação:", comentarioData);
 
-    const token = localStorage.getItem("userToken");
-    if (!token) throw new Error("Usuário não está logado.");
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Usuário não está logado. Faça login novamente.");
 
     try {
       const response = await api.post("/comentarios", comentarioData);
@@ -78,11 +77,10 @@ const ComentariosService = {
   criarComentarioVaga: async (comentarioData) => {
     console.log("📤 Criando comentário na vaga:", comentarioData);
 
-    // Usando a mesma lógica do UserContext para buscar o token
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
     console.log("🔑 Token sendo usado:", token.substring(0, 10) + "...");
@@ -106,11 +104,10 @@ const ComentariosService = {
   excluirComentario: async (idComentario) => {
     console.log("🗑️ Excluindo comentário com ID:", idComentario);
     
-    // Usando a mesma lógica do UserContext para buscar o token
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
     console.log("🔑 Token sendo usado:", token.substring(0, 10) + "...");

@@ -417,8 +417,45 @@ export default function DoacaoInfo() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-6 mt-[80px]">
-        <p className="text-gray-600">Carregando doação...</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 mt-[80px]">
+          {/* Botão Voltar */}
+          <button
+            onClick={() => navigate("/doacoes")}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
+          >
+            <svg
+              className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
+            </svg>
+            <span className="font-medium">Voltar para doações</span>
+          </button>
+
+          {/* Loading Elaborado */}
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6" style={{ borderColor: corPrincipal }}></div>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Carregando doação...</h2>
+              <p className="text-gray-600 text-lg max-w-md mx-auto">
+                Aguarde enquanto buscamos todos os detalhes desta doação
+              </p>
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -726,8 +763,7 @@ export default function DoacaoInfo() {
                         {((coment.idUsuario === usuarioLogado.id ||
                           coment.emailUsuario === usuarioLogado.email) ||
                           // ✅ ADMIN pode deletar qualquer comentário
-                          (papelStr.includes("ADMINISTRADOR") ||
-                           papelStr.includes("ADMIN"))) && (
+                          isAdmin) && (
                           <button
                             onClick={() =>
                               setModalDeletar({

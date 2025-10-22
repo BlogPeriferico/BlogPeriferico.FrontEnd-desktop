@@ -91,11 +91,10 @@ const DoacaoService = {
   excluirDoacao: async (id) => {
     console.log("🗑️ Excluindo doação com ID:", id);
 
-    // Usando a mesma lógica do UserContext para buscar o token
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
     const config = {

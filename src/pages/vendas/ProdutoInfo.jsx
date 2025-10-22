@@ -289,49 +289,27 @@ export default function ProdutoInfo() {
     }
   }, [produto]);
 
-  // Verificação de permissões baseada no token JWT
+  // Verificação de permissões baseada no usuário do contexto (alinhado com Notícias/Doação)
   console.log('\n🔍 VERIFICAÇÃO DE PERMISSÕES (PRODUTO)');
-  
-  // Função para extrair o papel do token
-  const getUserRoleFromToken = () => {
-    try {
-      const token = localStorage.getItem('userToken') || localStorage.getItem('token');
-      if (!token) return '';
-      
-      const decoded = JSON.parse(atob(token.split('.')[1]));
-      console.log('🔐 Token decodificado:', decoded);
-      
-      // Verifica em várias possíveis localizações do papel
-      if (decoded.role) return decoded.role;
-      if (decoded.roles && decoded.roles.length > 0) return decoded.roles[0];
-      if (decoded.authorities && decoded.authorities.length > 0) {
-        const authority = typeof decoded.authorities[0] === 'string' 
-          ? decoded.authorities[0] 
-          : decoded.authorities[0].authority;
-        return authority;
-      }
-      if (decoded.scope) return decoded.scope;
-      
-      return '';
-    } catch (error) {
-      console.error('❌ Erro ao decodificar token:', error);
-      return '';
-    }
-  };
-  
-  // Obtém o papel do usuário do token JWT
-  const userRole = getUserRoleFromToken();
-  const roleNormalized = userRole ? userRole.toUpperCase() : '';
-  
-  // Verifica se o usuário é admin
-  const isAdmin = roleNormalized.includes('ADMIN');
-  const podeExcluirProduto = isAdmin;
+  const userRole = usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || '';
+  const roleNormalized = String(userRole || '').toUpperCase();
+  const isAdmin = roleNormalized.includes('ADMIN') || roleNormalized.includes('ADMINISTRADOR');
+  const isAutor = Boolean(
+    produto && usuarioLogado && (
+      produto.idUsuario === usuarioLogado.id ||
+      produto.emailUsuario === usuarioLogado.email ||
+      produto.autor === usuarioLogado.nome ||
+      (produto.autor && produto.autor.email === usuarioLogado.email)
+    )
+  );
+  const podeExcluirProduto = Boolean(produto && usuarioLogado && (isAdmin || isAutor));
   
   console.log('🔑 Dados de permissão (Produto):', {
-    'Token Role': userRole,
-    'Normalizado': roleNormalized,
-    'É admin?': isAdmin,
-    'Pode excluir?': podeExcluirProduto
+    role: userRole,
+    roleNormalized,
+    isAdmin,
+    isAutor,
+    podeExcluirProduto
   });
   
   // Log do usuário logado para debug
@@ -339,8 +317,9 @@ export default function ProdutoInfo() {
     id: usuarioLogado?.id,
     nome: usuarioLogado?.nome,
     email: usuarioLogado?.email,
-    role: userRole,
+    role: usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel,
     isAdmin,
+    isAutor,
     podeExcluirProduto
   });
 
@@ -418,9 +397,10 @@ export default function ProdutoInfo() {
       if (status === 401) {
         mensagemErro += "Sua sessão expirou. Por favor, faça login novamente.";
         // Limpa os dados de autenticação
-        localStorage.removeItem("userToken");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("email");
         // Redireciona para a página de login
         setTimeout(() => window.location.href = "/login", 1000);
       } else if (status === 403) {
@@ -507,8 +487,45 @@ export default function ProdutoInfo() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-6 mt-[80px]">
-        <p className="text-gray-600">Carregando produto...</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 mt-[80px]">
+          {/* Botão Voltar */}
+          <button
+            onClick={() => navigate("/achadinhos")}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
+          >
+            <svg
+              className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
+            </svg>
+            <span className="font-medium">Voltar para produtos</span>
+          </button>
+
+          {/* Loading Elaborado */}
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6" style={{ borderColor: corPrincipal }}></div>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Carregando produto...</h2>
+              <p className="text-gray-600 text-lg max-w-md mx-auto">
+                Aguarde enquanto buscamos todos os detalhes deste produto
+              </p>
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

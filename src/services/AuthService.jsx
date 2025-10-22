@@ -9,17 +9,27 @@ const AuthService = {
   },
 
   login: async (credentials) => {
-    const response = await api.post("/auth/login", credentials);
-    if (response.data.token) localStorage.setItem("userToken", response.data.token);
-    return response.data;
+    try {
+      const response = await api.post("/auth/login", credentials);
+      if (response.data.token) {
+        // Salva o token no localStorage
+        localStorage.setItem("token", response.data.token);
+        // Atualiza o cabeçalho de autorização para requisições futuras
+        api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+      }
+      return response.data;
+    } catch (error) {
+      console.error("Erro no login:", error);
+      throw error;
+    }
   },
 
   logout: () => {
-    localStorage.removeItem("userToken");
+    localStorage.removeItem("token");
   },
 
   getCurrentUser: () => {
-    const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem("token");
     if (!token) return null;
     try {
       return jwtDecode(token);
@@ -33,7 +43,7 @@ const AuthService = {
     if (!userId) throw new Error("ID do usuário não informado.");
     if (!perfilData || typeof perfilData !== "object") throw new Error("Dados do perfil inválidos.");
 
-    const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem("token");
     if (!token) throw new Error("Usuário não autenticado.");
 
     const payload = {
@@ -58,7 +68,7 @@ const AuthService = {
     if (!userId) throw new Error("ID do usuário não informado.");
     if (!file) throw new Error("Arquivo de foto inválido.");
 
-    const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem("token");
     if (!token) throw new Error("Usuário não autenticado.");
 
     const formData = new FormData();

@@ -12,8 +12,8 @@ export function UserProvider({ children }) {
   // Carrega usuário do token/localStorage ao iniciar
   useEffect(() => {
     const loadUser = async () => {
-      // Verifica tanto 'token' quanto 'userToken' para compatibilidade
-      const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+      // Verifica o token no localStorage
+      const token = localStorage.getItem("token");
       
       if (!token) {
         console.log("🔍 Nenhum token encontrado no localStorage");
@@ -87,13 +87,13 @@ export function UserProvider({ children }) {
 
   // logout
   const logout = () => {
-    console.log('🔒 Efetuando logout...');
     setUser(null);
-    // Remove todos os tokens possíveis
+    // Remove todos os dados de autenticação
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    localStorage.removeItem("userToken");
-    console.log('✅ Logout concluído. Dados removidos do localStorage.');
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("email");
+    console.log(' Logout concluído. Dados removidos do localStorage.');
   };
 
   // updateProfile (usado no EditaPerfil)

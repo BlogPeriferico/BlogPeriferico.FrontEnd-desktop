@@ -264,39 +264,31 @@ export default function VagaInfo() {
     }
   }, [user?.fotoPerfil, user?.id, comentarios.length]);
 
-  // Verificação de propriedade da vaga (SIMPLE E FUNCIONAL - igual ao ProdutoInfo)
-  const papel = usuarioLogado.papel || "";
-  const papelStr = String(papel).toUpperCase();
-
-  const podeExcluirVaga = Boolean(
-    vaga &&
-      usuarioLogado &&
-      (
-        // ✅ ADMIN pode deletar qualquer vaga
-        papelStr.includes("ADMINISTRADOR") ||
-        papelStr.includes("ADMIN") ||
-        // ✅ Autor pode deletar apenas sua própria vaga
-        vaga.idUsuario === usuarioLogado.id ||
-        vaga.emailUsuario === usuarioLogado.email ||
-        vaga.autor === usuarioLogado.nome
-      )
+  // Verificação de permissões (alinhado a Notícias/Achadinhos)
+  const userRole = usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
+  const roleNormalized = String(userRole).toUpperCase();
+  const isAdmin = roleNormalized.includes("ADMINISTRADOR") || roleNormalized.includes("ADMIN");
+  const isAutor = Boolean(
+    vaga && usuarioLogado && (
+      vaga.idUsuario === usuarioLogado.id ||
+      vaga.emailUsuario === usuarioLogado.email ||
+      vaga.autor === usuarioLogado.nome
+    )
   );
+  const podeExcluirVaga = Boolean(vaga && usuarioLogado && (isAdmin || isAutor));
 
   // Debug: log de permissões
   useEffect(() => {
     if (vaga && usuarioLogado.id) {
       console.log("🔍 Verificação de permissões:");
-      console.log("  - Papel do usuário:", usuarioLogado.papel);
-      console.log("  - Papel (string):", papelStr);
-      console.log(
-        "  - É ADMIN?",
-        papelStr.includes("ADMINISTRADOR") ||
-          papelStr.includes("ADMIN")
-      );
+      console.log("  - Papel do usuário:", userRole);
+      console.log("  - Papel normalizado:", roleNormalized);
+      console.log("  - É ADMIN?", isAdmin);
       console.log("  - ID do autor da vaga:", vaga.idUsuario);
       console.log("  - Nome do autor:", nomeAutor);
       console.log("  - ID do usuário logado:", usuarioLogado.id);
       console.log("  - Nome do usuário:", usuarioLogado.nome);
+      console.log("  - É autor?", isAutor);
       console.log("  - Pode excluir?", podeExcluirVaga);
     }
   }, [vaga, usuarioLogado, podeExcluirVaga]);
@@ -394,8 +386,45 @@ export default function VagaInfo() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-6 mt-[80px]">
-        <p className="text-gray-600">Carregando vaga...</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 mt-[80px]">
+          {/* Botão Voltar */}
+          <button
+            onClick={() => navigate("/vagas")}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
+          >
+            <svg
+              className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
+            </svg>
+            <span className="font-medium">Voltar para vagas</span>
+          </button>
+
+          {/* Loading Elaborado */}
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6" style={{ borderColor: corPrincipal }}></div>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Carregando vaga...</h2>
+              <p className="text-gray-600 text-lg max-w-md mx-auto">
+                Aguarde enquanto buscamos todos os detalhes desta vaga
+              </p>
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -688,8 +717,7 @@ export default function VagaInfo() {
                         </div>
                         {((coment.idUsuario === usuarioLogado.id ||
                           coment.emailUsuario === usuarioLogado.email) ||
-                          (papelStr.includes("ADMINISTRADOR") ||
-                            papelStr.includes("ADMIN"))) && (
+                          isAdmin) && (
                           <button
                             onClick={() =>
                               setModalDeletar({

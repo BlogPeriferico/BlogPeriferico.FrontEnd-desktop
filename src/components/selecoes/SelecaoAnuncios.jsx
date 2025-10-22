@@ -11,19 +11,29 @@ export default function SelecaoAnuncios({ produtos = [], loading = false }) {
   if (produtos.length === 0 && !loading) return <p>Carregando anúncios...</p>;
 
   // Ordenar por data de criação (mais recentes primeiro) e limitar a 16 itens
-  const ultimosProdutos = produtos
+  // Usa cópia para não mutar a prop `produtos` (evita problemas de re-render)
+  const ultimosProdutos = [...produtos]
     .sort((a, b) => new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao))
     .slice(0, 16);
 
-  // Loading state - igual ao QuebradaInforma
+  // Loading state - com título e subtítulo padronizados
   if (loading) {
     return (
       <div className="mt-20 mb-24">
-        <h2 className="text-4xl font-semibold mb-10 w-max mx-auto text-center">
-          Seleções de anúncios
-        </h2>
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative">
+            Últimos Achadinhos
+            <div
+              className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
+              style={{ backgroundColor: corPrincipal }}
+            ></div>
+          </h2>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Confira as melhores oportunidades e ofertas da sua região
+          </p>
+        </div>
 
-        {/* Loading spinner igual ao QuebradaInforma */}
+        {/* Loading spinner */}
         <div className="flex justify-center items-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: corPrincipal }}></div>
           <span className="ml-3 text-gray-600">Carregando anúncios...</span>
@@ -34,9 +44,18 @@ export default function SelecaoAnuncios({ produtos = [], loading = false }) {
 
   return (
     <div className="mt-20 mb-24">
-      <h2 className="text-4xl font-semibold mb-10 w-max mx-auto text-center">
-        Seleções de anúncios
-      </h2>
+      <div className="text-center mb-16">
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative">
+          Últimos Achadinhos
+          <div
+            className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
+            style={{ backgroundColor: corPrincipal }}
+          ></div>
+        </h2>
+        <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          Confira as melhores oportunidades e ofertas da sua região
+        </p>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
         {ultimosProdutos.map((anuncio) => (
           <div

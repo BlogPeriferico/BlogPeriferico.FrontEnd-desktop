@@ -98,32 +98,9 @@ export default function CorreCerto() {
       )}
 
       <CarrosselCorreCerto />
-      
-      {/* Mensagem quando não há vagas */}
-      {!loading && correcertos.length === 0 && (
-        <div className="text-center py-20">
-          <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-            <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M12 18h.01M12 15a3 3 0 100-6 3 3 0 000 6z"></path>
-            </svg>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            {regiao 
-              ? `Nenhuma vaga encontrada em ${regiao}`
-              : "Nenhuma vaga publicada ainda"}
-          </h3>
-          <p className="text-gray-600">
-            {regiao 
-              ? "Verifique se há vagas em outras regiões ou tente novamente mais tarde."
-              : "Seja o primeiro a compartilhar uma vaga da sua região!"}
-          </p>
-        </div>
-      )}
-      
-      {/* Passa o array do backend */}
-      {(!loading && correcertos.length > 0) && (
-        <SelecaoCorreCerto correcertos={correcertos} loading={loading} />
-      )}
+
+      {/* SelecaoCorreCerto sempre visível: título estático e conteúdo alterna entre spinner e grid */}
+      <SelecaoCorreCerto correcertos={correcertos} loading={loading} />
     </div>
   );
 }

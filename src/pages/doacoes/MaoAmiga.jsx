@@ -74,10 +74,10 @@ export default function Doacoes() {
 
   // Abre modal somente se estiver logado
   const abrirModal = () => {
-    const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem("token");
     if (!token) {
-      alert("Você precisa estar logado para criar uma doação.");
-      navigate("/"); // redireciona para página principal
+      alert("Você precisa estar logado para criar uma doação. Faça login e tente novamente.");
+      navigate("/login"); // redireciona para a página de login
       return;
     }
     setModalAberto(true);

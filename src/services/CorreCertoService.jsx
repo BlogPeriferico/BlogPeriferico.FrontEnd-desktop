@@ -10,10 +10,10 @@ const CorreCertoService = {
       delete vagaData.id;
     }
 
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("⚠️ Usuário não está logado.");
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
     const config = {
@@ -63,10 +63,10 @@ const CorreCertoService = {
   atualizarCorrecerto: async (id, vagaData) => {
     console.log(`✏️ Atualizando vaga ${id} com dados:`, vagaData);
     
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("⚠️ Usuário não está logado.");
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
     const config = {
@@ -91,10 +91,10 @@ const CorreCertoService = {
   excluirVaga: async (id) => {
     console.log(`🗑️ Excluindo vaga com ID: ${id}`);
     
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
     const config = {

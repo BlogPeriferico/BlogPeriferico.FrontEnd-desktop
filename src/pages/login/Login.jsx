@@ -20,7 +20,7 @@ export default function Login() {
       console.log("Login realizado:", data);
 
       // Salva informações no localStorage
-      localStorage.setItem("userToken", data.token);
+      localStorage.setItem("token", data.token);
       localStorage.setItem("email", email);
       localStorage.setItem("userRole", data.role || "ROLE_USUARIO");
 
@@ -35,8 +35,7 @@ export default function Login() {
   // Entrar como visitante
   const entrarComoVisitante = () => {
     // Remove qualquer token antigo
-    localStorage.removeItem("userToken");
-    localStorage.removeItem("token"); // remove token antigo usado pelo Api.jsx
+    localStorage.removeItem("token");
     localStorage.removeItem("email");
     localStorage.removeItem("role");
 

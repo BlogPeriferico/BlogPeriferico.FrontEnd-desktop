@@ -91,9 +91,8 @@ export default function Vendas() {
           modalAberto={modalAberto}
           setModalAberto={setModalAberto}
           corPrincipal={corPrincipal}
-          atualizarProdutos={(novoProduto) =>
-            setProdutos([novoProduto, ...produtos])
-          }
+          // ModalProduto espera `atualizarAnuncios`; vamos refazer o fetch como em Notícias
+          atualizarAnuncios={fetchProdutos}
         />
       )}
 

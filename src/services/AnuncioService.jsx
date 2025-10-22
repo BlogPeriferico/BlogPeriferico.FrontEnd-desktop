@@ -10,10 +10,10 @@ const AnuncioService = {
       delete anuncioData.id;
     }
 
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("⚠️ Usuário não está logado.");
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
     const config = {
@@ -66,10 +66,10 @@ const AnuncioService = {
   atualizarAnuncio: async (id, anuncioData) => {
     console.log(`✏️ Atualizando anúncio ${id} com dados:`, anuncioData);
 
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("⚠️ Usuário não está logado.");
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
     const config = {
@@ -96,10 +96,10 @@ const AnuncioService = {
   excluirAnuncio: async (id) => {
     console.log("🗑️ Excluindo anúncio com ID:", id);
 
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
     const config = {

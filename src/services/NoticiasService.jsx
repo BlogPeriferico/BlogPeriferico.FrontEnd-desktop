@@ -1,4 +1,5 @@
 import api from "./Api";
+import { jwtDecode } from "jwt-decode";
 
 const NoticiaService = {
   criarNoticia: async (noticiaData) => {
@@ -11,26 +12,54 @@ const NoticiaService = {
 
     const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("Usuário não está logado.");
+      throw new Error("Usuário não está logado. Faça login novamente.");
     }
 
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // ❌ não define Content-Type se for FormData
-        ...(noticiaData instanceof FormData
-          ? {}
-          : { "Content-Type": "application/json" }),
-      },
-    };
+    // Verifica se o token é válido
+    try {
+      const decoded = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      
+      if (decoded.exp < currentTime) {
+        console.warn("⚠️ Token expirado");
+        localStorage.removeItem("token");
+        window.location.href = "/login?error=session_expired";
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+    } catch (error) {
+      console.error("❌ Erro ao verificar token:", error);
+      localStorage.removeItem("token");
+      window.location.href = "/login?error=invalid_token";
+      throw new Error("Erro de autenticação. Faça login novamente.");
+    }
+
+    // Configuração do cabeçalho
+    const config = {};
+    if (!(noticiaData instanceof FormData)) {
+      config.headers = { 'Content-Type': 'application/json' };
+    }
 
     try {
       const response = await api.post("/noticias", noticiaData, config);
-      console.log("✅ Notícia criada:", response.data);
+      console.log("✅ Notícia criada com sucesso!");
       return response.data;
     } catch (err) {
-      console.error("❌ Erro ao criar notícia:", err.response?.data || err);
-      throw err;
+      console.error("❌ Erro ao criar notícia:", {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+      
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        // Token inválido ou expirado
+        localStorage.removeItem("token");
+        window.location.href = "/login?error=session_expired";
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+      
+      // Outros erros
+      const errorMessage = err.response?.data?.message || "Erro ao criar notícia. Tente novamente.";
+      throw new Error(errorMessage);
     }
   },
 
@@ -94,8 +123,7 @@ const NoticiaService = {
   excluirNoticia: async (id) => {
     console.log("🗑️ Excluindo notícia com ID:", id);
 
-    // Usando a mesma lógica do UserContext para buscar o token
-    const token = localStorage.getItem("userToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
       throw new Error("Usuário não está logado.");
