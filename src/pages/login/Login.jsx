@@ -27,8 +27,13 @@ export default function Login() {
       setMensagem("Login realizado com sucesso!");
       navigate("/quebrada-informa");
     } catch (err) {
-      console.error("Erro no login:", err.response ? err.response.data : err.message);
-      setMensagem("Falha no login: " + (err.response ? err.response.data : err.message));
+      console.error(
+        "Erro no login:",
+        err.response ? err.response.data : err.message
+      );
+      setMensagem(
+        "Falha no login: " + (err.response ? err.response.data : err.message)
+      );
     }
   };
 

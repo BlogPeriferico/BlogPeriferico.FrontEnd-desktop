@@ -219,7 +219,7 @@ export default function QuebradaInforma() {
                 key={nome}
                 className="relative rounded-xl text-white p-4 shadow-md overflow-hidden h-[150px] flex flex-col justify-between transition-transform duration-300 hover:scale-105 cursor-pointer "
                 style={{
-                  backgroundImage: `url(https://blogperiferico.blob.core.windows.net/zonas/zona_${nome.toLowerCase()}.png)`,
+                  backgroundImage: `url(https://blogperic0.blob.core.windows.net/zonas/zona_${nome.toLowerCase()}.png)`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
