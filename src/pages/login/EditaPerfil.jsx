@@ -1,7 +1,7 @@
 // src/components/Perfil/EditaPerfil.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaTimes, FaEdit, FaCamera, FaCheck } from "react-icons/fa";
+import { FaTimes, FaEdit, FaCamera, FaCheck, FaSignOutAlt } from "react-icons/fa";
 import { useUser } from "../../contexts/UserContext.jsx";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
@@ -12,7 +12,7 @@ import NoPicture from "../../assets/images/NoPicture.webp";
 
 export default function EditaPerfil() {
   const navigate = useNavigate();
-  const { user, updateProfile } = useUser();
+  const { user, updateProfile, logout } = useUser();
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
@@ -172,7 +172,14 @@ export default function EditaPerfil() {
     }
   };
 
-  const handleCancelar = () => navigate("/perfil");
+  const handleVoltar = () => {
+    navigate(-1);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   if (!usuarioLogado)
     return (
@@ -269,9 +276,18 @@ export default function EditaPerfil() {
               </button>
             </div>
 
-            <button onClick={handleCancelar} className="w-full mt-6 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200">
-              Voltar ao Perfil
-            </button>
+            <div className="flex flex-col gap-4 mt-6">
+              <button onClick={handleVoltar} className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200">
+                Voltar ao Perfil
+              </button>
+              <button 
+                onClick={handleLogout} 
+                className="flex items-center justify-center gap-2 w-full bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 transition-colors"
+              >
+                <FaSignOutAlt />
+                Sair da Conta
+              </button>
+            </div>
           </div>
         </div>
 
@@ -283,8 +299,12 @@ export default function EditaPerfil() {
                 <h2 className="text-xl font-bold text-gray-900">
                   Redefinir  {editingField?.charAt(0).toUpperCase() + editingField?.slice(1)}
                 </h2>
-                <button onClick={closeEditModal} className="text-gray-400 hover:text-gray-600">
-                  <FaTimes size={24} />
+                <button
+                  onClick={handleVoltar}
+                  className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
+                  title="Fechar"
+                >
+                  <FaTimes className="text-2xl" />
                 </button>
               </div>
               <form className="space-y-6">

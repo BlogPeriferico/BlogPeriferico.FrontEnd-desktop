@@ -1,32 +1,35 @@
 // src/contexts/UserContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
 import api from "../services/Api"; // sua instância Axios
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import NoPicture from "../assets/images/NoPicture.webp";
 
 export const UserContext = createContext();
 
 export function UserProvider({ children }) {
-  const [user, setUser] = useState(null); // começa null até carregar
+  const [user, setUser] = useState({ isVisitor: true }); // Inicia como visitante
 
   // Carrega usuário do token/localStorage ao iniciar
   useEffect(() => {
     const loadUser = async () => {
-      // Verifica o token no localStorage
-      const token = localStorage.getItem("token");
-      
-      if (!token) {
-        console.log("🔍 Nenhum token encontrado no localStorage");
-        // fallback: tenta carregar do localStorage
+      try {
+        const token = localStorage.getItem("token");
+        
+        if (!token) {
+          console.log("🔍 Nenhum token encontrado, mantendo como visitante");
+          setUser({ isVisitor: true });
+          return;
+        }
+
+        // Verifica se já temos os dados do usuário no localStorage
         const savedUser = localStorage.getItem("user");
         if (savedUser) {
-          console.log("🔍 Carregando usuário do localStorage:", JSON.parse(savedUser));
-          setUser(JSON.parse(savedUser));
+          const parsedUser = JSON.parse(savedUser);
+          console.log("🔄 Carregando usuário do localStorage:", parsedUser);
+          setUser(parsedUser);
         }
-        return;
-      }
 
-      try {
+        // Busca os dados mais recentes do servidor
         const decoded = jwtDecode(token);
         const email = decoded.sub;
 
@@ -36,20 +39,39 @@ export function UserProvider({ children }) {
         const usuarioEncontrado = usuarios.find((u) => u.email === email);
 
         if (usuarioEncontrado) {
-          // garante campo fotoPerfil
-          if (!usuarioEncontrado.fotoPerfil) usuarioEncontrado.fotoPerfil = NoPicture;
-          console.log("🔄 UserContext - Inicializando usuário:", usuarioEncontrado);
-          setUser(usuarioEncontrado);
-          localStorage.setItem("user", JSON.stringify(usuarioEncontrado));
+          // Garante que o usuário tenha uma foto de perfil
+          if (!usuarioEncontrado.fotoPerfil) {
+            usuarioEncontrado.fotoPerfil = NoPicture;
+          }
+          
+          console.log("🔄 UserContext - Usuário carregado do servidor:", usuarioEncontrado);
+          setUser({
+            ...usuarioEncontrado,
+            isVisitor: false
+          });
+          
+          // Atualiza o localStorage
+          localStorage.setItem("user", JSON.stringify({
+            ...usuarioEncontrado,
+            isVisitor: false
+          }));
+        } else if (savedUser) {
+          // Se não encontrou no servidor mas tem no localStorage, mantém o do localStorage
+          console.log("⚠️ Usuário não encontrado no servidor, usando dados locais");
         } else {
-          // fallback: localStorage
-          const savedUser = localStorage.getItem("user");
-          if (savedUser) setUser(JSON.parse(savedUser));
+          // Se não encontrou em lugar nenhum, mantém como visitante
+          console.log("⚠️ Nenhum dado de usuário encontrado");
+          setUser({ isVisitor: true });
         }
       } catch (error) {
-        console.error("Erro ao carregar usuário:", error);
+        console.error("❌ Erro ao carregar usuário:", error);
+        // Em caso de erro, tenta carregar do localStorage
         const savedUser = localStorage.getItem("user");
-        if (savedUser) setUser(JSON.parse(savedUser));
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        } else {
+          setUser({ isVisitor: true });
+        }
       }
     };
 
@@ -64,25 +86,48 @@ export function UserProvider({ children }) {
   }, [user]);
 
   // login
-  const login = (userData) => {
-    // Obtém o papel do usuário, verificando todos os possíveis nomes de campo
-    const role = userData.role || userData.roles || userData.papel || "USUARIO";
-    const roleNormalizado = String(role).toUpperCase();
-    
-    const userWithDefaults = {
-      id: userData.id,
-      nome: userData.nome || "Usuário",
-      email: userData.email,
-      token: userData.token,
-      fotoPerfil: userData.fotoPerfil || NoPicture,
-      role: roleNormalizado,          // Padroniza como 'role'
-      roles: roleNormalizado,         // Mantém compatibilidade com 'roles'
-      papel: roleNormalizado,         // Mantém compatibilidade com 'papel'
-    };
-    
-    console.log(" Login realizado:", userWithDefaults);
-    setUser(userWithDefaults);
-    localStorage.setItem("user", JSON.stringify(userWithDefaults));
+  const login = async (userData) => {
+    try {
+      // Se for um login com token, decodifica para obter o email
+      if (userData.token) {
+        const decoded = jwtDecode(userData.token);
+        const email = decoded.sub;
+        
+        // Busca os dados completos do usuário
+        const response = await api.get("/usuarios/listar");
+        const usuarios = response.data;
+        const usuarioEncontrado = usuarios.find((u) => u.email === email);
+        
+        if (usuarioEncontrado) {
+          // Garante que o usuário tenha uma foto de perfil
+          if (!usuarioEncontrado.fotoPerfil) {
+            usuarioEncontrado.fotoPerfil = NoPicture;
+          }
+          
+          // Atualiza o estado do usuário
+          console.log("✅ Login realizado com sucesso:", usuarioEncontrado);
+          setUser({
+            ...usuarioEncontrado,
+            isVisitor: false
+          });
+          
+          // Salva no localStorage
+          localStorage.setItem("user", JSON.stringify({
+            ...usuarioEncontrado,
+            isVisitor: false
+          }));
+          
+          return usuarioEncontrado;
+        }
+      }
+      
+      // Se não encontrou o usuário ou não tem token, mantém como visitante
+      console.warn("⚠️ Usuário não encontrado ou token inválido");
+      return null;
+    } catch (error) {
+      console.error("❌ Erro ao fazer login:", error);
+      throw error;
+    }
   };
 
   // logout
@@ -93,7 +138,7 @@ export function UserProvider({ children }) {
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
     localStorage.removeItem("email");
-    console.log(' Logout concluído. Dados removidos do localStorage.');
+    console.log(" Logout concluído. Dados removidos do localStorage.");
   };
 
   // updateProfile (usado no EditaPerfil)
@@ -123,11 +168,12 @@ export function UserProvider({ children }) {
   return (
     <UserContext.Provider
       value={{
-        user,
+        user: user || { isVisitor: true },
         login,
         logout,
         updateProfile,
         isLoggedIn: !!user?.id,
+        isVisitor: !user?.id || user.isVisitor,
         setUser, // exposto para atualizações diretas (opcional)
       }}
     >
