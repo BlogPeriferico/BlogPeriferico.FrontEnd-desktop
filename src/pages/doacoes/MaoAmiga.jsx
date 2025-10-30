@@ -5,18 +5,24 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalDoacao from "../../components/modals/ModalDoacao";
 import { useRegiao } from "../../contexts/RegionContext";
+import { useUser } from "../../contexts/UserContext";
 import { regionColors } from "../../utils/regionColors";
 import DoacaoService from "../../services/DoacaoService";
 import api from "../../services/Api";
+import { ModalVisitantes } from "../../components/modals/ModalVisitantes";
 
 export default function Doacoes() {
   const [modalAberto, setModalAberto] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [doacoes, setDoacoes] = useState([]);
-  const [loading, setLoading] = useState(true); // ✅ Estado de loading
+  const [loading, setLoading] = useState(true);
   const { regiao } = useRegiao();
+  const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
-
   const navigate = useNavigate();
+  
+  // Verifica se o usuário é um visitante
+  const isVisitor = !user || user.isVisitor === true;
 
   useEffect(() => {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
@@ -75,13 +81,11 @@ export default function Doacoes() {
 
   // Abre modal somente se estiver logado
   const abrirModal = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Você precisa estar logado para criar uma doação. Faça login e tente novamente.");
-      navigate("/login"); // redireciona para a página de login
-      return;
+    if (!isVisitor) {
+      setModalAberto(true);
+    } else {
+      setShowAuthModal(true);
     }
-    setModalAberto(true);
   };
 
   return (
@@ -98,8 +102,22 @@ export default function Doacoes() {
         </button>
       </div>
 
-      {/* Modal */}
-      {modalAberto && (
+      {/* Modal de autenticação para visitantes */}
+      <ModalVisitantes
+        abrir={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLogin={() => {
+          // Fecha o modal primeiro
+          setShowAuthModal(false);
+          // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
+          setTimeout(() => {
+            navigate('/auth/login');
+          }, 100);
+        }}
+      />
+
+      {/* Modal de adicionar doação - Só mostra se não for visitante */}
+      {!isVisitor && modalAberto && (
         <ModalDoacao
           modalAberto={modalAberto}
           setModalAberto={setModalAberto}

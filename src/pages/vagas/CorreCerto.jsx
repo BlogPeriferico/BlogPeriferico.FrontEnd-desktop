@@ -1,19 +1,28 @@
 import { FiPlus } from "react-icons/fi";
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/Api";
 import ModalCorreCerto from "../../components/modals/ModalCorreCerto";
 import { useRegiao } from "../../contexts/RegionContext";
+import { useUser } from "../../contexts/UserContext";
 import { regionColors } from "../../utils/regionColors";
 import CarrosselCorreCerto from "../../components/carrossels/CarrosselCorreCerto";
 import SelecaoCorreCerto from "../../components/selecoes/SelecaoCorreCerto";
 import CorreCertoService from "../../services/CorreCertoService";
+import { ModalVisitantes } from "../../components/modals/ModalVisitantes";
 
 export default function CorreCerto() {
   const [modalAberto, setModalAberto] = useState(false);
-  const [correcertos, setCorrecertos] = useState([]); // aqui vai o array do backend
-  const [loading, setLoading] = useState(true); // ✅ Estado de loading
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [correcertos, setCorrecertos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { regiao } = useRegiao();
+  const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
+  const navigate = useNavigate();
+  
+  // Verifica se o usuário é um visitante
+  const isVisitor = !user || user.isVisitor === true;
 
   useEffect(() => {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
@@ -81,7 +90,13 @@ export default function CorreCerto() {
       {/* Botão flutuante de adicionar vaga */}
       <div className="fixed top-28 right-6 z-50 hover:scale-105">
         <button
-          onClick={() => setModalAberto(true)}
+          onClick={() => {
+            if (!isVisitor) {
+              setModalAberto(true);
+            } else {
+              setShowAuthModal(true);
+            }
+          }}
           className="bg-[color:var(--corPrincipal)] text-white p-3 rounded-full shadow-lg hover:bg-opacity-90"
           style={{ backgroundColor: corPrincipal }}
           title="Adicionar sua Vaga de emprego"
@@ -90,13 +105,27 @@ export default function CorreCerto() {
         </button>
       </div>
 
-      {/* Modal de adicionar vaga */}
-      {modalAberto && (
+      {/* Modal de autenticação para visitantes */}
+      <ModalVisitantes
+        abrir={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLogin={() => {
+          // Fecha o modal primeiro
+          setShowAuthModal(false);
+          // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
+          setTimeout(() => {
+            navigate('/auth/login');
+          }, 100);
+        }}
+      />
+
+      {/* Modal de adicionar vaga - Só mostra se não for visitante */}
+      {!isVisitor && modalAberto && (
         <ModalCorreCerto
           modalAberto={modalAberto}
           setModalAberto={setModalAberto}
           corPrincipal={corPrincipal}
-          atualizarCorrecertos={carregarCorrecertos} // atualiza a lista após criar
+          atualizarCorrecertos={carregarCorrecertos}
         />
       )}
 

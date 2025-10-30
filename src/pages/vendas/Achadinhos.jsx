@@ -2,17 +2,26 @@ import CarrosselVendas from "../../components/carrossels/CarrosselVendas";
 import SelecaoAnuncios from "../../components/selecoes/SelecaoAnuncios";
 import { FiPlus } from "react-icons/fi";
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import ModalProduto from "../../components/modals/ModalProduto";
 import { useRegiao } from "../../contexts/RegionContext";
+import { useUser } from "../../contexts/UserContext";
 import { regionColors } from "../../utils/regionColors";
 import VendasService from "../../services/AnuncioService";
+import { ModalVisitantes } from "../../components/modals/ModalVisitantes";
 
 export default function Vendas() {
   const [modalAberto, setModalAberto] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [produtos, setProdutos] = useState([]);
   const [loadingProdutos, setLoadingProdutos] = useState(true);
   const { regiao } = useRegiao();
+  const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
+  const navigate = useNavigate();
+  
+  // Verifica se o usuário é um visitante
+  const isVisitor = !user || user.isVisitor === true;
 
   useEffect(() => {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
@@ -80,9 +89,15 @@ export default function Vendas() {
   return (
     <div className="max-w-6xl mx-auto pt-24 px-6 relative">
       {/* Botão flutuante de adicionar */}
-      <div className="fixed top-28 right-6 z-50">
+      <div className="fixed top-28 right-6 z-50 hover:scale-105">
         <button
-          onClick={() => setModalAberto(true)}
+          onClick={() => {
+            if (!isVisitor) {
+              setModalAberto(true);
+            } else {
+              setShowAuthModal(true);
+            }
+          }}
           className="bg-[color:var(--corPrincipal)] text-white p-3 rounded-full shadow-lg hover:bg-opacity-90"
           style={{ backgroundColor: corPrincipal }}
           title="Adicionar novo produto"
@@ -91,13 +106,26 @@ export default function Vendas() {
         </button>
       </div>
 
-      {/* Modal de adicionar produto */}
-      {modalAberto && (
+      {/* Modal de autenticação para visitantes */}
+      <ModalVisitantes
+        abrir={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLogin={() => {
+          // Fecha o modal primeiro
+          setShowAuthModal(false);
+          // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
+          setTimeout(() => {
+            navigate('/auth/login');
+          }, 100);
+        }}
+      />
+
+      {/* Modal de adicionar produto - Só mostra se não for visitante */}
+      {!isVisitor && modalAberto && (
         <ModalProduto
           modalAberto={modalAberto}
           setModalAberto={setModalAberto}
           corPrincipal={corPrincipal}
-          // ModalProduto espera `atualizarAnuncios`; vamos refazer o fetch como em Notícias
           atualizarAnuncios={fetchProdutos}
         />
       )}

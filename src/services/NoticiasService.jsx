@@ -19,7 +19,7 @@ const NoticiaService = {
     try {
       const decoded = jwtDecode(token);
       const currentTime = Date.now() / 1000;
-      
+
       if (decoded.exp < currentTime) {
         console.warn("⚠️ Token expirado");
         localStorage.removeItem("token");
@@ -36,7 +36,7 @@ const NoticiaService = {
     // Configuração do cabeçalho
     const config = {};
     if (!(noticiaData instanceof FormData)) {
-      config.headers = { 'Content-Type': 'application/json' };
+      config.headers = { "Content-Type": "application/json" };
     }
 
     try {
@@ -47,18 +47,20 @@ const NoticiaService = {
       console.error("❌ Erro ao criar notícia:", {
         status: err.response?.status,
         data: err.response?.data,
-        message: err.message
+        message: err.message,
       });
-      
+
       if (err.response?.status === 401 || err.response?.status === 403) {
         // Token inválido ou expirado
         localStorage.removeItem("token");
         window.location.href = "/login?error=session_expired";
         throw new Error("Sessão expirada. Faça login novamente.");
       }
-      
+
       // Outros erros
-      const errorMessage = err.response?.data?.message || "Erro ao criar notícia. Tente novamente.";
+      const errorMessage =
+        err.response?.data?.message ||
+        "Erro ao criar notícia. Tente novamente.";
       throw new Error(errorMessage);
     }
   },
@@ -85,19 +87,26 @@ const NoticiaService = {
       console.log(`✅ Notícia ${id} atualizada com sucesso:`, response.data);
       return response.data;
     } catch (err) {
-      console.error(`❌ Erro ao atualizar notícia ${id}:`, err.response?.data || err);
+      console.error(
+        `❌ Erro ao atualizar notícia ${id}:`,
+        err.response?.data || err
+      );
       throw err;
     }
   },
 
   listarNoticias: async (regiao) => {
-    console.log(`📥 Buscando notícias${regiao ? ` para a região: ${regiao}` : ' de todas as regiões'}...`);
+    console.log(
+      `📥 Buscando notícias${
+        regiao ? ` para a região: ${regiao}` : " de todas as regiões"
+      }...`
+    );
     try {
       const params = {};
       if (regiao) {
         params.regiao = regiao;
       }
-      
+
       const response = await api.get("/noticias", { params });
       console.log(`✅ ${response.data?.length || 0} notícias encontradas`);
       return response.data || [];
@@ -115,7 +124,10 @@ const NoticiaService = {
       console.log("✅ Notícia recebida:", response.data);
       return response.data;
     } catch (err) {
-      console.error(`❌ Erro ao buscar notícia ${id}:`, err.response?.data || err);
+      console.error(
+        `❌ Erro ao buscar notícia ${id}:`,
+        err.response?.data || err
+      );
       throw err;
     }
   },
@@ -133,15 +145,18 @@ const NoticiaService = {
 
     try {
       const response = await api.delete(`/noticias/${id}`, {
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       });
       console.log(`✅ Notícia ${id} excluída.`, response.data);
       return response.data;
     } catch (err) {
-      console.error(`❌ Erro ao excluir notícia ${id}:`, err.response?.data || err);
+      console.error(
+        `❌ Erro ao excluir notícia ${id}:`,
+        err.response?.data || err
+      );
       console.error(`❌ Status HTTP:`, err.response?.status);
       console.error(`❌ Headers da resposta:`, err.response?.headers);
       throw err;
