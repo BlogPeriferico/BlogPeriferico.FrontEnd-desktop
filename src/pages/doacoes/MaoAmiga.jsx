@@ -1,6 +1,6 @@
 import CarrosselDoacao from "../../components/carrossels/CarrosselDoacao";
 import SelecaoDoacoes from "../../components/selecoes/SelecaoDoacoes";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiRefreshCw } from "react-icons/fi";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalDoacao from "../../components/modals/ModalDoacao";
@@ -39,11 +39,11 @@ export default function Doacoes() {
     status: d.status || "Ativa"
   });
 
-  // Função para carregar doações do backend
-  const carregarDoacoes = useCallback(async () => {
+  // Função para recarregar as doações mantendo o filtro de região
+  const recarregarDoacoes = useCallback(async () => {
     try {
       setLoading(true);
-      console.log(`Buscando doações para a região: ${regiao || 'Todas as regiões'}`);
+      console.log(`Atualizando doações para a região: ${regiao || "Todas as regiões"}`);
       
       // Busca todas as doações
       const response = await api.get("/doacoes");
@@ -74,10 +74,16 @@ export default function Doacoes() {
       setLoading(false);
     }
   }, [regiao]);
-  
+
+  // Função para carregar as doações (mantida para compatibilidade)
+  const carregarDoacoes = useCallback(async () => {
+    await recarregarDoacoes();
+  }, [recarregarDoacoes]);
+
+  // Carrega as doações quando o componente for montado ou a região mudar
   useEffect(() => {
-    carregarDoacoes();
-  }, [carregarDoacoes]);
+    recarregarDoacoes();
+  }, [recarregarDoacoes]);
 
   // Abre modal somente se estiver logado
   const abrirModal = () => {
@@ -111,7 +117,7 @@ export default function Doacoes() {
           setShowAuthModal(false);
           // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
           setTimeout(() => {
-            navigate('/auth/login');
+            navigate('/login');
           }, 100);
         }}
       />
@@ -127,7 +133,42 @@ export default function Doacoes() {
       )}
 
       {/* Carrossel */}
-      <CarrosselDoacao doacoes={doacoes} />
+      <div className="mb-16">
+        <CarrosselDoacao doacoes={doacoes} />
+      </div>
+
+      <div className="relative mb-16">
+        <div className="flex justify-between items-center">
+          <div className="text-center w-full">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
+              Doações Disponíveis
+              <div
+                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
+                style={{ backgroundColor: corPrincipal }}
+              ></div>
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Encontre itens que podem fazer a diferença na vida de alguém
+            </p>
+          </div>
+          <div className="absolute right-0 top-0">
+            <button
+              onClick={recarregarDoacoes}
+              disabled={loading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                loading 
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              } transition-colors`}
+              title="Atualizar doações"
+              aria-label="Atualizar doações"
+            >
+              <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              <span className="text-sm font-medium">Atualizar</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Seleção */}
       <SelecaoDoacoes doacoes={doacoes} loading={loading} />

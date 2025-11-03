@@ -1,4 +1,4 @@
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiRefreshCw } from "react-icons/fi";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/Api";
@@ -44,11 +44,11 @@ export default function CorreCerto() {
     imagem: v.imagem || ""
   });
 
-  // Busca as vagas baseado na região atual
-  const carregarCorrecertos = useCallback(async () => {
+  // Função para recarregar as vagas mantendo o filtro de região
+  const recarregarVagas = useCallback(async () => {
     try {
       setLoading(true);
-      console.log(`Buscando vagas para a região: ${regiao || 'Todas as regiões'}`);
+      console.log(`Atualizando vagas para a região: ${regiao || "Todas as regiões"}`);
       
       // Busca todas as vagas
       const response = await api.get("/vagas");
@@ -80,10 +80,15 @@ export default function CorreCerto() {
     }
   }, [regiao]);
   
-  // Atualiza quando a região mudar
+  // Função para carregar as vagas (mantida para compatibilidade)
+  const carregarCorrecertos = useCallback(async () => {
+    await recarregarVagas();
+  }, [recarregarVagas]);
+
+  // Busca as vagas quando a região mudar
   useEffect(() => {
-    carregarCorrecertos();
-  }, [carregarCorrecertos]);
+    recarregarVagas();
+  }, [recarregarVagas]);
 
   return (
     <div className="max-w-6xl mx-auto pt-24 px-6 relative">
@@ -114,7 +119,7 @@ export default function CorreCerto() {
           setShowAuthModal(false);
           // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
           setTimeout(() => {
-            navigate('/auth/login');
+            navigate('/login');
           }, 100);
         }}
       />
@@ -129,7 +134,42 @@ export default function CorreCerto() {
         />
       )}
 
-      <CarrosselCorreCerto />
+      <div className="mb-16">
+        <CarrosselCorreCerto />
+      </div>
+
+      <div className="relative mb-16">
+        <div className="flex justify-between items-center">
+          <div className="text-center w-full">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
+              Vagas Recentes
+              <div
+                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
+                style={{ backgroundColor: corPrincipal }}
+              ></div>
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Encontre as melhores oportunidades de trabalho na sua região
+            </p>
+          </div>
+          <div className="absolute right-0 top-0">
+            <button
+              onClick={recarregarVagas}
+              disabled={loading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                loading 
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              } transition-colors`}
+              title="Atualizar vagas"
+              aria-label="Atualizar vagas"
+            >
+              <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              <span className="text-sm font-medium">Atualizar</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* SelecaoCorreCerto sempre visível: título estático e conteúdo alterna entre spinner e grid */}
       <SelecaoCorreCerto correcertos={correcertos} loading={loading} />

@@ -1,6 +1,6 @@
 import CarrosselVendas from "../../components/carrossels/CarrosselVendas";
 import SelecaoAnuncios from "../../components/selecoes/SelecaoAnuncios";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiRefreshCw } from "react-icons/fi";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalProduto from "../../components/modals/ModalProduto";
@@ -45,11 +45,11 @@ export default function Vendas() {
     categoria: p.categoria || "Outros"
   });
 
-  // Busca os produtos baseado na região atual
-  const fetchProdutos = useCallback(async () => {
+  // Função para recarregar os produtos mantendo o filtro de região
+  const recarregarProdutos = useCallback(async () => {
     try {
       setLoadingProdutos(true);
-      console.log(`Buscando produtos para a região: ${regiao || 'Todas as regiões'}`);
+      console.log(`Atualizando produtos para a região: ${regiao || "Todas as regiões"}`);
       
       // Busca todos os produtos
       const response = await VendasService.getAnuncios();
@@ -81,10 +81,15 @@ export default function Vendas() {
     }
   }, [regiao]);
   
-  // Atualiza quando a região mudar
+  // Busca os produtos quando a região mudar
   useEffect(() => {
-    fetchProdutos();
-  }, [fetchProdutos]);
+    recarregarProdutos();
+  }, [recarregarProdutos]);
+
+  // Função para buscar os produtos (mantida para compatibilidade)
+  const fetchProdutos = useCallback(async () => {
+    await recarregarProdutos();
+  }, [recarregarProdutos]);
 
   return (
     <div className="max-w-6xl mx-auto pt-24 px-6 relative">
@@ -115,7 +120,7 @@ export default function Vendas() {
           setShowAuthModal(false);
           // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
           setTimeout(() => {
-            navigate('/auth/login');
+            navigate('/login');
           }, 100);
         }}
       />
@@ -130,7 +135,42 @@ export default function Vendas() {
         />
       )}
 
-      <CarrosselVendas produtos={produtos} />
+      <div className="mb-16">
+        <CarrosselVendas produtos={produtos} />
+      </div>
+
+      <div className="relative mb-16">
+        <div className="flex justify-between items-center">
+          <div className="text-center w-full">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
+              Anúncios Recentes
+              <div
+                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
+                style={{ backgroundColor: corPrincipal }}
+              ></div>
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Confira as melhores ofertas e descontos na sua região
+            </p>
+          </div>
+          <div className="absolute right-0 top-0">
+            <button
+              onClick={recarregarProdutos}
+              disabled={loadingProdutos}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                loadingProdutos 
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              } transition-colors`}
+              title="Atualizar anúncios"
+              aria-label="Atualizar anúncios"
+            >
+              <FiRefreshCw className={`w-5 h-5 ${loadingProdutos ? 'animate-spin' : ''}`} />
+              <span className="text-sm font-medium">Atualizar</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* SelecaoAnuncios cuida do cabeçalho, loading e estado vazio */}
       <SelecaoAnuncios produtos={produtos} loading={loadingProdutos} />

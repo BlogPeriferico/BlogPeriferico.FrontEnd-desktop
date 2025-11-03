@@ -64,8 +64,8 @@ export default function Header() {
         </Link>
       </div>
 
-      {/* Centro: Links + pesquisa */}
-      <div className="flex-1 flex items-center gap-6">
+      {/* Links de navegação */}
+      <div className="flex-1">
         <nav className="hidden lg:flex gap-6 font-medium text-sm text-black ml-4">
           {navLinks.map((link) => (
             <Link
@@ -82,10 +82,17 @@ export default function Header() {
             </Link>
           ))}
         </nav>
+      </div>
 
+      {/* Barra de pesquisa */}
+      <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-4">
         <div
-          className="hidden lg:flex items-center bg-white rounded-full shadow-md px-4 py-2 w-72 border gap-2 transition-all duration-300 ml-auto"
-          style={{ borderColor: "#d1d5db" }}
+          className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
+          style={{ 
+            borderColor: "#d1d5db",
+            minWidth: '200px',
+            maxWidth: '500px'
+          }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = corPrincipal;
             e.currentTarget.style.boxShadow = `0 0 10px ${hexToRGBA(
@@ -114,7 +121,7 @@ export default function Header() {
       </div>
 
       {/* Direita: avatar + região */}
-      <div className="flex items-center gap-5 flex-shrink-0">
+      <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0 ml-2 lg:ml-4">
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="text-xl lg:hidden"

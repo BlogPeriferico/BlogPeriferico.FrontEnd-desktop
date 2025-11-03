@@ -14,25 +14,12 @@ export default function SelecaoDoacoes({ doacoes, loading = false }) {
     .sort((a, b) => new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao))
     .slice(0, 16);
 
-  // Loading state - igual ao QuebradaInforma
+  // Loading state
   if (loading) {
     return (
-      <div className="w-full mt-20 mb-24">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative">
-            Doações Disponíveis
-            <div
-              className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
-              style={{ backgroundColor: corPrincipal }}
-            ></div>
-          </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Encontre itens que podem fazer a diferença na vida de alguém
-          </p>
-        </div>
-
-        {/* Loading spinner igual ao QuebradaInforma */}
-        <div className="flex justify-center items-center py-20">
+      <div className="w-full">
+        {/* Loading spinner */}
+        <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: corPrincipal }}></div>
           <span className="ml-3 text-gray-600">Carregando doações...</span>
         </div>
@@ -42,21 +29,8 @@ export default function SelecaoDoacoes({ doacoes, loading = false }) {
 
   if (ultimasDoacoes.length === 0) {
     return (
-      <div className="w-full mt-20 mb-24">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative">
-            Doações Disponíveis
-            <div
-              className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
-              style={{ backgroundColor: corPrincipal }}
-            ></div>
-          </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Encontre itens que podem fazer a diferença na vida de alguém
-          </p>
-        </div>
-
-        <div className="text-center py-20">
+      <div className="w-full">
+        <div className="text-center py-12">
           <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
             <svg
               className="w-12 h-12 text-gray-400"
@@ -84,20 +58,8 @@ export default function SelecaoDoacoes({ doacoes, loading = false }) {
   }
 
   return (
-    <div className="w-full mt-20 mb-24">
+    <div className="w-full">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative">
-            Doações Disponíveis
-            <div
-              className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
-              style={{ backgroundColor: corPrincipal }}
-            ></div>
-          </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Encontre itens que podem fazer a diferença na vida de alguém
-          </p>
-        </div>
 
         {/* GRID AJUSTADO */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">

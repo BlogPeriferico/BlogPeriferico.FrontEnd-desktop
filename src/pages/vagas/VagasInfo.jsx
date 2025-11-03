@@ -25,11 +25,9 @@ export default function VagaInfo() {
   const [novoComentario, setNovoComentario] = useState("");
   const [comentLoading, setComentLoading] = useState(false);
   const [usuarioLogado, setUsuarioLogado] = useState({ id: null, email: null, nome: "Visitante", papel: null });
-  const [modalDeletar, setModalDeletar] = useState({
-    isOpen: false,
-    comentarioId: null,
-  });
+  const [modalDeletar, setModalDeletar] = useState({ isOpen: false, comentarioId: null });
   const [modalDeletarVaga, setModalDeletarVaga] = useState(false);
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
   const [nomeAutor, setNomeAutor] = useState(null);
 
   // Carregar perfil do usuário usando UserContext
@@ -159,8 +157,34 @@ export default function VagaInfo() {
         // Carrega os comentários
         try {
           const comentariosData = await ComentariosService.listarComentariosVaga(id);
+          
+          // Buscar todos os usuários para obter as fotos de perfil
+          const response = await api.get("/usuarios/listar");
+          const usuarios = response.data;
+          
+          // Mapear comentários e adicionar avatar
+          const comentariosComAvatar = comentariosData.map(coment => {
+            // Encontrar o usuário que fez o comentário
+            const usuarioComentario = usuarios.find(u => 
+              u.id === coment.idUsuario || u.email === coment.emailUsuario
+            );
+            
+            // Se encontrou o usuário e ele tem foto de perfil, usa a foto
+            if (usuarioComentario?.fotoPerfil) {
+              return { ...coment, avatar: usuarioComentario.fotoPerfil };
+            }
+            
+            // Se for o próprio usuário logado, usa a foto do perfil atual
+            if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
+              return { ...coment, avatar: user.fotoPerfil };
+            }
+            
+            // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
+            return { ...coment, avatar: coment.avatar || NoPicture };
+          });
+          
           if (isMounted) {
-            setComentarios(comentariosData);
+            setComentarios(comentariosComAvatar);
           }
         } catch (err) {
           console.error('Erro ao carregar comentários:', err);
@@ -329,6 +353,11 @@ export default function VagaInfo() {
 
   // Publicar comentário
   const handlePublicarComentario = async () => {
+    if (!user?.id) {
+      setShowLoginAlert(true);
+      return;
+    }
+    
     if (!novoComentario.trim()) return;
 
     // Aguardar o carregamento do ID do usuário
@@ -627,6 +656,23 @@ export default function VagaInfo() {
           </div>
 
           {/* Formulário de Comentário */}
+          {!user?.id && (
+            <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">
+                    Você precisa estar logado para comentar. <a href="/login" className="font-medium text-yellow-700 underline hover:text-yellow-600">Faça login</a> ou <a href="/cadastro" className="font-medium text-yellow-700 underline hover:text-yellow-600">cadastre-se</a> para participar da conversa.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img

@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/Api";
 import { regionColors } from "../../utils/regionColors";
 import { Link } from "react-router-dom";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiRefreshCw } from "react-icons/fi";
 import ModalNoticia from "../../components/modals/ModalNoticia";
 import { ModalVisitantes } from "../../components/modals/ModalVisitantes";
 import NoticiaService from "../../services/NoticiasService";
@@ -41,6 +41,45 @@ export default function QuebradaInforma() {
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
+  
+  // Função para recarregar as notícias mantendo o filtro de região
+  const recarregarNoticias = async () => {
+    try {
+      setLoadingNoticias(true);
+      console.log(`Atualizando notícias para a região: ${regiao || "Todas as regiões"}`);
+      
+      // Busca todas as notícias
+      const response = await api.get("/noticias");
+      const dados = Array.isArray(response.data) ? response.data : [];
+
+      // Normaliza os dados das notícias
+      const noticiasNormalizadas = dados.map(mapNoticiaFromDTO);
+
+      // Ordena por data de criação (mais recentes primeiro)
+      const noticiasOrdenadas = [...noticiasNormalizadas].sort(
+        (a, b) => new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
+      );
+
+      // Aplica o filtro de região
+      let noticiasFiltradas = noticiasOrdenadas;
+      if (regiao) {
+        const regiaoFiltro = regiao.toLowerCase() === "central" ? "Centro" : regiao;
+        noticiasFiltradas = noticiasOrdenadas.filter(
+          (noticia) =>
+            noticia.regiao &&
+            noticia.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
+        );
+      }
+
+      setTodasNoticias(noticiasFiltradas);
+      setPaginaAtual(1);
+      console.log(`✅ ${noticiasFiltradas.length} notícias atualizadas`);
+    } catch (error) {
+      console.error("❌ Erro ao atualizar notícias:", error);
+    } finally {
+      setLoadingNoticias(false);
+    }
+  };
 
   // Busca clima
   const buscarClima = async () => {
@@ -204,7 +243,7 @@ export default function QuebradaInforma() {
           setShowAuthModal(false);
           // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
           setTimeout(() => {
-            navigate('/auth/login');
+            navigate('/login');
           }, 100);
         }}
       />
@@ -296,18 +335,41 @@ export default function QuebradaInforma() {
 
       {/* Notícias */}
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative">
-            Últimas Notícias
-            <div
-              className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
-              style={{ backgroundColor: corPrincipal }}
-            ></div>
-          </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Fique por dentro das principais notícias e acontecimentos da sua
-            região
-          </p>
+        <div className="mb-8">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quebrada Informa</h1>
+            <p className="text-gray-600 dark:text-gray-300">Notícias {regiao ? `da região ${regiao}` : 'de todas as regiões'}</p>
+          </div>
+        </div>
+        <div className="relative mb-16">
+          <div className="text-center">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
+              Últimas Notícias
+              <div
+                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
+                style={{ backgroundColor: corPrincipal }}
+              ></div>
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-6">
+              Fique por dentro das principais notícias e acontecimentos da sua região
+            </p>
+          </div>
+          <div className="absolute right-0 top-0">
+            <button
+              onClick={recarregarNoticias}
+              disabled={loadingNoticias}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                loadingNoticias 
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              } transition-colors`}
+              title="Atualizar notícias"
+              aria-label="Atualizar notícias"
+            >
+              <FiRefreshCw className={`w-5 h-5 ${loadingNoticias ? 'animate-spin' : ''}`} />
+              <span className="text-sm font-medium">Atualizar</span>
+            </button>
+          </div>
         </div>
 
         {loadingNoticias ? (
