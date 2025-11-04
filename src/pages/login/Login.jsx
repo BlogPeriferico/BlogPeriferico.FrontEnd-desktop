@@ -156,6 +156,17 @@ export default function Login({ onLoginSuccess }) {
             </button>
           </div>
 
+          <div className="text-right mb-4">
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              className="text-sm text-blue-500 hover:underline focus:outline-none"
+              disabled={isLoading}
+            >
+              Esqueci minha senha
+            </button>
+          </div>
+
           <button
             type="submit"
             onClick={handleLogin}

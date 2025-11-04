@@ -18,6 +18,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { UserProvider } from "./contexts/UserContext";
 import { RegionProvider } from "./contexts/RegionContext";
+import ForgotPassword from "./pages/login/ForgotPassword";
 
 function AppContent() {
   const location = useLocation();
@@ -27,7 +28,8 @@ function AppContent() {
   const isAuthPage =
     location.pathname === "/login" ||
     location.pathname === "/register" ||
-    location.pathname === "/editar-perfil";
+    location.pathname === "/editar-perfil" ||
+    location.pathname === "/forgot-password";
 
   return (
         <div className="flex flex-col min-h-screen">
@@ -44,6 +46,11 @@ function AppContent() {
               <Route path="/register" element={
                 <div className="min-h-screen flex items-center justify-center">
                   <Register onRegisterSuccess={() => navigate('/login')} />
+                </div>
+              } />
+              <Route path="/forgot-password" element={
+                <div className="min-h-screen flex items-center justify-center">
+                  <ForgotPassword />
                 </div>
               } />
               <Route path="/editar-perfil" element={<EditaPerfil />} />

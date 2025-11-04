@@ -83,6 +83,26 @@ const AuthService = {
 
     return response.data; // Retorna o usuário atualizado
   },
+
+  // Solicita um código de redefinição de senha
+  solicitarCodigoRedefinicao: async (email) => {
+    if (!email) throw new Error("E-mail é obrigatório");
+    const response = await api.post("/auth/esqueci-senha", { email });
+    return response.data;
+  },
+
+  // Redefine a senha usando o código recebido
+  redefinirSenha: async (email, codigo, novaSenha) => {
+    if (!email || !codigo || !novaSenha) {
+      throw new Error("E-mail, código e nova senha são obrigatórios");
+    }
+    const response = await api.post("/auth/redefinir-senha", {
+      email,
+      codigo,
+      novaSenha,
+    });
+    return response.data;
+  },
 };
 
 export default AuthService;
