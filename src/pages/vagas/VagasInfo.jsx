@@ -49,21 +49,12 @@ export default function VagaInfo() {
   // Função para carregar os dados do autor da vaga
   const carregarAutor = useCallback(async (vagaData) => {
     if (!vagaData) return null;
-    
-    console.log('🔍 Buscando autor para a vaga:', {
-      id: vagaData.id,
-      idUsuario: vagaData.idUsuario,
-      emailUsuario: vagaData.emailUsuario,
-      autorAtual: vagaData.autor
-    });
 
     // Tenta buscar por idUsuario primeiro (caso mais comum)
     if (vagaData.idUsuario) {
       try {
-        console.log(`🔍 Buscando usuário por ID: ${vagaData.idUsuario}`);
         const response = await api.get(`/usuarios/${vagaData.idUsuario}`);
         if (response.data) {
-          console.log('✅ Usuário encontrado por ID:', response.data.nome);
           return {
             id: response.data.id,
             nome: response.data.nome,
@@ -71,15 +62,11 @@ export default function VagaInfo() {
           };
         }
       } catch (err) {
-        console.warn('❌ Erro ao buscar usuário por ID, tentando listar todos...', err);
-        
         // Se falhar, tenta listar todos e filtrar localmente
         try {
-          console.log('🔍 Listando todos os usuários para encontrar por ID...');
           const response = await api.get('/usuarios/listar');
           const usuario = response.data.find(u => u.id === vagaData.idUsuario);
           if (usuario) {
-            console.log('✅ Usuário encontrado na lista:', usuario.nome);
             return {
               id: usuario.id,
               nome: usuario.nome,
@@ -87,7 +74,7 @@ export default function VagaInfo() {
             };
           }
         } catch (listErr) {
-          console.error('❌ Erro ao listar usuários:', listErr);
+          // Erro silencioso
         }
       }
     }
@@ -95,52 +82,48 @@ export default function VagaInfo() {
     // Se não encontrou por ID, tenta por email
     if (vagaData.emailUsuario) {
       try {
-        console.log(`📧 Buscando usuário por email: ${vagaData.emailUsuario}`);
         const response = await api.get('/usuarios/listar');
         const usuario = response.data.find(u => u.email === vagaData.emailUsuario);
         if (usuario) {
-          console.log('✅ Usuário encontrado por email:', usuario.nome);
           return {
             id: usuario.id,
             nome: usuario.nome,
-            fotoPerfil: usuario.fotoPerfil || 'https://i.pravatar.cc/80'
+            fotoPerfil: usuario.fotoPerfil || NoPicture
           };
         }
       } catch (err) {
-        console.error('❌ Erro ao buscar usuário por email:', err);
+        // Erro silencioso
       }
     }
 
     // Se não encontrou de nenhuma forma, tenta usar o autor direto da vaga
     if (vagaData.autor) {
-      console.log('ℹ️ Usando nome do autor diretamente da vaga');
       return {
         id: vagaData.idUsuario || null,
         nome: vagaData.autor,
-        fotoPerfil: vagaData.fotoPerfil || NoPicture
+        fotoPerfil: NoPicture
       };
     }
 
-    console.warn('⚠️ Não foi possível encontrar informações do autor');
     return null;
   }, []);
 
   // Carregar vaga e comentários
   useEffect(() => {
     let isMounted = true;
-    
+
     const carregarDados = async () => {
       try {
         setLoading(true);
-        
+
         // Carrega a vaga
         const vagaData = await CorreCertoService.buscarCorrecertoPorId(id);
-        
+
         if (!isMounted) return;
-        
+
         // Busca os dados do autor
         const autorInfo = await carregarAutor(vagaData);
-        
+
         if (autorInfo) {
           // Atualiza os dados da vaga com as informações do autor
           vagaData.autor = autorInfo.nome;
@@ -151,38 +134,38 @@ export default function VagaInfo() {
           vagaData.autor = null;
           vagaData.fotoPerfil = null;
         }
-        
+
         setVaga(vagaData);
-        
+
         // Carrega os comentários
         try {
           const comentariosData = await ComentariosService.listarComentariosVaga(id);
-          
+
           // Buscar todos os usuários para obter as fotos de perfil
           const response = await api.get("/usuarios/listar");
           const usuarios = response.data;
-          
+
           // Mapear comentários e adicionar avatar
           const comentariosComAvatar = comentariosData.map(coment => {
             // Encontrar o usuário que fez o comentário
-            const usuarioComentario = usuarios.find(u => 
+            const usuarioComentario = usuarios.find(u =>
               u.id === coment.idUsuario || u.email === coment.emailUsuario
             );
-            
+
             // Se encontrou o usuário e ele tem foto de perfil, usa a foto
             if (usuarioComentario?.fotoPerfil) {
               return { ...coment, avatar: usuarioComentario.fotoPerfil };
             }
-            
+
             // Se for o próprio usuário logado, usa a foto do perfil atual
             if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
               return { ...coment, avatar: user.fotoPerfil };
             }
-            
+
             // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
             return { ...coment, avatar: coment.avatar || NoPicture };
           });
-          
+
           if (isMounted) {
             setComentarios(comentariosComAvatar);
           }
@@ -203,9 +186,9 @@ export default function VagaInfo() {
         }
       }
     };
-    
+
     carregarDados();
-    
+
     return () => {
       isMounted = false;
     };
@@ -220,25 +203,17 @@ export default function VagaInfo() {
     }
   }, [vaga]);
 
-  // Atualiza fotoPerfil da vaga quando foto do usuário muda
+  // Atualiza fotoPerfil do usuário quando a foto do usuário logado mudar
   useEffect(() => {
     if (vaga && user?.id && vaga.idUsuario === user.id) {
       const novaFoto = user.fotoPerfil || NoPicture;
 
       // Só atualiza se a foto realmente mudou
       if (novaFoto !== vaga.fotoPerfil) {
-        console.log("🔄 VagasInfo - Atualizando fotoPerfil da vaga:", vaga.id);
-        console.log("📷 Foto antes:", vaga.fotoPerfil);
-        console.log("📷 Foto depois:", novaFoto);
-
         setVaga(prevVaga => ({
           ...prevVaga,
           fotoPerfil: novaFoto
         }));
-
-        console.log("✅ VagasInfo - fotoPerfil atualizada");
-      } else {
-        console.log("🔄 VagasInfo - Foto já está atualizada:", novaFoto);
       }
     }
   }, [user?.fotoPerfil, vaga?.id, vaga?.idUsuario, user?.id]);
@@ -246,45 +221,28 @@ export default function VagaInfo() {
   // Sincroniza fotoPerfil inicial quando vaga e usuário estão disponíveis
   useEffect(() => {
     if (vaga && user?.id && vaga.idUsuario === user.id && user.fotoPerfil && !vaga.fotoPerfil) {
-      console.log("🔄 VagasInfo - Sincronizando fotoPerfil inicial:", vaga.id);
-      console.log("📷 Foto do usuário:", user.fotoPerfil);
-
       setVaga(prevVaga => ({
         ...prevVaga,
         fotoPerfil: user.fotoPerfil
       }));
-
-      console.log("✅ VagasInfo - fotoPerfil inicial sincronizada");
     }
   }, [vaga, user]);
 
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
-    console.log("🔄 VagasInfo - User mudou:", {
-      id: user?.id,
-      fotoPerfil: user?.fotoPerfil,
-      comentariosCount: comentarios.length
-    });
-
     if (user?.id && comentarios.length > 0) {
-      console.log("🔄 VagasInfo - Atualizando comentários existentes...");
-
       setComentarios(prevComentarios => {
-        const updated = prevComentarios.map(coment => {
+        return prevComentarios.map(coment => {
           const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
 
           if (isUserComment) {
-            console.log(`✅ VagasInfo - Atualizando comentário ${coment.id}:`, {
-              de: coment.avatar,
-              para: user.fotoPerfil || "https://i.pravatar.cc/40"
-            });
-            return { ...coment, avatar: user.fotoPerfil || NoPicture };
+            return {
+              ...coment,
+              avatar: user.fotoPerfil || "https://i.pravatar.cc/40"
+            };
           }
           return coment;
         });
-
-        console.log("✅ VagasInfo - Comentários atualizados:", updated.length);
-        return updated;
       });
     }
   }, [user?.fotoPerfil, user?.id, comentarios.length]);
@@ -302,33 +260,23 @@ export default function VagaInfo() {
   );
   const podeExcluirVaga = Boolean(vaga && usuarioLogado && (isAdmin || isAutor));
 
-  // Debug: log de permissões
+  // Efeito para verificar permissões
   useEffect(() => {
-    if (vaga && usuarioLogado.id) {
-      console.log("🔍 Verificação de permissões:");
-      console.log("  - Papel do usuário:", userRole);
-      console.log("  - Papel normalizado:", roleNormalized);
-      console.log("  - É ADMIN?", isAdmin);
-      console.log("  - ID do autor da vaga:", vaga.idUsuario);
-      console.log("  - Nome do autor:", nomeAutor);
-      console.log("  - ID do usuário logado:", usuarioLogado.id);
-      console.log("  - Nome do usuário:", usuarioLogado.nome);
-      console.log("  - É autor?", isAutor);
-      console.log("  - Pode excluir?", podeExcluirVaga);
-    }
+    // Verificação de permissões
   }, [vaga, usuarioLogado, podeExcluirVaga]);
 
   const handleDeletarVaga = async () => {
     try {
-      console.log("🗑️ Tentando excluir vaga ID:", id);
-      console.log("🔑 Token no localStorage:", localStorage.getItem("token"));
-      console.log("👤 Usuário logado:", usuarioLogado);
-      console.log("📋 Dados da vaga completa:", vaga);
-
       await CorreCertoService.excluirVaga(id);
       setModalDeletarVaga(false);
-      alert("Vaga excluída com sucesso.");
-      navigate("/vagas");
+
+      // Mostra mensagem de sucesso
+      // toast.success("Vaga excluída com sucesso!");
+
+      // Redireciona para a página de vagas após um pequeno delay
+      setTimeout(() => {
+        navigate("/vagas");
+      }, 1000);
     } catch (err) {
       console.error("❌ Erro ao excluir vaga:", err);
       console.error("❌ Resposta do servidor:", err.response?.data);
@@ -336,14 +284,14 @@ export default function VagaInfo() {
       if (status === 403 || status === 401) {
         alert(
           "❌ ERRO DE AUTORIZAÇÃO\n\n" +
-            "Você não tem permissão para excluir esta vaga.\n\n" +
-            "Detalhes técnicos:\n" +
-            "- ID do usuário logado: " + usuarioLogado?.id + "\n" +
-            "- ID do autor da vaga: " + vaga?.idUsuario + "\n" +
-            "- Nome do usuário: " + usuarioLogado?.nome + "\n" +
-            "- Nome do autor: " + nomeAutor + "\n" +
-            "- Papel do usuário: " + usuarioLogado?.papel + "\n\n" +
-            "Apenas o autor da vaga ou um administrador podem excluí-la."
+          "Você não tem permissão para excluir esta vaga.\n\n" +
+          "Detalhes técnicos:\n" +
+          "- ID do usuário logado: " + usuarioLogado?.id + "\n" +
+          "- ID do autor da vaga: " + vaga?.idUsuario + "\n" +
+          "- Nome do usuário: " + usuarioLogado?.nome + "\n" +
+          "- Nome do autor: " + nomeAutor + "\n" +
+          "- Papel do usuário: " + usuarioLogado?.papel + "\n\n" +
+          "Apenas o autor da vaga ou um administrador podem excluí-la."
         );
       } else {
         alert("Não foi possível excluir a vaga. Tente novamente.");
@@ -357,7 +305,7 @@ export default function VagaInfo() {
       setShowLoginAlert(true);
       return;
     }
-    
+
     if (!novoComentario.trim()) return;
 
     // Aguardar o carregamento do ID do usuário
@@ -375,12 +323,6 @@ export default function VagaInfo() {
         idUsuario: usuarioLogado.id,
         tipo: "VAGA", // ✅ Especifica o tipo de comentário
       };
-
-      console.log("📤 VagasInfo - DTO antes de enviar:", dto);
-      console.log("📤 VagasInfo - ID do parâmetro:", id);
-      console.log("📤 VagasInfo - ID convertido:", Number(id));
-      console.log("📤 VagasInfo - Usuario logado:", usuarioLogado);
-      console.log("📤 VagasInfo - Novo comentário:", novoComentario);
 
       const comentarioCriado = await ComentariosService.criarComentarioVaga(dto);
 

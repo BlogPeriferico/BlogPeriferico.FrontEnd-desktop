@@ -46,7 +46,6 @@ export default function QuebradaInforma() {
   const recarregarNoticias = async () => {
     try {
       setLoadingNoticias(true);
-      console.log(`Atualizando notícias para a região: ${regiao || "Todas as regiões"}`);
       
       // Busca todas as notícias
       const response = await api.get("/noticias");
@@ -73,9 +72,8 @@ export default function QuebradaInforma() {
 
       setTodasNoticias(noticiasFiltradas);
       setPaginaAtual(1);
-      console.log(`✅ ${noticiasFiltradas.length} notícias atualizadas`);
     } catch (error) {
-      console.error("❌ Erro ao atualizar notícias:", error);
+      // Erro silencioso
     } finally {
       setLoadingNoticias(false);
     }
@@ -138,9 +136,6 @@ export default function QuebradaInforma() {
   const buscarNoticias = useCallback(async () => {
     try {
       setLoadingNoticias(true);
-      console.log(
-        `Buscando notícias para a região: ${regiao || "Todas as regiões"}`
-      );
 
       // Busca todas as notícias
       const response = await api.get("/noticias");
@@ -168,9 +163,7 @@ export default function QuebradaInforma() {
 
       setTodasNoticias(noticiasFiltradas);
       setPaginaAtual(1); // Resetar para a primeira página
-      console.log(`✅ ${noticiasFiltradas.length} notícias carregadas`);
     } catch (err) {
-      console.error("❌ Erro ao carregar notícias:", err);
       return [];
     } finally {
       setLoadingNoticias(false);
@@ -201,10 +194,7 @@ export default function QuebradaInforma() {
       setPaginaAtual(1);
     }
 
-    // Debug: Mostra as regiões das notícias carregadas
-    console.log("Regiões encontradas:", [
-      ...new Set(todasNoticias.map((n) => n.regiao)),
-    ]);
+    // Regiões disponíveis nas notícias carregadas
   }, [todasNoticias, paginaAtual]);
 
   // Função para carregar mais itens (scroll infinito)

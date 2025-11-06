@@ -15,9 +15,9 @@ const ModalAuth = ({ isOpen, onClose }) => {
     e.preventDefault();
     // Lógica de autenticação será implementada aqui
     if (activeTab === 'login') {
-      console.log('Fazendo login...');
+      // Lógica de login
     } else {
-      console.log('Criando conta...');
+      // Lógica de criação de conta
     }
   };
 

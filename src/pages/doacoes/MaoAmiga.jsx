@@ -43,7 +43,6 @@ export default function Doacoes() {
   const recarregarDoacoes = useCallback(async () => {
     try {
       setLoading(true);
-      console.log(`Atualizando doações para a região: ${regiao || "Todas as regiões"}`);
       
       // Busca todas as doações
       const response = await api.get("/doacoes");
@@ -67,9 +66,8 @@ export default function Doacoes() {
       }
       
       setDoacoes(doacoesFiltradas);
-      console.log(`✅ ${doacoesFiltradas.length} doações carregadas`);
     } catch (err) {
-      console.error("❌ Erro ao carregar doações:", err);
+      // Erro ao carregar doações
     } finally {
       setLoading(false);
     }

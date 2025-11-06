@@ -3,8 +3,6 @@ import { jwtDecode } from "jwt-decode";
 
 const NoticiaService = {
   criarNoticia: async (noticiaData) => {
-    console.log("📤 Criando notícia com dados:", noticiaData);
-
     // 🔥 Garante que nenhum id vai junto
     if (!(noticiaData instanceof FormData) && noticiaData?.id !== undefined) {
       delete noticiaData.id;
@@ -41,7 +39,6 @@ const NoticiaService = {
 
     try {
       const response = await api.post("/noticias", noticiaData, config);
-      console.log("✅ Notícia criada com sucesso!");
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao criar notícia:", {
@@ -66,8 +63,6 @@ const NoticiaService = {
   },
 
   atualizarNoticia: async (id, noticiaData) => {
-    console.log(`✏️ Atualizando notícia ${id} com dados:`, noticiaData);
-
     const token = localStorage.getItem("token");
     if (!token) {
       throw new Error("Usuário não está logado.");
@@ -84,7 +79,6 @@ const NoticiaService = {
 
     try {
       const response = await api.put(`/noticias/${id}`, noticiaData, config);
-      console.log(`✅ Notícia ${id} atualizada com sucesso:`, response.data);
       return response.data;
     } catch (err) {
       console.error(
@@ -96,11 +90,6 @@ const NoticiaService = {
   },
 
   listarNoticias: async (regiao) => {
-    console.log(
-      `📥 Buscando notícias${
-        regiao ? ` para a região: ${regiao}` : " de todas as regiões"
-      }...`
-    );
     try {
       const params = {};
       if (regiao) {
@@ -108,7 +97,6 @@ const NoticiaService = {
       }
 
       const response = await api.get("/noticias", { params });
-      console.log(`✅ ${response.data?.length || 0} notícias encontradas`);
       return response.data || [];
     } catch (err) {
       console.error("❌ Erro ao buscar notícias:", err.response?.data || err);
@@ -118,10 +106,8 @@ const NoticiaService = {
   },
 
   buscarNoticiaPorId: async (id) => {
-    console.log("🔍 Buscando notícia com ID:", id);
     try {
       const response = await api.get(`/noticias/${id}`);
-      console.log("✅ Notícia recebida:", response.data);
       return response.data;
     } catch (err) {
       console.error(
@@ -133,24 +119,17 @@ const NoticiaService = {
   },
 
   excluirNoticia: async (id) => {
-    console.log("🗑️ Excluindo notícia com ID:", id);
-
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("❌ Nenhum token encontrado no localStorage");
       throw new Error("Usuário não está logado.");
     }
-
-    console.log("🔑 Token sendo enviado:", token.substring(0, 10) + "...");
 
     try {
       const response = await api.delete(`/noticias/${id}`, {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(`✅ Notícia ${id} excluída.`, response.data);
       return response.data;
     } catch (err) {
       console.error(

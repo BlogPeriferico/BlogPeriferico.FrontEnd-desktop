@@ -56,18 +56,10 @@ export default function ProdutoInfo() {
 
       // Só atualiza se a foto realmente mudou
       if (novaFoto !== produto.fotoPerfil) {
-        console.log("🔄 ProdutoInfo - Atualizando fotoPerfil do produto:", produto.id);
-        console.log("📷 Foto antes:", produto.fotoPerfil);
-        console.log("📷 Foto depois:", novaFoto);
-
         setProduto(prevProduto => ({
           ...prevProduto,
           fotoPerfil: novaFoto
         }));
-
-        console.log("✅ ProdutoInfo - fotoPerfil atualizada");
-      } else {
-        console.log("🔄 ProdutoInfo - Foto já está atualizada:", novaFoto);
       }
     }
   }, [user?.fotoPerfil, produto?.id, produto?.idUsuario, user?.id]);
@@ -75,49 +67,31 @@ export default function ProdutoInfo() {
   // Sincroniza fotoPerfil inicial quando produto e usuário estão disponíveis
   useEffect(() => {
     if (produto && user?.id && produto.idUsuario === user.id && user.fotoPerfil && !produto.fotoPerfil) {
-      console.log("🔄 ProdutoInfo - Sincronizando fotoPerfil inicial:", produto.id);
-      console.log("📷 Foto do usuário:", user.fotoPerfil);
-
       setProduto(prevProduto => ({
         ...prevProduto,
         fotoPerfil: user.fotoPerfil
       }));
-
-      console.log("✅ ProdutoInfo - fotoPerfil inicial sincronizada");
     }
   }, [produto, user]);
 
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
-    console.log("🔄 ProdutoInfo - User mudou:", {
-      id: user?.id,
-      fotoPerfil: user?.fotoPerfil,
-      comentariosCount: comentarios.length
-    });
-
     if (user?.id && comentarios.length > 0) {
-      console.log("🔄 ProdutoInfo - Atualizando comentários existentes...");
-
       setComentarios(prevComentarios => {
-        const updated = prevComentarios.map(coment => {
+        return prevComentarios.map(coment => {
           const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
 
           if (isUserComment) {
-            console.log(`✅ ProdutoInfo - Atualizando comentário ${coment.id}:`, {
-              de: coment.avatar,
-              para: user.fotoPerfil || NoPicture
-            });
-            return { ...coment, avatar: user.fotoPerfil || NoPicture };
+            return {
+              ...coment,
+              avatar: user.fotoPerfil || NoPicture
+            };
           }
           return coment;
         });
-
-        console.log("✅ ProdutoInfo - Comentários atualizados:", updated.length);
-        return updated;
       });
-
-      setLastSyncTimestamp(Date.now());
     }
+    setLastSyncTimestamp(Date.now());
   }, [user?.fotoPerfil, user?.id, comentarios.length]);
 
   // Carrega comentários apenas se não foram atualizados recentemente
@@ -153,13 +127,9 @@ export default function ProdutoInfo() {
 
         // Só atualiza se não houve sincronização recente (últimos 2 segundos)
         if (Date.now() - lastSyncTimestamp > 2000) {
-          console.log("🔄 ProdutoInfo - Carregando comentários do backend:", comentariosComAvatar.length);
           setComentarios(comentariosComAvatar);
-        } else {
-          console.log("🔄 ProdutoInfo - Pulando reload - sincronização recente");
         }
       } catch (err) {
-        console.error("❌ Erro ao buscar comentários:", err);
         setComentarios([]);
       }
     };
@@ -170,45 +140,33 @@ export default function ProdutoInfo() {
   // Função para carregar os dados do autor do produto
   const carregarAutor = useCallback(async (produtoData) => {
     if (!produtoData) return null;
-    
-    console.log('🔍 Buscando autor para o produto:', {
-      id: produtoData.id,
-      idUsuario: produtoData.idUsuario,
-      emailUsuario: produtoData.emailUsuario,
-      autorAtual: produtoData.autor
-    });
 
     // Tenta buscar por idUsuario primeiro (caso mais comum)
     if (produtoData.idUsuario) {
       try {
-        console.log(`🔍 Buscando usuário por ID: ${produtoData.idUsuario}`);
         const response = await api.get(`/usuarios/${produtoData.idUsuario}`);
         if (response.data) {
-          console.log('✅ Usuário encontrado por ID:', response.data.nome);
           return {
             id: response.data.id,
             nome: response.data.nome,
-            fotoPerfil: response.data.fotoPerfil  
+            email: response.data.email,
+            fotoPerfil: response.data.fotoPerfil || NoPicture
           };
         }
       } catch (err) {
-        console.warn('❌ Erro ao buscar usuário por ID, tentando listar todos...', err);
-        
         // Se falhar, tenta listar todos e filtrar localmente
         try {
-          console.log('🔍 Listando todos os usuários para encontrar por ID...');
           const response = await api.get('/usuarios/listar');
           const usuario = response.data.find(u => u.id === produtoData.idUsuario);
           if (usuario) {
-            console.log('✅ Usuário encontrado na lista:', usuario.nome);
             return {
               id: usuario.id,
               nome: usuario.nome,
-              fotoPerfil: usuario.fotoPerfil   
+              email: usuario.email,
+              fotoPerfil: usuario.fotoPerfil || NoPicture
             };
           }
         } catch (listErr) {
-          console.error('❌ Erro ao listar usuários:', listErr);
         }
       }
     }
@@ -216,33 +174,29 @@ export default function ProdutoInfo() {
     // Se não encontrou por ID, tenta por email
     if (produtoData.emailUsuario) {
       try {
-        console.log(`📧 Buscando usuário por email: ${produtoData.emailUsuario}`);
         const response = await api.get('/usuarios/listar');
         const usuario = response.data.find(u => u.email === produtoData.emailUsuario);
         if (usuario) {
-          console.log('✅ Usuário encontrado por email:', usuario.nome);
           return {
             id: usuario.id,
             nome: usuario.nome,
-            fotoPerfil: usuario.fotoPerfil  
+            email: usuario.email,
+            fotoPerfil: usuario.fotoPerfil || NoPicture
           };
         }
       } catch (err) {
-        console.error('❌ Erro ao buscar usuário por email:', err);
       }
     }
 
     // Se não encontrou de nenhuma forma, tenta usar o autor direto do produto
     if (produtoData.autor) {
-      console.log('ℹ️ Usando nome do autor diretamente do produto');
       return {
         id: produtoData.idUsuario || null,
         nome: produtoData.autor,
-        fotoPerfil: produtoData.fotoPerfil   
+        fotoPerfil: produtoData.fotoPerfil || NoPicture
       };
     }
 
-    console.warn('⚠️ Não foi possível encontrar informações do autor');
     return null;
   }, []);
 
@@ -282,13 +236,11 @@ export default function ProdutoInfo() {
             setComentarios(comentariosData);
           }
         } catch (err) {
-          console.error('Erro ao carregar comentários:', err);
           if (isMounted) {
             setComentarios([]);
           }
         }
       } catch (err) {
-        console.error('Erro ao carregar produto:', err);
         if (isMounted) {
           setProduto(null);
         }
@@ -316,66 +268,21 @@ export default function ProdutoInfo() {
   }, [produto]);
 
   // Verificação de permissões baseada no usuário do contexto (alinhado com Notícias/Doação)
-  console.log('\n🔍 VERIFICAÇÃO DE PERMISSÕES (PRODUTO)');
   const userRole = usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || '';
   const roleNormalized = String(userRole || '').toUpperCase();
   const isAdmin = roleNormalized.includes('ADMIN') || roleNormalized.includes('ADMINISTRADOR');
+  const isModerador = roleNormalized.includes('MODERADOR') || roleNormalized.includes('MODERATOR');
   const isAutor = Boolean(
-    produto && usuarioLogado && (
-      produto.idUsuario === usuarioLogado.id ||
-      produto.emailUsuario === usuarioLogado.email ||
-      produto.autor === usuarioLogado.nome ||
-      (produto.autor && produto.autor.email === usuarioLogado.email)
-    )
+    produto && 
+    usuarioLogado && 
+    (produto.idUsuario === usuarioLogado.id || 
+     (produto.emailUsuario && produto.emailUsuario === usuarioLogado.email))
   );
   const podeExcluirProduto = Boolean(produto && usuarioLogado && (isAdmin || isAutor));
-  
-  console.log('🔑 Dados de permissão (Produto):', {
-    role: userRole,
-    roleNormalized,
-    isAdmin,
-    isAutor,
-    podeExcluirProduto
-  });
-  
-  // Log do usuário logado para debug
-  console.log('👤 Dados do usuário logado (Produto):', {
-    id: usuarioLogado?.id,
-    nome: usuarioLogado?.nome,
-    email: usuarioLogado?.email,
-    role: usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel,
-    isAdmin,
-    isAutor,
-    podeExcluirProduto
-  });
-
-  // Efeito para depuração
-  useEffect(() => {
-    if (produto && usuarioLogado.id) {
-      console.log("📌 DETALHES DO PRODUTO:", {
-        id: produto.id,
-        titulo: produto.titulo,
-        idUsuario: produto.idUsuario,
-        emailUsuario: produto.emailUsuario,
-        autor: produto.autor
-      });
-    }
-  }, [produto, usuarioLogado]);
 
   // Deletar produto
   const handleDeletarProduto = async () => {
     try {
-      console.log("\n🗑️ === TENTANDO EXCLUIR PRODUTO ===");
-      console.log("📌 DETALHES DA EXCLUSÃO:");
-      console.log("ID do produto:", id);
-      console.log("👤 USUÁRIO LOGADO:", {
-        id: usuarioLogado?.id,
-        nome: usuarioLogado?.nome,
-        email: usuarioLogado?.email,
-        role: userRole,
-        isAdmin: isAdmin
-      });
-
       // Verificação de segurança adicional
       if (!podeExcluirProduto) {
         throw new Error("Usuário não tem permissão para excluir este produto");
@@ -388,7 +295,6 @@ export default function ProdutoInfo() {
       );
       
       if (!confirmacao) {
-        console.log("❌ Exclusão cancelada pelo usuário");
         return;
       }
 
@@ -398,7 +304,6 @@ export default function ProdutoInfo() {
       // Chama o serviço de exclusão
       await AnuncioService.excluirAnuncio(id);
       
-      console.log("✅ Produto excluído com sucesso!");
       setModalDeletarProduto(false);
       
       // Mostra mensagem de sucesso
@@ -410,10 +315,6 @@ export default function ProdutoInfo() {
       }, 500);
       
     } catch (error) {
-      console.error("❌ ERRO AO EXCLUIR PRODUTO:", error);
-      console.error("❌ Status:", error.status || error.response?.status);
-      console.error("❌ Código:", error.code);
-      console.error("❌ Dados da resposta:", error.response?.data);
       
       let mensagemErro = "Não foi possível excluir o produto.\n\n";
       
@@ -482,8 +383,6 @@ export default function ProdutoInfo() {
         idUsuario: usuarioLogado.id,
         tipo: "VENDA"
       };
-
-      console.log("📤 Enviando comentário:", dto);
 
       const comentarioCriado = await ComentariosService.criarComentario(dto);
 

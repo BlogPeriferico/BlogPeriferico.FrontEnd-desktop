@@ -49,7 +49,6 @@ export default function Vendas() {
   const recarregarProdutos = useCallback(async () => {
     try {
       setLoadingProdutos(true);
-      console.log(`Atualizando produtos para a região: ${regiao || "Todas as regiões"}`);
       
       // Busca todos os produtos
       const response = await VendasService.getAnuncios();
@@ -73,9 +72,8 @@ export default function Vendas() {
       }
       
       setProdutos(produtosFiltrados);
-      console.log(`✅ ${produtosFiltrados.length} produtos carregados`);
     } catch (err) {
-      console.error("❌ Erro ao carregar produtos:", err);
+      // Erro silencioso
     } finally {
       setLoadingProdutos(false);
     }

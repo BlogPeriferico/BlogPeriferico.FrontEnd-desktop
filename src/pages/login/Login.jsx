@@ -2,11 +2,31 @@
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+
+// Estilo para esconder o ícone de olho nativo do navegador
+const styles = `
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none !important;
+  }
+  input[type="password"]::-webkit-contacts-auto-fill-button,
+  input[type="password"]::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+  }
+`;
 import FundoSaoPaulo from "/src/assets/images/BackGroundImg.png";
 import EyeOpen from "../../assets/images/view.png";
 import EyeClose from "../../assets/images/hide.png";
 import AuthService from "../../services/AuthService";
 import { UserContext } from "../../contexts/UserContext";
+
+// Adiciona o estilo ao documento
+const styleElement = document.createElement('style');
+styleElement.textContent = styles;
+document.head.appendChild(styleElement);
 
 export default function Login({ onLoginSuccess }) {
   const navigate = useNavigate();
@@ -36,9 +56,7 @@ export default function Login({ onLoginSuccess }) {
         throw new Error("Token não recebido do servidor");
       }
       
-      console.log("✅ Token recebido:", data.token);
-      
-      // 2. Salva o token no localStorage
+      // Salva o token no localStorage
       localStorage.setItem("token", data.token);
       
       // 3. Atualiza o contexto do usuário
@@ -48,7 +66,6 @@ export default function Login({ onLoginSuccess }) {
         throw new Error("Falha ao carregar os dados do usuário");
       }
       
-      console.log("✅ Usuário autenticado com sucesso:", userData);
       setMensagem("Login realizado com sucesso!");
       
       // 4. Redireciona ou chama o callback de sucesso
@@ -138,6 +155,15 @@ export default function Login({ onLoginSuccess }) {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               className="w-full px-5 py-3 rounded-md text-black placeholder-gray-400 pr-10 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 outline-none transition-all duration-400 ease-in-out transform hover:scale-[1.01] focus:scale-[1.02]"
+              style={{
+                // Esconde o ícone de olho nativo do Chrome/Edge
+                '::-ms-reveal': {
+                  display: 'none',
+                },
+                '::-ms-clear': {
+                  display: 'none',
+                },
+              }}
               required
               minLength={6}
               disabled={isLoading}

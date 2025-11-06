@@ -48,7 +48,6 @@ export default function CorreCerto() {
   const recarregarVagas = useCallback(async () => {
     try {
       setLoading(true);
-      console.log(`Atualizando vagas para a região: ${regiao || "Todas as regiões"}`);
       
       // Busca todas as vagas
       const response = await api.get("/vagas");
@@ -72,9 +71,8 @@ export default function CorreCerto() {
       }
       
       setCorrecertos(vagasFiltradas);
-      console.log(`✅ ${vagasFiltradas.length} vagas carregadas`);
     } catch (err) {
-      console.error("❌ Erro ao carregar vagas:", err);
+      // Erro silencioso
     } finally {
       setLoading(false);
     }

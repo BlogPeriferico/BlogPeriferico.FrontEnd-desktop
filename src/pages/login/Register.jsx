@@ -22,11 +22,8 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("Dados enviados para o backend:", form);
-
     try {
-      const response = await AuthService.register(form);
-      console.log("Resposta do backend:", response);
+      await AuthService.register(form);
 
       alert("Usuário registrado com sucesso!");
       navigate("/");

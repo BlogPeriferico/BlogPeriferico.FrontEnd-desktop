@@ -54,8 +54,8 @@ function AppContent() {
                 </div>
               } />
               <Route path="/editar-perfil" element={<EditaPerfil />} />
-              <Route path="/perfil" element={
-                isLoggedIn ? <Perfil /> : <Navigate to="/login" replace />
+              <Route path="/perfil/:id?" element={
+                isLoggedIn ? <Perfil /> : <Navigate to="/login" replace state={{ from: location.pathname }} />
               } />
               <Route path="/sobre" element={<SobreNos />} />
               <Route path="/quebrada-informa" element={<QuebradaInforma />} />

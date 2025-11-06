@@ -19,8 +19,6 @@ export default function NoticiasInfo() {
   const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
-  // Log para depuração
-  console.log("🔍 UserContext - user:", user);
 
   const [noticia, setNoticia] = useState(location.state || null);
   const [loading, setLoading] = useState(!location.state);
@@ -53,8 +51,6 @@ export default function NoticiasInfo() {
         fotoPerfil: user.fotoPerfil,
       };
 
-      console.log("🔄 Dados do usuário do contexto:", user);
-      console.log("🔄 Dados normalizados do usuário:", userData);
 
       setUsuarioLogado(userData);
     }
@@ -66,27 +62,19 @@ export default function NoticiasInfo() {
 
     if (!noticia) {
       setLoading(true);
-      console.log("🔍 NoticiasInfo - Carregando notícia do backend...");
       NoticiaService.buscarNoticiaPorId(id)
         .then(async (data) => {
-          console.log("✅ NoticiasInfo - Notícia carregada:", data);
-
-          // ✅ Buscar dados do usuário junto com a notícia
+          // Buscar dados do usuário junto com a notícia
           if (data.idUsuario) {
             try {
-              console.log("🔍 Buscando dados do autor ID:", data.idUsuario);
               const response = await api.get("/usuarios/listar");
               const usuarios = response.data;
               const autor = usuarios.find((u) => u.id === data.idUsuario);
 
               if (autor) {
-                // ✅ Inclui fotoPerfil diretamente na notícia
+                // Inclui fotoPerfil diretamente na notícia
                 data.fotoPerfil = autor.fotoPerfil;
                 data.nomeAutor = autor.nome;
-                console.log("✅ Dados do autor incluídos:", {
-                  nome: autor.nome,
-                  fotoPerfil: autor.fotoPerfil ? "Presente" : "Ausente",
-                });
               }
             } catch (err) {
               console.error("❌ Erro ao buscar autor:", err);
@@ -181,20 +169,8 @@ export default function NoticiasInfo() {
       }
     };
     buscarAutor();
-  }, [noticia?.idUsuario, nomeAutor]); // Dependências corretas
+  }, [noticia?.idUsuario, nomeAutor]); 
 
-  // Monitorar mudanças na notícia para debug
-  useEffect(() => {
-    if (noticia) {
-      console.log("🔍 NoticiasInfo - Notícia mudou:", {
-        id: noticia.id,
-        idUsuario: noticia.idUsuario,
-        titulo: noticia.titulo,
-      });
-    }
-  }, [noticia]);
-
-  // Publicar comentário
   const handlePublicarComentario = async () => {
     if (!novoComentario.trim()) return;
 
@@ -265,37 +241,7 @@ export default function NoticiasInfo() {
     noticia && usuarioLogado && (isAdmin || isAutor)
   );
 
-  // Debug: log detalhado
-  useEffect(() => {
-    if (noticia && usuarioLogado?.id) {
-      console.log("🔍 DETALHES DE PERMISSÕES:", {
-        usuario: usuarioLogado.nome,
-        role: userRole,
-        roleNormalizado,
-        isAdmin,
-        isAutor,
-        podeExcluirNoticia,
-        noticiaId: noticia.id,
-        noticiaAutor: noticia.autor || noticia.nomeAutor,
-        usuarioLogado: {
-          id: usuarioLogado.id,
-          nome: usuarioLogado.nome,
-          email: usuarioLogado.email,
-          role: usuarioLogado.role,
-          roles: usuarioLogado.roles,
-          papel: usuarioLogado.papel,
-        },
-      });
-    }
-  }, [
-    noticia,
-    usuarioLogado,
-    isAdmin,
-    isAutor,
-    podeExcluirNoticia,
-    userRole,
-    roleNormalizado,
-  ]);
+  // Verificação de permissões
 
   // Deletar notícia
   const handleDeletarNoticia = async () => {

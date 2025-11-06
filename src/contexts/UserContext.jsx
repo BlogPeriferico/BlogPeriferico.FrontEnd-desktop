@@ -16,7 +16,6 @@ export function UserProvider({ children }) {
         const token = localStorage.getItem("token");
         
         if (!token) {
-          console.log("🔍 Nenhum token encontrado, mantendo como visitante");
           setUser({ isVisitor: true });
           return;
         }
@@ -25,7 +24,6 @@ export function UserProvider({ children }) {
         const savedUser = localStorage.getItem("user");
         if (savedUser) {
           const parsedUser = JSON.parse(savedUser);
-          console.log("🔄 Carregando usuário do localStorage:", parsedUser);
           setUser(parsedUser);
         }
 
@@ -43,8 +41,6 @@ export function UserProvider({ children }) {
           if (!usuarioEncontrado.fotoPerfil) {
             usuarioEncontrado.fotoPerfil = NoPicture;
           }
-          
-          console.log("🔄 UserContext - Usuário carregado do servidor:", usuarioEncontrado);
           setUser({
             ...usuarioEncontrado,
             isVisitor: false
@@ -57,10 +53,8 @@ export function UserProvider({ children }) {
           }));
         } else if (savedUser) {
           // Se não encontrou no servidor mas tem no localStorage, mantém o do localStorage
-          console.log("⚠️ Usuário não encontrado no servidor, usando dados locais");
         } else {
           // Se não encontrou em lugar nenhum, mantém como visitante
-          console.log("⚠️ Nenhum dado de usuário encontrado");
           setUser({ isVisitor: true });
         }
       } catch (error) {
@@ -105,7 +99,6 @@ export function UserProvider({ children }) {
           }
           
           // Atualiza o estado do usuário
-          console.log("✅ Login realizado com sucesso:", usuarioEncontrado);
           setUser({
             ...usuarioEncontrado,
             isVisitor: false
@@ -138,7 +131,6 @@ export function UserProvider({ children }) {
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
     localStorage.removeItem("email");
-    console.log(" Logout concluído. Dados removidos do localStorage.");
   };
 
   // updateProfile (usado no EditaPerfil)
@@ -156,7 +148,6 @@ export function UserProvider({ children }) {
       if (!updatedUser.fotoPerfil) updatedUser.fotoPerfil = NoPicture;
 
       // atualiza contexto e localStorage
-      console.log("🔄 UserContext - Atualizando usuário:", updatedUser);
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
     } catch (error) {

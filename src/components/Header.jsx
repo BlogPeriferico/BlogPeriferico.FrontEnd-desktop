@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FaSearch, FaMapMarkerAlt, FaBars, FaUser } from "react-icons/fa";
+import { FaSearch, FaMapMarkerAlt, FaBars, FaUser, FaTimes } from "react-icons/fa";
 import RegionSelector from "./RegionSelector";
 import { useRegiao } from "../contexts/RegionContext";
 import { useUser } from "../contexts/UserContext.jsx";
 import { regionColors } from "../utils/regionColors";
 import NoPicture from "../assets/images/NoPicture.webp";
 import ModalAuth from "./modals/ModalAuth";
+import { buscarUsuarios } from "../services/UsuarioService";
+import SearchResults from "./SearchResults";
+import { debounce } from 'lodash';
 
 export default function Header() {
   const navigate = useNavigate();
@@ -17,6 +20,11 @@ export default function Header() {
   const [showRegionSelector, setShowRegionSelector] = useState(false);
   const [fotoAtual, setFotoAtual] = useState(NoPicture);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef(null);
 
   // Atualiza a foto quando o user mudar
   useEffect(() => {
@@ -46,6 +54,60 @@ export default function Header() {
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  // Função de busca com debounce
+  const debouncedSearch = useRef(
+    debounce(async (term) => {
+      if (!term.trim()) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+      
+      try {
+        const results = await buscarUsuarios(term);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Erro na busca:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300)
+  ).current;
+
+  // Atualiza a busca quando o termo mudar
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    debouncedSearch(searchTerm);
+    
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [searchTerm, debouncedSearch]);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setSearchResults([]);
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
+
+  const handleResultClick = () => {
+    setSearchTerm('');
+    setSearchResults([]);
+    setIsSearchFocused(false);
   };
 
   return (
@@ -86,37 +148,49 @@ export default function Header() {
 
       {/* Barra de pesquisa */}
       <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-4">
-        <div
-          className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
-          style={{ 
-            borderColor: "#d1d5db",
-            minWidth: '200px',
-            maxWidth: '500px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = corPrincipal;
-            e.currentTarget.style.boxShadow = `0 0 10px ${hexToRGBA(
-              corPrincipal,
-              0.3
-            )}`;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "#d1d5db";
-            e.currentTarget.style.boxShadow = "0 0 0 rgba(0,0,0,0)";
-          }}
-        >
-          <input
-            type="text"
-            placeholder="O que deseja encontrar?"
-            className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
-          />
-          <FaSearch
-            className="text-gray-400 cursor-pointer transition-colors duration-200"
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.color = hexToRGBA(corPrincipal, 0.6))
-            }
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
-          />
+        <div className="relative w-full max-w-2xl mx-4">
+          <div
+            className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
+            style={{ 
+              borderColor: isSearchFocused ? corPrincipal : "#d1d5db",
+              minWidth: '200px',
+              boxShadow: isSearchFocused ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}` : 'none',
+            }}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+          >
+            <FaSearch
+              className="text-gray-400 flex-shrink-0"
+              style={{ color: isSearchFocused ? corPrincipal : "#9ca3af" }}
+            />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Buscar usuários..."
+              className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
+            />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Limpar busca"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          
+          {(isSearchFocused || searchTerm) && (
+            <div className="absolute left-0 right-0 mt-1">
+              <SearchResults 
+                results={searchResults} 
+                searchTerm={searchTerm}
+                onClose={handleResultClick}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -199,22 +273,47 @@ export default function Header() {
           className="absolute top-14 left-0 w-full bg-white p-4 lg:hidden border-b-[2px]"
           style={{ borderColor: corPrincipal }}
         >
-          <div
-            className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300 mb-4"
-            style={{ borderColor: "#d1d5db" }}
-          >
-            <input
-              type="text"
-              placeholder="O que deseja encontrar?"
-              className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
-            />
-            <FaSearch
-              className="text-gray-400 cursor-pointer transition-colors duration-200"
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = hexToRGBA(corPrincipal, 0.6))
-              }
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
-            />
+          <div className="relative w-full mb-4">
+            <div
+              className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
+              style={{ 
+                borderColor: isSearchFocused ? corPrincipal : "#d1d5db",
+                boxShadow: isSearchFocused ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}` : 'none',
+              }}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+            >
+              <FaSearch
+                className="text-gray-400 flex-shrink-0"
+                style={{ color: isSearchFocused ? corPrincipal : "#9ca3af" }}
+              />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Buscar usuários..."
+                className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
+              />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Limpar busca"
+                >
+                  <FaTimes className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            
+            {(isSearchFocused || searchTerm) && (
+              <div className="absolute left-0 right-0 mt-1 z-50">
+                <SearchResults 
+                  results={searchResults} 
+                  searchTerm={searchTerm}
+                  onClose={handleResultClick}
+                />
+              </div>
+            )}
           </div>
 
           <nav className="flex flex-col gap-3">

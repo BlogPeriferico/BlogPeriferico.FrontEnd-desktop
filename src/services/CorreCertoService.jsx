@@ -3,8 +3,6 @@ import api from "./Api";
 const CorreCertoService = {
   // Criar vaga
   criarCorrecerto: async (vagaData) => {
-    console.log("📤 Criando vaga com dados:", vagaData);
-
     // Remove id se existir
     if (vagaData.id !== undefined) {
       delete vagaData.id;
@@ -25,7 +23,6 @@ const CorreCertoService = {
 
     try {
       const response = await api.post("/vagas", vagaData, config);
-      console.log("✅ Vaga criada com sucesso:", response.data);
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao criar vaga:", err.response?.data || err);
@@ -35,10 +32,8 @@ const CorreCertoService = {
 
   // Listar todas as vagas
   listarCorrecertos: async () => {
-    console.log("📥 Carregando lista de vagas...");
     try {
       const response = await api.get("/vagas");
-      console.log(`✅ ${response.data.length} vagas carregadas`);
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao listar vagas:", err.response?.data || err);
@@ -48,10 +43,8 @@ const CorreCertoService = {
 
   // Buscar vaga por ID
   buscarCorrecertoPorId: async (id) => {
-    console.log(`🔍 Buscando vaga com ID: ${id}`);
     try {
       const response = await api.get(`/vagas/${id}`);
-      console.log("✅ Dados da vaga recebidos:", response.data);
       return response.data;
     } catch (err) {
       console.error(`❌ Erro ao buscar vaga ${id}:`, err.response?.data || err);
@@ -61,8 +54,6 @@ const CorreCertoService = {
 
   // Atualizar vaga
   atualizarCorrecerto: async (id, vagaData) => {
-    console.log(`✏️ Atualizando vaga ${id} com dados:`, vagaData);
-    
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("⚠️ Usuário não está logado.");
@@ -72,14 +63,12 @@ const CorreCertoService = {
     const config = {
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type":
-          vagaData instanceof FormData ? "multipart/form-data" : "application/json",
+        "Content-Type": vagaData instanceof FormData ? "multipart/form-data" : "application/json",
       },
     };
 
     try {
       const response = await api.put(`/vagas/${id}`, vagaData, config);
-      console.log(`✅ Vaga ${id} atualizada com sucesso:`, response.data);
       return response.data;
     } catch (err) {
       console.error(`❌ Erro ao atualizar vaga ${id}:`, err.response?.data || err);
@@ -89,8 +78,6 @@ const CorreCertoService = {
 
   // Excluir vaga
   excluirVaga: async (id) => {
-    console.log(`🗑️ Excluindo vaga com ID: ${id}`);
-    
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
@@ -105,7 +92,6 @@ const CorreCertoService = {
 
     try {
       const response = await api.delete(`/vagas/${id}`, config);
-      console.log(`✅ Vaga ${id} excluída com sucesso`);
       return response.data;
     } catch (err) {
       console.error(`❌ Erro ao excluir vaga ${id}:`, err.response?.data || err);

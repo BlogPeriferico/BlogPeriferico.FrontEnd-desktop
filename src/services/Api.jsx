@@ -28,21 +28,15 @@ api.interceptors.request.use(
 
         // Adiciona o token ao cabeçalho
         config.headers.Authorization = `Bearer ${token}`;
-        console.log("🔑 Token válido para:", config.url);
       } catch (error) {
-        console.error("Erro ao decodificar token:", error);
         localStorage.removeItem("token");
-        window.location.href = "/login";
         return Promise.reject(error);
       }
-    } else {
-      console.log("ℹ️ Nenhum token encontrado para:", config.url);
     }
 
     return config;
   },
   (error) => {
-    console.error("Erro no interceptor de requisição:", error);
     return Promise.reject(error);
   }
 );
