@@ -1,10 +1,28 @@
 // src/pages/Login.jsx
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaChevronDown } from "react-icons/fa";
 
-// Estilo para esconder o ícone de olho nativo do navegador
+import FundoSaoPaulo from "/src/assets/images/BackGroundImg.png";
+import EyeOpen from "../../assets/images/view.png";
+import EyeClose from "../../assets/images/hide.png";
+import AuthService from "../../services/AuthService";
+import { UserContext } from "../../contexts/UserContext";
+
+// Estilo para a animação de pulo e esconder o ícone de olho nativo
 const styles = `
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0) translateX(-50%);
+    }
+    50% {
+      transform: translateY(-10px) translateX(-50%);
+    }
+  }
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+
   input[type="password"]::-ms-reveal,
   input[type="password"]::-ms-clear {
     display: none !important;
@@ -17,24 +35,27 @@ const styles = `
     right: 0;
   }
 `;
-import FundoSaoPaulo from "/src/assets/images/BackGroundImg.png";
-import EyeOpen from "../../assets/images/view.png";
-import EyeClose from "../../assets/images/hide.png";
-import AuthService from "../../services/AuthService";
-import { UserContext } from "../../contexts/UserContext";
-
-// Adiciona o estilo ao documento
-const styleElement = document.createElement("style");
-styleElement.textContent = styles;
-document.head.appendChild(styleElement);
 
 export default function Login({ onLoginSuccess }) {
   const navigate = useNavigate();
+  
+  // Adiciona o estilo ao documento
+  React.useEffect(() => {
+    const styleElement = document.createElement("style");
+    styleElement.textContent = styles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      // Limpa o estilo quando o componente for desmontado
+      document.head.removeChild(styleElement);
+    };
+  }, []);
   const { login } = useContext(UserContext);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Login normal
@@ -87,6 +108,49 @@ export default function Login({ onLoginSuccess }) {
     }
   };
 
+  // Efeito para verificar se há conteúdo para rolar
+  useEffect(() => {
+    const checkScroll = () => {
+      // Verifica se há conteúdo suficiente para rolar
+      const hasScrollableContent = document.body.scrollHeight > window.innerHeight;
+      // Verifica se o usuário já rolou até o final
+      const isAtBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 20;
+      
+      // Mostra o botão apenas se houver conteúdo para rolar E o usuário não estiver no final
+      setShowScrollButton(hasScrollableContent && !isAtBottom);
+    };
+
+    const checkScrollWithDelay = () => {
+      // Adiciona um pequeno atraso para garantir que o DOM foi atualizado
+      setTimeout(checkScroll, 100);
+    };
+
+    // Verifica na montagem do componente e após atualizações
+    checkScrollWithDelay();
+    
+    // Adiciona listeners para verificar quando o conteúdo for carregado
+    window.addEventListener('load', checkScrollWithDelay);
+    window.addEventListener('resize', checkScrollWithDelay);
+    window.addEventListener('scroll', checkScroll);
+
+    // Verifica periodicamente para capturar mudanças dinâmicas no conteúdo
+    const scrollCheckInterval = setInterval(checkScroll, 1000);
+
+    return () => {
+      window.removeEventListener('load', checkScrollWithDelay);
+      window.removeEventListener('resize', checkScrollWithDelay);
+      window.removeEventListener('scroll', checkScroll);
+      clearInterval(scrollCheckInterval);
+    };
+  }, []);
+
+  const scrollDown = () => {
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: 'smooth'
+    });
+  };
+
   // Entrar como visitante
   const entrarComoVisitante = (e) => {
     e.preventDefault();
@@ -108,14 +172,14 @@ export default function Login({ onLoginSuccess }) {
 
   return (
     <div
-      className="relative w-full h-[100dvh] font-poppins bg-center bg-cover overflow-hidden"
+      className="relative w-full h-full min-h-screen font-poppins bg-center bg-cover overflow-x-hidden"
       style={{ backgroundImage: `url(${FundoSaoPaulo})` }}
     >
       <div className="absolute inset-0 bg-black/40"></div>
 
-      <div className="relative z-10 h-full flex flex-col md:flex-row">
+      <div className="relative z-10 flex flex-col md:flex-row min-h-screen">
         {/* Painel do formulário */}
-        <div className="flex-1 md:w-[45%] bg-white/70 p-8 md:p-12 shadow-lg flex flex-col justify-center">
+        <div className="w-full md:w-[45%] bg-white/70 p-6 md:p-8 lg:p-12 shadow-lg flex flex-col justify-center min-h-screen md:min-h-full">
           {mensagem && (
             <div
               className={`p-3 mb-4 rounded-md text-center ${
@@ -252,16 +316,31 @@ export default function Login({ onLoginSuccess }) {
           </div>
         </div>
 
-        {/* Painel do lado direito */}
-        <div className="hidden md:flex flex-1 md:w-[55%] flex-col justify-center items-center text-white px-8 md:px-12">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            BlogPeriférico
-          </h2>
-          <h3 className="text-lg md:text-xl lg:text-2xl font-medium text-gray-200 text-center">
-            Bem-vindo ao blog periférico!
-          </h3>
+        {/* Painel da direita - Apenas em desktop */}
+        <div className="hidden md:flex md:w-[55%] flex-col justify-center items-center p-4 lg:p-8 text-white bg-black/30 min-h-full">
+          <div className="max-w-md mx-auto">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-center px-4">
+              BlogPeriférico
+            </h1>
+            <p className="text-xl md:text-2xl text-center text-gray-200 px-4">
+              Bem-vindo de volta!
+            </p>
+          </div>
         </div>
       </div>
+      
+      {/* Botão de rolagem para baixo */}
+      {showScrollButton && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-20">
+          <button 
+            onClick={scrollDown}
+            className="bg-white/80 hover:bg-white text-gray-800 rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center animate-bounce-slow"
+            aria-label="Rolar para baixo"
+          >
+            <FaChevronDown className="text-xl" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

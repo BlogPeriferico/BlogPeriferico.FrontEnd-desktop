@@ -50,7 +50,10 @@ const AnuncioService = {
       const response = await api.get(`/vendas/${id}`);
       return response.data;
     } catch (err) {
-      console.error(`❌ Erro ao buscar anúncio ${id}:`, err.response?.data || err);
+      console.error(
+        `❌ Erro ao buscar anúncio ${id}:`,
+        err.response?.data || err
+      );
       throw err;
     }
   },
@@ -77,7 +80,10 @@ const AnuncioService = {
       const response = await api.put(`/vendas/${id}`, anuncioData, config);
       return response.data;
     } catch (err) {
-      console.error(`❌ Erro ao atualizar anúncio ${id}:`, err.response?.data || err);
+      console.error(
+        `❌ Erro ao atualizar anúncio ${id}:`,
+        err.response?.data || err
+      );
       throw err;
     }
   },
@@ -92,8 +98,8 @@ const AnuncioService = {
 
     const config = {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     };
 
     try {

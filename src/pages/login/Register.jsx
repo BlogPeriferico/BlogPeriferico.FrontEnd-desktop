@@ -1,13 +1,14 @@
 // src/pages/Register.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaChevronDown } from "react-icons/fa";
 import Periferia from "/src/assets/images/BackGroundImg.png";
 import AuthService from "../../services/AuthService";
 
 export default function Register() {
   const navigate = useNavigate();
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   const [form, setForm] = useState({
     nome: "",
@@ -28,9 +29,70 @@ export default function Register() {
       alert("Usuário registrado com sucesso!");
       navigate("/");
     } catch (err) {
-      console.error("Erro ao registrar:", err.response ? err.response.data : err);
+      console.error(
+        "Erro ao registrar:",
+        err.response ? err.response.data : err
+      );
       alert("Erro ao registrar usuário. Verifique os dados.");
     }
+  };
+
+  // Estilo para a animação de pulo e esconder o ícone de olho nativo
+  const styles = `
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0) translateX(-50%);
+      }
+      50% {
+        transform: translateY(-10px) translateX(-50%);
+      }
+    }
+    .animate-bounce-slow {
+      animation: bounce 2s infinite;
+    }
+  `;
+
+  // Efeito para verificar se há conteúdo para rolar
+  useEffect(() => {
+    const checkScroll = () => {
+      // Verifica se há conteúdo suficiente para rolar
+      const hasScrollableContent = document.body.scrollHeight > window.innerHeight;
+      // Verifica se o usuário já rolou até o final
+      const isAtBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 20;
+      
+      // Mostra o botão apenas se houver conteúdo para rolar E o usuário não estiver no final
+      setShowScrollButton(hasScrollableContent && !isAtBottom);
+    };
+
+    const checkScrollWithDelay = () => {
+      // Adiciona um pequeno atraso para garantir que o DOM foi atualizado
+      setTimeout(checkScroll, 100);
+    };
+
+    // Verifica na montagem do componente e após atualizações
+    checkScrollWithDelay();
+    
+    // Adiciona listeners para verificar quando o conteúdo for carregado
+    window.addEventListener('load', checkScrollWithDelay);
+    window.addEventListener('resize', checkScrollWithDelay);
+    window.addEventListener('scroll', checkScroll);
+
+    // Verifica periodicamente para capturar mudanças dinâmicas no conteúdo
+    const scrollCheckInterval = setInterval(checkScroll, 1000);
+
+    return () => {
+      window.removeEventListener('load', checkScrollWithDelay);
+      window.removeEventListener('resize', checkScrollWithDelay);
+      window.removeEventListener('scroll', checkScroll);
+      clearInterval(scrollCheckInterval);
+    };
+  }, []);
+
+  const scrollDown = () => {
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: 'smooth'
+    });
   };
 
   const entrarComoVisitante = () => {
@@ -38,7 +100,7 @@ export default function Register() {
   };
 
   return (
-    <div className="relative w-full h-screen font-poppins">
+    <div className="relative w-full min-h-screen font-poppins overflow-x-hidden">
       {/* Imagem de fundo */}
       <img
         src={Periferia}
@@ -47,12 +109,12 @@ export default function Register() {
       />
 
       {/* Overlay escuro leve */}
-      <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+      <div className="absolute inset-0 bg-black/40"></div>
 
       {/* Painel principal */}
-      <div className="relative z-10 flex flex-col md:flex-row h-full">
+      <div className="relative z-10 flex flex-col md:flex-row min-h-screen">
         {/* Esquerda - Formulário */}
-        <div className="w-full md:w-[45%] bg-white/70 p-8 md:p-12 shadow-lg flex flex-col justify-center h-full">
+        <div className="w-full md:w-[45%] bg-white/70 p-6 md:p-8 lg:p-12 shadow-lg flex flex-col justify-center min-h-screen md:min-h-0">
           <h2 className="text-2xl md:text-3xl text-center font-bold mb-6 text-black">
             Registre-se
           </h2>
@@ -114,7 +176,8 @@ export default function Register() {
 
             <button
               type="submit"
-              className="w-full bg-[#828282] text-white py-3 text-lg rounded-md mb-6 transition-all duration-300 hover:scale-105 cursor-pointer"
+              className="w-full bg-[#828282] text-white py-3 text-lg rounded-md mb-6 transition-all duration-300 hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              disabled={Object.values(form).some((value) => !value.trim())}
             >
               Registrar
             </button>
@@ -147,15 +210,28 @@ export default function Register() {
         </div>
 
         {/* Direita - Texto (esconde em mobile) */}
-        <div className="hidden md:flex w-full md:w-[55%] flex-col justify-center items-center text-white px-8 md:px-12">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+        <div className="hidden md:flex w-full md:w-[55%] flex-col justify-center items-center p-4 lg:p-8 text-white">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-center px-4">
             BlogPeriférico
           </h2>
-          <h3 className="text-lg md:text-xl lg:text-2xl font-medium text-gray-200 text-center">
+          <h3 className="text-lg md:text-xl lg:text-2xl font-medium text-gray-200 text-center px-4">
             Bem-vindo ao blog periférico!
           </h3>
         </div>
       </div>
+      
+      {/* Botão de rolagem para baixo */}
+      {showScrollButton && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-20">
+          <button 
+            onClick={scrollDown}
+            className="bg-white/80 hover:bg-white text-gray-800 rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center animate-bounce-slow"
+            aria-label="Rolar para baixo"
+          >
+            <FaChevronDown className="text-xl" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

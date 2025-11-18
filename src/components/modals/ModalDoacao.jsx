@@ -13,6 +13,7 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
   const [telefone, setTelefone] = useState("");
   const [imagem, setImagem] = useState(null);
   const [erroToast, setErroToast] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const maxDescricao = 120;
   const maxLength = 60;
 
@@ -50,12 +51,17 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
   };
 
   const handleSubmit = async () => {
+    // Se já estiver enviando, não faz nada
+    if (isSubmitting) return;
+    
     const token = localStorage.getItem("token");
     if (!token) {
       alert("Você precisa estar logado para criar uma doação.");
       navigate("/");
       return;
     }
+
+    setIsSubmitting(true); // Inicia o carregamento
 
     const dto = { titulo, descricao, categoria, zona, telefone };
 
@@ -71,6 +77,8 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
       console.error(err);
       setErroToast("Erro ao criar a doação. Verifique os dados e tente novamente.");
       setTimeout(() => setErroToast(""), 3000);
+    } finally {
+      setIsSubmitting(false); // Finaliza o carregamento em caso de sucesso ou erro
     }
   };
 
@@ -154,8 +162,16 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
               </div>
 
               <div className="flex justify-end">
-                <button type="button" onClick={handleSubmit} className="hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow duration-300 hover:scale-105" style={{ backgroundColor: corSecundaria }}>
-                  Publicar
+                <button 
+                  type="button" 
+                  onClick={handleSubmit} 
+                  disabled={isSubmitting}
+                  className={`hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow duration-300 ${
+                    isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                  }`}
+                  style={{ backgroundColor: isSubmitting ? '#9CA3AF' : corSecundaria }}
+                >
+                  {isSubmitting ? 'Publicando...' : 'Publicar'}
                 </button>
               </div>
             </div>

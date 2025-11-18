@@ -1,10 +1,18 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../../contexts/UserContext.jsx";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
-import { FaEdit, FaMapMarkerAlt, FaNewspaper, FaShoppingCart, FaHandHoldingHeart, FaBriefcase, FaArrowLeft, FaUserCog } from "react-icons/fa";
+import {
+  FaEdit,
+  FaMapMarkerAlt,
+  FaNewspaper,
+  FaShoppingCart,
+  FaHandHoldingHeart,
+  FaBriefcase,
+  FaArrowLeft,
+  FaUserCog,
+} from "react-icons/fa";
 import { Link } from "react-router-dom";
 import NoticiaService from "../../services/NoticiasService";
 import AnuncioService from "../../services/AnuncioService";
@@ -24,17 +32,33 @@ export default function Perfil() {
     noticias: [],
     anuncios: [],
     doacoes: [],
-    vagas: []
+    vagas: [],
   });
   const [loading, setLoading] = useState(true);
+  const [loadingPosts, setLoadingPosts] = useState(true);
   const [fotoAtual, setFotoAtual] = useState(NoPicture);
 
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const abas = [
-    { id: "noticias", label: "Quebrada Informa", cor: corPrincipal, icon: FaNewspaper },
-    { id: "anuncios", label: "Achadinhos", cor: corPrincipal, icon: FaShoppingCart },
-    { id: "doacoes", label: "Mão Amiga", cor: corPrincipal, icon: FaHandHoldingHeart },
-    { id: "vagas", label: "Corre Certo", cor: corPrincipal, icon: FaBriefcase }
+    {
+      id: "noticias",
+      label: "Quebrada Informa",
+      cor: corPrincipal,
+      icon: FaNewspaper,
+    },
+    {
+      id: "anuncios",
+      label: "Achadinhos",
+      cor: corPrincipal,
+      icon: FaShoppingCart,
+    },
+    {
+      id: "doacoes",
+      label: "Mão Amiga",
+      cor: corPrincipal,
+      icon: FaHandHoldingHeart,
+    },
+    { id: "vagas", label: "Corre Certo", cor: corPrincipal, icon: FaBriefcase },
   ];
 
   // Carregar perfil do usuário
@@ -46,7 +70,7 @@ export default function Perfil() {
         const usuarioId = id || (usuarioAutenticado && usuarioAutenticado.id);
         if (!usuarioId) {
           // Redirecionar para login se não estiver logado e não tiver ID
-          window.location.href = '/login';
+          window.location.href = "/login";
           return;
         }
 
@@ -57,7 +81,7 @@ export default function Perfil() {
         console.error("Erro ao carregar perfil:", error);
         // Se for o próprio perfil e der erro, redireciona para login
         if (!id && usuarioAutenticado) {
-          window.location.href = '/login';
+          window.location.href = "/login";
         }
       } finally {
         setLoading(false);
@@ -71,37 +95,43 @@ export default function Perfil() {
     if (!perfilUsuario?.id) return;
 
     const carregarPosts = async () => {
-      setLoading(true);
+      setLoadingPosts(true);
       try {
+        let dados = [];
+        
         switch (abaAtiva) {
           case "noticias":
-            const noticias = await NoticiaService.listarNoticias();
+            dados = await NoticiaService.listarNoticias();
             setPostsUsuario(prev => ({
               ...prev,
-              noticias: noticias.filter(n => n.idUsuario === perfilUsuario.id)
+              noticias: dados.filter(n => n.idUsuario === perfilUsuario.id)
             }));
             break;
+            
           case "anuncios":
-            const anuncios = await AnuncioService.getAnuncios();
+            dados = await AnuncioService.getAnuncios();
             setPostsUsuario(prev => ({
               ...prev,
-              anuncios: anuncios.filter(a => a.usuarioId === perfilUsuario.id)
+              anuncios: dados.filter(a => a.usuarioId === perfilUsuario.id)
             }));
             break;
+            
           case "doacoes":
-            const doacoes = await DoacaoService.listarDoacoes();
+            dados = await DoacaoService.listarDoacoes();
             setPostsUsuario(prev => ({
               ...prev,
-              doacoes: doacoes.filter(d => d.usuarioId === perfilUsuario.id)
+              doacoes: dados.filter(d => d.usuarioId === perfilUsuario.id)
             }));
             break;
+            
           case "vagas":
-            const vagas = await VagaService.listarVagas();
+            dados = await VagaService.listarVagas();
             setPostsUsuario(prev => ({
               ...prev,
-              vagas: vagas.filter(v => v.usuarioId === perfilUsuario.id)
+              vagas: dados.filter(v => v.usuarioId === perfilUsuario.id)
             }));
             break;
+            
           default:
             break;
         }
@@ -109,23 +139,28 @@ export default function Perfil() {
         console.error("Erro ao carregar posts:", error);
       } finally {
         setLoading(false);
+        setLoadingPosts(false);
       }
     };
 
     carregarPosts();
   }, [perfilUsuario?.id, abaAtiva]);
 
-  if (loading && !perfilUsuario) {
+  if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
         <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl text-center">
           <div className="flex flex-col items-center justify-center">
-            <div 
-              className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 mb-4" 
+            <div
+              className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 mb-4"
               style={{ borderColor: corPrincipal }}
             ></div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Carregando perfil</h3>
-            <p className="text-gray-600">Aguarde enquanto buscamos as informações...</p>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              Carregando perfil
+            </h3>
+            <p className="text-gray-600">
+              Aguarde enquanto buscamos as informações...
+            </p>
           </div>
         </div>
       </div>
@@ -136,8 +171,12 @@ export default function Perfil() {
     return (
       <main className="min-h-screen bg-gray-50 pt-24 px-4 md:px-10 max-w-4xl mx-auto">
         <div className="text-center py-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Perfil não encontrado</h2>
-          <p className="text-gray-600">O perfil solicitado não pôde ser carregado.</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Perfil não encontrado
+          </h2>
+          <p className="text-gray-600">
+            O perfil solicitado não pôde ser carregado.
+          </p>
           <button
             onClick={() => navigate(-1)}
             className="mt-4 inline-flex items-center px-4 py-2 rounded-full text-white font-medium"
@@ -150,15 +189,21 @@ export default function Perfil() {
     );
   }
 
-  const isMeuPerfil = usuarioAutenticado && perfilUsuario && usuarioAutenticado.id === perfilUsuario.id;
+  const isMeuPerfil =
+    usuarioAutenticado &&
+    perfilUsuario &&
+    usuarioAutenticado.id === perfilUsuario.id;
 
   const renderizarPosts = () => {
     const posts = postsUsuario[abaAtiva] || [];
 
-    if (loading) {
+    if (loadingPosts) {
       return (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mr-3" style={{ borderColor: corPrincipal }}></div>
+          <div
+            className="animate-spin rounded-full h-8 w-8 border-b-2 mr-3"
+            style={{ borderColor: corPrincipal }}
+          ></div>
           <p className="text-gray-600">Carregando posts...</p>
         </div>
       );
@@ -177,9 +222,15 @@ export default function Perfil() {
         {posts.map((post, index) => (
           <Link
             key={post.id}
-            to={`/${abaAtiva === "noticias" ? "noticia" :
-                  abaAtiva === "anuncios" ? "produto" :
-                  abaAtiva === "doacoes" ? "doacao" : "vaga"}/${post.id}`}
+            to={`/${
+              abaAtiva === "noticias"
+                ? "noticia"
+                : abaAtiva === "anuncios"
+                ? "produto"
+                : abaAtiva === "doacoes"
+                ? "doacao"
+                : "vaga"
+            }/${post.id}`}
             className="block group transform hover:scale-[1.02] transition-transform duration-300"
             style={{ animationDelay: `${index * 100}ms` }}
           >
@@ -206,7 +257,9 @@ export default function Perfil() {
                 </p>
                 <div className="text-xs text-gray-400 flex justify-end items-center">
                   <span className="bg-gray-100 px-2 py-1 rounded-full">
-                    {new Date(post.dataHoraCriacao || post.dataCriacao).toLocaleDateString("pt-BR")}
+                    {new Date(
+                      post.dataHoraCriacao || post.dataCriacao
+                    ).toLocaleDateString("pt-BR")}
                   </span>
                 </div>
               </div>
@@ -218,14 +271,16 @@ export default function Perfil() {
   };
 
   // Verifica se o usuário é admin
-  const isAdmin = usuarioAutenticado?.roles === 'ROLE_ADMINISTRADOR' || usuarioAutenticado?.admin === true;
-  
+  const isAdmin =
+    usuarioAutenticado?.roles === "ROLE_ADMINISTRADOR" ||
+    usuarioAutenticado?.admin === true;
+
   // Debug
-  console.log('=== PERFIL - DADOS DO USUÁRIO ===');
-  console.log('Usuário autenticado:', usuarioAutenticado);
-  console.log('É admin?', isAdmin);
-  console.log('Roles:', usuarioAutenticado?.roles);
-  console.log('Propriedade admin:', usuarioAutenticado?.admin);
+  console.log("=== PERFIL - DADOS DO USUÁRIO ===");
+  console.log("Usuário autenticado:", usuarioAutenticado);
+  console.log("É admin?", isAdmin);
+  console.log("Roles:", usuarioAutenticado?.roles);
+  console.log("Propriedade admin:", usuarioAutenticado?.admin);
 
   return (
     <main className="min-h-screen bg-gray-50 pt-24 px-4 md:px-8">
@@ -265,27 +320,29 @@ export default function Perfil() {
                   <h1 className="text-3xl font-bold text-gray-900">
                     {perfilUsuario.nome}
                   </h1>
-                  <p className="text-gray-500 text-base">@{perfilUsuario.username || perfilUsuario.email}</p>
+                  <p className="text-gray-500 text-base">
+                    @{perfilUsuario.username || perfilUsuario.email}
+                  </p>
                 </div>
-                
+
                 {/* Botão de administração - visível apenas para admin */}
                 {isAdmin && (
                   <div className="mt-2 md:mt-0">
                     <button
-                      onClick={() => navigate('/admin')}
+                      onClick={() => navigate("/admin")}
                       className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-full px-4 py-2 shadow-lg transition-all duration-200 border border-blue-700 hover:shadow-xl"
                       title="Painel de Administração"
                     >
                       <FaUserCog className="text-lg" />
-                      <span className="text-sm font-medium">
-                        Painel Admin
-                      </span>
+                      <span className="text-sm font-medium">Painel Admin</span>
                     </button>
                   </div>
                 )}
               </div>
               {perfilUsuario.bio && (
-                <p className="text-gray-700 text-sm leading-relaxed max-w-2xl">{perfilUsuario.bio}</p>
+                <p className="text-gray-700 text-sm leading-relaxed max-w-2xl">
+                  {perfilUsuario.bio}
+                </p>
               )}
               <div className="flex items-center justify-center md:justify-start gap-2 mt-4">
                 <FaMapMarkerAlt style={{ color: corPrincipal }} size={16} />
@@ -300,7 +357,9 @@ export default function Perfil() {
                 <p className="text-2xl font-bold text-gray-900 mb-1 text-center">
                   {Object.values(postsUsuario).flat().length}
                 </p>
-                <p className="text-gray-600 font-medium text-sm text-center">Posts</p>
+                <p className="text-gray-600 font-medium text-sm text-center">
+                  Posts
+                </p>
               </div>
             </div>
           </div>
@@ -316,13 +375,15 @@ export default function Perfil() {
                   <button
                     key={aba.id}
                     onClick={() => setAbaAtiva(aba.id)}
-                    className={`px-6 py-4 font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${abaAtiva === aba.id
+                    className={`px-6 py-4 font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${
+                      abaAtiva === aba.id
                         ? "border-b-2 text-gray-900 bg-gray-100"
                         : "text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50"
                     }`}
                     style={{
-                      borderColor: abaAtiva === aba.id ? aba.cor : "transparent",
-                      color: abaAtiva === aba.id ? aba.cor : undefined
+                      borderColor:
+                        abaAtiva === aba.id ? aba.cor : "transparent",
+                      color: abaAtiva === aba.id ? aba.cor : undefined,
                     }}
                   >
                     <IconComponent size={16} />
@@ -337,7 +398,10 @@ export default function Perfil() {
           <div className="p-6 bg-white">
             {loading ? (
               <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: corPrincipal }}></div>
+                <div
+                  className="animate-spin rounded-full h-12 w-12 border-b-2"
+                  style={{ borderColor: corPrincipal }}
+                ></div>
                 <p className="ml-4 text-gray-600">Carregando posts...</p>
               </div>
             ) : (

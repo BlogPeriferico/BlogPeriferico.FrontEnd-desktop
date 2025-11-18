@@ -47,7 +47,10 @@ const DoacaoService = {
       const response = await api.get(`/doacoes/${id}`);
       return response.data;
     } catch (err) {
-      console.error(`❌ Erro ao buscar doação ${id}:`, err.response?.data || err);
+      console.error(
+        `❌ Erro ao buscar doação ${id}:`,
+        err.response?.data || err
+      );
       throw err;
     }
   },
@@ -73,7 +76,10 @@ const DoacaoService = {
       const response = await api.put(`/doacoes/${id}`, doacaoData, config);
       return response.data;
     } catch (err) {
-      console.error(`❌ Erro ao atualizar doação ${id}:`, err.response?.data || err);
+      console.error(
+        `❌ Erro ao atualizar doação ${id}:`,
+        err.response?.data || err
+      );
       throw err;
     }
   },
@@ -95,7 +101,10 @@ const DoacaoService = {
       const response = await api.delete(`/doacoes/${id}`, config);
       return response.data;
     } catch (err) {
-      console.error(`❌ Erro ao excluir doação ${id}:`, err.response?.data || err);
+      console.error(
+        `❌ Erro ao excluir doação ${id}:`,
+        err.response?.data || err
+      );
       throw err;
     }
   },
