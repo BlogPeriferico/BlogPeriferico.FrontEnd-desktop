@@ -1,7 +1,7 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-const API_URL = "http://localhost:8080";
+const API_URL = "https://backblog.azurewebsites.net";
 
 const api = axios.create({
   baseURL: API_URL,
