@@ -1,44 +1,56 @@
 import api from "./Api";
-import { jwtDecode } from "jwt-decode";
+
+const TOKEN_KEY = "token";
+
+/** Pega o token ou lança erro amigável */
+const getTokenOrThrow = () => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    throw new Error("Usuário não está logado. Faça login novamente.");
+  }
+  return token;
+};
+
+/** Monta headers com Authorization e, opcionalmente, Content-Type */
+const buildAuthConfig = ({
+  isFormData = false,
+  withContentType = true,
+} = {}) => {
+  const token = getTokenOrThrow();
+
+  const headers = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  if (withContentType) {
+    headers["Content-Type"] = isFormData
+      ? "multipart/form-data"
+      : "application/json";
+  }
+
+  return { headers };
+};
 
 const NoticiaService = {
   criarNoticia: async (noticiaData) => {
-    // 🔥 Garante que nenhum id vai junto
-    if (!(noticiaData instanceof FormData) && noticiaData?.id !== undefined) {
-      delete noticiaData.id;
+    // Garante que nenhum id vai junto sem mutar o objeto original
+    let payload = noticiaData;
+
+    if (
+      !(noticiaData instanceof FormData) &&
+      noticiaData &&
+      typeof noticiaData === "object" &&
+      "id" in noticiaData
+    ) {
+      const { id: _ignoredId, ...rest } = noticiaData;
+      payload = rest;
     }
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("Usuário não está logado. Faça login novamente.");
-    }
-
-    // Verifica se o token é válido
-    try {
-      const decoded = jwtDecode(token);
-      const currentTime = Date.now() / 1000;
-
-      if (decoded.exp < currentTime) {
-        console.warn("⚠️ Token expirado");
-        localStorage.removeItem("token");
-        window.location.href = "/login?error=session_expired";
-        throw new Error("Sessão expirada. Faça login novamente.");
-      }
-    } catch (error) {
-      console.error("❌ Erro ao verificar token:", error);
-      localStorage.removeItem("token");
-      window.location.href = "/login?error=invalid_token";
-      throw new Error("Erro de autenticação. Faça login novamente.");
-    }
-
-    // Configuração do cabeçalho
-    const config = {};
-    if (!(noticiaData instanceof FormData)) {
-      config.headers = { "Content-Type": "application/json" };
-    }
+    const isFormData = payload instanceof FormData;
+    const config = buildAuthConfig({ isFormData });
 
     try {
-      const response = await api.post("/noticias", noticiaData, config);
+      const response = await api.post("/noticias", payload, config);
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao criar notícia:", {
@@ -47,14 +59,15 @@ const NoticiaService = {
         message: err.message,
       });
 
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        // Token inválido ou expirado
-        localStorage.removeItem("token");
-        window.location.href = "/login?error=session_expired";
-        throw new Error("Sessão expirada. Faça login novamente.");
+      const status = err.response?.status;
+
+      if (status === 401 || status === 403) {
+        // Mantém mensagem amigável de sessão/permissão
+        throw new Error(
+          "Sessão expirada ou sem permissão. Faça login novamente."
+        );
       }
 
-      // Outros erros
       const errorMessage =
         err.response?.data?.message ||
         "Erro ao criar notícia. Tente novamente.";
@@ -63,19 +76,8 @@ const NoticiaService = {
   },
 
   atualizarNoticia: async (id, noticiaData) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("Usuário não está logado.");
-    }
-
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...(noticiaData instanceof FormData
-          ? {}
-          : { "Content-Type": "application/json" }),
-      },
-    };
+    const isFormData = noticiaData instanceof FormData;
+    const config = buildAuthConfig({ isFormData });
 
     try {
       const response = await api.put(`/noticias/${id}`, noticiaData, config);
@@ -119,25 +121,18 @@ const NoticiaService = {
   },
 
   excluirNoticia: async (id) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("Usuário não está logado.");
-    }
+    const config = buildAuthConfig({ withContentType: false });
 
     try {
-      const response = await api.delete(`/noticias/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.delete(`/noticias/${id}`, config);
       return response.data;
     } catch (err) {
       console.error(
         `❌ Erro ao excluir notícia ${id}:`,
         err.response?.data || err
       );
-      console.error(`❌ Status HTTP:`, err.response?.status);
-      console.error(`❌ Headers da resposta:`, err.response?.headers);
+      console.error("❌ Status HTTP:", err.response?.status);
+      console.error("❌ Headers da resposta:", err.response?.headers);
       throw err;
     }
   },

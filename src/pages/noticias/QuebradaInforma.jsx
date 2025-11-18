@@ -1,15 +1,14 @@
+// src/pages/QuebradaInforma/QuebradaInforma.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useRegiao } from "../../contexts/RegionContext";
 import { useUser } from "../../contexts/UserContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import api from "../../services/Api";
 import { regionColors } from "../../utils/regionColors";
-import { Link } from "react-router-dom";
 import { FiPlus, FiRefreshCw } from "react-icons/fi";
 import ModalNoticia from "../../components/modals/ModalNoticia";
 import { ModalVisitantes } from "../../components/modals/ModalVisitantes";
-import NoticiaService from "../../services/NoticiasService";
 
 const API_KEY = "56fd2180ff9c0389b8ebc9c566b4d563";
 
@@ -25,61 +24,47 @@ const zonasClima = {
   Sul: { bairro: "Santo Amaro", lat: -23.6486, lon: -46.7133 },
 };
 
+// Normaliza os dados da notícia vindos do back
+const mapNoticiaFromDTO = (n) => ({
+  id: String(n.id),
+  titulo: n.titulo || "",
+  texto: n.texto || "",
+  imagem: n.imagem || "",
+  regiao: n.regiao || n.zona || n.local || "Centro",
+  dataHoraCriacao: n.dataHoraCriacao || new Date().toISOString(),
+  views: n.views || 0,
+  comments: n.comments || 0,
+});
+
 export default function QuebradaInforma() {
   const [dados, setDados] = useState({});
   const [horaAtual, setHoraAtual] = useState(new Date());
   const [modalAberto, setModalAberto] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const [todasNoticias, setTodasNoticias] = useState([]);
   const [noticias, setNoticias] = useState([]);
   const [loadingNoticias, setLoadingNoticias] = useState(true);
+
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 5;
+  const [totalPaginas, setTotalPaginas] = useState(1);
+
   const { user } = useUser();
   const navigate = useNavigate();
-  
-  // Verifica se o usuário é um visitante
   const isVisitor = !user || user.isVisitor === true;
 
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
-  
-  // Função para recarregar as notícias mantendo o filtro de região
-  const recarregarNoticias = async () => {
-    try {
-      setLoadingNoticias(true);
-      
-      // Busca todas as notícias
-      const response = await api.get("/noticias");
-      const dados = Array.isArray(response.data) ? response.data : [];
 
-      // Normaliza os dados das notícias
-      const noticiasNormalizadas = dados.map(mapNoticiaFromDTO);
-
-      // Ordena por data de criação (mais recentes primeiro)
-      const noticiasOrdenadas = [...noticiasNormalizadas].sort(
-        (a, b) => new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
-      );
-
-      // Aplica o filtro de região
-      let noticiasFiltradas = noticiasOrdenadas;
-      if (regiao) {
-        const regiaoFiltro = regiao.toLowerCase() === "central" ? "Centro" : regiao;
-        noticiasFiltradas = noticiasOrdenadas.filter(
-          (noticia) =>
-            noticia.regiao &&
-            noticia.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
-        );
-      }
-
-      setTodasNoticias(noticiasFiltradas);
-      setPaginaAtual(1);
-    } catch (error) {
-      // Erro silencioso
-    } finally {
-      setLoadingNoticias(false);
-    }
+  // Helpers de paginação (modo "carregar mais")
+  const getItensPaginados = (itens, pagina, itensPorPag) => {
+    const fim = pagina * itensPorPag;
+    return itens.slice(0, fim);
   };
 
-  // Busca clima
+  // Buscar clima
   const buscarClima = async () => {
     const novosDados = {};
     for (const [nome, zona] of Object.entries(zonasClima)) {
@@ -108,48 +93,20 @@ export default function QuebradaInforma() {
     return () => clearInterval(horaTimer);
   }, []);
 
-  // Estados para gerenciar as notícias e paginação
-  const [todasNoticias, setTodasNoticias] = useState([]);
-  const [paginaAtual, setPaginaAtual] = useState(1);
-  const itensPorPagina = 5;
-  const [totalPaginas, setTotalPaginas] = useState(1);
-
-  // Função para obter os itens da página atual
-  const getItensPaginados = (itens, pagina, itensPorPag) => {
-    const inicio = (pagina - 1) * itensPorPag;
-    return itens.slice(0, inicio + itensPorPag);
-  };
-
-  // Função para normalizar os dados da notícia
-  const mapNoticiaFromDTO = (n) => ({
-    id: String(n.id),
-    titulo: n.titulo || "",
-    texto: n.texto || "",
-    imagem: n.imagem || "",
-    regiao: n.regiao || n.zona || n.local || "Centro",
-    dataHoraCriacao: n.dataHoraCriacao || new Date().toISOString(),
-    views: n.views || 0,
-    comments: n.comments || 0,
-  });
-
-  // Busca as notícias baseado na região atual
-  const buscarNoticias = useCallback(async () => {
+  // Busca / recarrega as notícias baseado na região atual
+  const carregarNoticias = useCallback(async () => {
     try {
       setLoadingNoticias(true);
 
-      // Busca todas as notícias
       const response = await api.get("/noticias");
-      const dados = Array.isArray(response.data) ? response.data : [];
+      const dadosBrutos = Array.isArray(response.data) ? response.data : [];
 
-      // Normaliza os dados das notícias
-      const noticiasNormalizadas = dados.map(mapNoticiaFromDTO);
+      const noticiasNormalizadas = dadosBrutos.map(mapNoticiaFromDTO);
 
-      // Ordena por data de criação (mais recentes primeiro)
       const noticiasOrdenadas = [...noticiasNormalizadas].sort(
         (a, b) => new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
 
-      // Filtra por região se necessário (trata Central vs Centro)
       let noticiasFiltradas = noticiasOrdenadas;
       if (regiao) {
         const regiaoFiltro =
@@ -162,22 +119,22 @@ export default function QuebradaInforma() {
       }
 
       setTodasNoticias(noticiasFiltradas);
-      setPaginaAtual(1); // Resetar para a primeira página
+      setPaginaAtual(1);
     } catch (err) {
-      return [];
+      console.error("Erro ao carregar notícias:", err);
+      setTodasNoticias([]);
     } finally {
       setLoadingNoticias(false);
     }
   }, [regiao]);
 
-  // Busca as notícias quando o componente é montado ou quando a região muda
+  // Buscar notícias quando monta / quando muda a região
   useEffect(() => {
-    buscarNoticias();
-  }, [buscarNoticias]);
+    carregarNoticias();
+  }, [carregarNoticias]);
 
-  // Atualiza a lista de notícias exibidas quando a página ou as notícias mudam
+  // Atualiza lista paginada sempre que as notícias ou a página mudam
   useEffect(() => {
-    // Aplica a paginação
     const noticiasPaginadas = getItensPaginados(
       todasNoticias,
       paginaAtual,
@@ -185,22 +142,18 @@ export default function QuebradaInforma() {
     );
     setNoticias(noticiasPaginadas);
 
-    // Atualiza o total de páginas
     const total = Math.ceil(todasNoticias.length / itensPorPagina);
-    setTotalPaginas(total > 0 ? total : 1);
+    const totalValido = total > 0 ? total : 1;
+    setTotalPaginas(totalValido);
 
-    // Se a página atual for maior que o total, volta para a primeira
-    if (paginaAtual > total && total > 0) {
+    if (paginaAtual > totalValido && totalValido > 0) {
       setPaginaAtual(1);
     }
-
-    // Regiões disponíveis nas notícias carregadas
   }, [todasNoticias, paginaAtual]);
 
-  // Função para carregar mais itens (scroll infinito)
   const carregarMais = () => {
     if (paginaAtual < totalPaginas) {
-      setPaginaAtual(paginaAtual + 1);
+      setPaginaAtual((prev) => prev + 1);
     }
   };
 
@@ -229,11 +182,9 @@ export default function QuebradaInforma() {
         abrir={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onLogin={() => {
-          // Fecha o modal primeiro
           setShowAuthModal(false);
-          // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
           setTimeout(() => {
-            navigate('/login');
+            navigate("/login");
           }, 100);
         }}
       />
@@ -244,9 +195,13 @@ export default function QuebradaInforma() {
           modalAberto={modalAberto}
           setModalAberto={setModalAberto}
           corPrincipal={corPrincipal}
-          atualizarNoticias={(novaNoticia) =>
-            setNoticias([novaNoticia, ...noticias])
-          }
+          atualizarNoticias={(novaNoticia) => {
+            // Joga a nova notícia pro topo da lista e recalcula tudo
+            const normalizada = mapNoticiaFromDTO(novaNoticia);
+            const novas = [normalizada, ...todasNoticias];
+            setTodasNoticias(novas);
+            setPaginaAtual(1);
+          }}
         />
       )}
 
@@ -275,7 +230,7 @@ export default function QuebradaInforma() {
             baseadas nas cores das <br />
             zonas da SpTrans
           </p>
-          <a href="#" className="" style={{ color: corSecundaria }}>
+          <a href="#" style={{ color: corSecundaria }}>
             Por que das cores?
           </a>
         </div>
@@ -286,20 +241,20 @@ export default function QuebradaInforma() {
             return (
               <div
                 key={nome}
-                className="relative rounded-xl text-white p-4 shadow-md overflow-hidden h-[150px] flex flex-col justify-between transition-transform duration-300 hover:scale-105 cursor-pointer "
+                className="relative rounded-xl text-white p-4 shadow-md overflow-hidden h-[150px] flex flex-col justify-between transition-transform duration-300 hover:scale-105 cursor-pointer"
                 style={{
                   backgroundImage: `url(https://blogperic0.blob.core.windows.net/zonas/zona_${nome.toLowerCase()}.png)`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
               >
-                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-xl " />
+                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-xl" />
                 <div className="relative z-10 text-xs">
                   <p>Precipitação: {clima?.rain?.["1h"] || "10"}%</p>
                   <p>Umidade: {clima?.main?.humidity || "--"}%</p>
                   <p>Vento: {clima?.wind?.speed || "--"} Km/H</p>
                 </div>
-                <div className="relative z-10 flex justify-between items-end ">
+                <div className="relative z-10 flex justify-between items-end">
                   <div className="flex items-center">
                     {clima && (
                       <img
@@ -327,10 +282,15 @@ export default function QuebradaInforma() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quebrada Informa</h1>
-            <p className="text-gray-600 dark:text-gray-300">Notícias {regiao ? `da região ${regiao}` : 'de todas as regiões'}</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Quebrada Informa
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Notícias {regiao ? `da região ${regiao}` : "de todas as regiões"}
+            </p>
           </div>
         </div>
+
         <div className="relative mb-16">
           <div className="text-center">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
@@ -341,22 +301,25 @@ export default function QuebradaInforma() {
               ></div>
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-6">
-              Fique por dentro das principais notícias e acontecimentos da sua região
+              Fique por dentro das principais notícias e acontecimentos da sua
+              região
             </p>
           </div>
           <div className="absolute right-0 top-0">
             <button
-              onClick={recarregarNoticias}
+              onClick={carregarNoticias}
               disabled={loadingNoticias}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                loadingNoticias 
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                loadingNoticias
+                  ? "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
               } transition-colors`}
               title="Atualizar notícias"
               aria-label="Atualizar notícias"
             >
-              <FiRefreshCw className={`w-5 h-5 ${loadingNoticias ? 'animate-spin' : ''}`} />
+              <FiRefreshCw
+                className={`w-5 h-5 ${loadingNoticias ? "animate-spin" : ""}`}
+              />
               <span className="text-sm font-medium">Atualizar</span>
             </button>
           </div>
@@ -403,18 +366,15 @@ export default function QuebradaInforma() {
                 className="group block animate-slideInUp"
                 style={{
                   animationDelay: `${index * 100}ms`,
-                  display:
-                    index >= paginaAtual * itensPorPagina ? "none" : "block",
                 }}
               >
                 <article
-                  className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden hover:-translate-y-2"
+                  className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duração-300 border border-gray-100 overflow-hidden hover:-translate-y-2"
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.borderColor = corPrincipal)
                   }
                   onMouseLeave={(e) => (e.currentTarget.style.borderColor = "")}
                 >
-                  {/* Imagem */}
                   {/* Imagem */}
                   <div className="relative h-48 overflow-hidden">
                     {n.imagem ? (
@@ -424,7 +384,7 @@ export default function QuebradaInforma() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         onError={(e) => {
                           e.target.src =
-                            "https://via.placeholder.com/400x200?text=Imagem+indisponível";
+                            "https://via.placeholder.com/400x200?text=Imagem+indispon%C3%ADvel";
                         }}
                       />
                     ) : (
@@ -527,14 +487,12 @@ export default function QuebradaInforma() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Efeito de hover */}
                 </article>
               </Link>
             ))}
 
             {/* Botão Carregar Mais */}
-            {paginaAtual * itensPorPagina < noticias.length && (
+            {paginaAtual * itensPorPagina < todasNoticias.length && (
               <div className="col-span-full flex justify-center mt-10">
                 <button
                   onClick={carregarMais}
@@ -548,9 +506,7 @@ export default function QuebradaInforma() {
 
             {/* Contador de notícias */}
             <div className="col-span-full text-center mt-6 text-sm text-gray-500">
-              Mostrando{" "}
-              {Math.min(noticias.length, paginaAtual * itensPorPagina)} de{" "}
-              {noticias.length} notícias
+              Mostrando {noticias.length} de {todasNoticias.length} notícias
               {regiao && ` na região ${regiao}`}
             </div>
           </div>

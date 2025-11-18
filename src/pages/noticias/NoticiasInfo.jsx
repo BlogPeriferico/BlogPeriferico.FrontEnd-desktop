@@ -1,13 +1,13 @@
+// src/pages/Noticias/NoticiasInfo.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import NoticiaService from "../../services/NoticiasService";
 import ComentariosService from "../../services/ComentariosService";
-import AuthService from "../../services/AuthService";
 import api from "../../services/Api";
 import { useRegiao } from "../../contexts/RegionContext";
 import { useUser } from "../../contexts/UserContext.jsx";
 import { regionColors } from "../../utils/regionColors";
-import { FaTimes, FaTrash } from "react-icons/fa";
+import { FaTrash } from "react-icons/fa";
 import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
 import NoPicture from "../../assets/images/NoPicture.webp";
 
@@ -18,7 +18,6 @@ export default function NoticiasInfo() {
   const { regiao } = useRegiao();
   const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
-
 
   const [noticia, setNoticia] = useState(location.state || null);
   const [loading, setLoading] = useState(!location.state);
@@ -37,6 +36,7 @@ export default function NoticiasInfo() {
   });
   const [modalDeletarNoticia, setModalDeletarNoticia] = useState(false);
   const [nomeAutor, setNomeAutor] = useState(null);
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
 
   // Carregar perfil do usuário usando UserContext
   useEffect(() => {
@@ -51,12 +51,11 @@ export default function NoticiasInfo() {
         fotoPerfil: user.fotoPerfil,
       };
 
-
       setUsuarioLogado(userData);
     }
   }, [user]);
 
-  // Carregar notícia e comentários
+  // Carregar notícia
   useEffect(() => {
     window.scrollTo(0, 0);
 
@@ -72,7 +71,6 @@ export default function NoticiasInfo() {
               const autor = usuarios.find((u) => u.id === data.idUsuario);
 
               if (autor) {
-                // Inclui fotoPerfil diretamente na notícia
                 data.fotoPerfil = autor.fotoPerfil;
                 data.nomeAutor = autor.nome;
               }
@@ -94,33 +92,35 @@ export default function NoticiasInfo() {
   const carregarComentarios = async () => {
     try {
       // Buscar comentários
-      const comentarios = await ComentariosService.listarComentariosNoticia(id);
-      
+      const comentariosData = await ComentariosService.listarComentariosNoticia(
+        id
+      );
+
       // Buscar todos os usuários para obter as fotos de perfil
       const response = await api.get("/usuarios/listar");
       const usuarios = response.data;
-      
+
       // Mapear comentários e adicionar avatar
-      const comentariosComAvatar = comentarios.map(coment => {
-        // Encontrar o usuário que fez o comentário
-        const usuarioComentario = usuarios.find(u => 
-          u.id === coment.idUsuario || u.email === coment.emailUsuario
+      const comentariosComAvatar = comentariosData.map((coment) => {
+        const usuarioComentario = usuarios.find(
+          (u) => u.id === coment.idUsuario || u.email === coment.emailUsuario
         );
-        
-        // Se encontrou o usuário e ele tem foto de perfil, usa a foto
+
         if (usuarioComentario?.fotoPerfil) {
           return { ...coment, avatar: usuarioComentario.fotoPerfil };
         }
-        
-        // Se for o próprio usuário logado, usa a foto do perfil atual
-        if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
+
+        if (
+          (coment.idUsuario === user?.id ||
+            coment.emailUsuario === user?.email) &&
+          user?.fotoPerfil
+        ) {
           return { ...coment, avatar: user.fotoPerfil };
         }
-        
-        // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
+
         return { ...coment, avatar: coment.avatar || NoPicture };
       });
-      
+
       setComentarios(comentariosComAvatar);
     } catch (err) {
       console.error("❌ Erro ao buscar comentários:", err);
@@ -128,7 +128,7 @@ export default function NoticiasInfo() {
     }
   };
 
-  // Carrega comentários apenas se não foram atualizados recentemente
+  // Carrega comentários
   useEffect(() => {
     carregarComentarios();
   }, [id]);
@@ -136,8 +136,8 @@ export default function NoticiasInfo() {
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
     if (user?.id && comentarios.length > 0) {
-      setComentarios((prevComentarios) => {
-        const updated = prevComentarios.map((coment) => {
+      setComentarios((prevComentarios) =>
+        prevComentarios.map((coment) => {
           const isUserComment =
             coment.idUsuario === user.id || coment.emailUsuario === user.email;
 
@@ -145,10 +145,8 @@ export default function NoticiasInfo() {
             return { ...coment, avatar: user.fotoPerfil || NoPicture };
           }
           return coment;
-        });
-
-        return updated;
-      });
+        })
+      );
     }
   }, [user?.fotoPerfil, user?.id, comentarios.length]);
 
@@ -166,15 +164,21 @@ export default function NoticiasInfo() {
         } catch (err) {
           console.error("❌ Erro ao buscar autor:", err);
         }
+      } else if (noticia && noticia.autor && !nomeAutor) {
+        setNomeAutor(noticia.autor);
       }
     };
     buscarAutor();
-  }, [noticia?.idUsuario, nomeAutor]); 
+  }, [noticia, noticia?.idUsuario, nomeAutor]);
 
   const handlePublicarComentario = async () => {
+    if (!user?.id) {
+      setShowLoginAlert(true);
+      return;
+    }
+
     if (!novoComentario.trim()) return;
 
-    // Aguardar o carregamento do ID do usuário
     if (!usuarioLogado.id) {
       alert("Aguarde o carregamento do perfil ou faça login novamente.");
       return;
@@ -221,16 +225,15 @@ export default function NoticiasInfo() {
   };
 
   // Verificação de propriedade da notícia
-  // Verifica role, roles ou papel, em qualquer caso
   const userRole =
     usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
   const roleNormalizado = String(userRole).toUpperCase();
-  const papelStr = roleNormalizado; // Adicionando papelStr para compatibilidade
+  const papelStr = roleNormalizado;
 
-  // Verificação de permissões
   const isAdmin =
     roleNormalizado.includes("ADMIN") ||
     roleNormalizado.includes("ADMINISTRADOR");
+
   const isAutor =
     noticia &&
     (noticia.idUsuario === usuarioLogado?.id ||
@@ -240,8 +243,6 @@ export default function NoticiasInfo() {
   const podeExcluirNoticia = Boolean(
     noticia && usuarioLogado && (isAdmin || isAutor)
   );
-
-  // Verificação de permissões
 
   // Deletar notícia
   const handleDeletarNoticia = async () => {
@@ -382,7 +383,7 @@ export default function NoticiasInfo() {
               {noticia.zona}
             </div>
 
-            {/* Autor - MOVIDO PARA CANTO SUPERIOR ESQUERDO */}
+            {/* Autor */}
             <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
                 src={noticia.fotoPerfil || NoPicture}
@@ -408,7 +409,7 @@ export default function NoticiasInfo() {
               </div>
             </div>
 
-            {/* Botão Excluir - MOVIDO PARA CANTO INFERIOR DIREITO */}
+            {/* Botão Excluir Notícia */}
             {podeExcluirNoticia && (
               <div className="absolute bottom-6 right-6">
                 <button
@@ -436,7 +437,7 @@ export default function NoticiasInfo() {
               </p>
             )}
 
-            {/* Metadados - COM LOCAL E HORÁRIO */}
+            {/* Metadados */}
             <div className="flex flex-wrap items-center gap-4 pb-6 mb-6 border-b border-gray-200">
               <div className="flex items-center gap-2 text-gray-600">
                 <svg
@@ -455,7 +456,7 @@ export default function NoticiasInfo() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    d="M15 11a3 3 0 11-6 0 3 3 3 0 016 0z"
                   ></path>
                 </svg>
                 <span className="text-sm font-medium">
@@ -510,6 +511,49 @@ export default function NoticiasInfo() {
               Comentários ({comentarios.length})
             </h2>
           </div>
+
+          {/* Aviso de login para comentar */}
+          {(!user?.id || showLoginAlert) && (
+            <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-yellow-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">
+                    Você precisa estar logado para comentar.{" "}
+                    <a
+                      href="/login"
+                      className="font-medium text-yellow-700 underline hover:text-yellow-600"
+                    >
+                      Faça login
+                    </a>{" "}
+                    ou{" "}
+                    <a
+                      href="/register"
+                      className="font-medium text-yellow-700 underline hover:text-yellow-600"
+                    >
+                      cadastre-se
+                    </a>{" "}
+                    para participar da conversa.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Formulário de Comentário */}
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img
@@ -517,6 +561,9 @@ export default function NoticiasInfo() {
                 alt="Seu avatar"
                 className="w-10 h-10 rounded-full border-2 hidden sm:block"
                 style={{ borderColor: corPrincipal }}
+                onError={(e) => {
+                  e.target.src = NoPicture;
+                }}
               />
               <div className="flex-1 w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <input
@@ -608,6 +655,9 @@ export default function NoticiasInfo() {
                       src={coment.avatar || NoPicture}
                       alt={coment.nomeUsuario || "Usuário"}
                       className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                      onError={(e) => {
+                        e.target.src = NoPicture;
+                      }}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
@@ -632,9 +682,7 @@ export default function NoticiasInfo() {
                         </div>
                         {(coment.idUsuario === usuarioLogado.id ||
                           coment.emailUsuario === usuarioLogado.email ||
-                          // ✅ ADMIN pode deletar qualquer comentário
-                          papelStr.includes("ADMINISTRADOR") ||
-                          papelStr.includes("ADMIN")) && (
+                          isAdmin) && (
                           <button
                             onClick={() =>
                               setModalDeletar({
@@ -642,7 +690,7 @@ export default function NoticiasInfo() {
                                 comentarioId: coment.id,
                               })
                             }
-                            className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200"
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duração-200"
                             title="Excluir comentário"
                           >
                             <svg
@@ -672,7 +720,7 @@ export default function NoticiasInfo() {
           )}
         </div>
 
-        {/* Modal de Confirmação de Exclusão */}
+        {/* Modal de Confirmação de Exclusão de Comentário */}
         <ModalConfirmacao
           isOpen={modalDeletar.isOpen}
           onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}

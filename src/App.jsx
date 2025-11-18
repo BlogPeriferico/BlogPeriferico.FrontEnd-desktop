@@ -1,6 +1,13 @@
 import React from "react";
-import { Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+  Navigate,
+} from "react-router-dom";
 import { useUser } from "./contexts/UserContext";
+
 import Login from "./pages/login/Login";
 import Register from "./pages/login/Register";
 import EditaPerfil from "./pages/login/EditaPerfil";
@@ -27,64 +34,104 @@ function AppContent() {
   const navigate = useNavigate();
   const { isLoggedIn } = useUser();
 
-  const isAuthPage =
-    location.pathname === "/login" ||
-    location.pathname === "/register" ||
-    location.pathname === "/editar-perfil" ||
-    location.pathname === "/forgot-password";
+  const AUTH_PATHS = ["/login", "/register", "/editar-perfil", "/forgot-password"];
+  const isAuthPage = AUTH_PATHS.includes(location.pathname);
 
   return (
-        <div className="flex flex-col min-h-screen">
-          {!isAuthPage && <Header />}
+    <div className="flex flex-col min-h-screen">
+      {/* Link de pulo para teclado (acessibilidade) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-white focus:text-black focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg"
+      >
+        Pular para o conteúdo principal
+      </a>
 
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<QuebradaInforma />} />
-              <Route path="/login" element={
-                <div className="min-h-screen flex items-center justify-center">
-                  <Login onLoginSuccess={() => navigate('/')} />
-                </div>
-              } />
-              <Route path="/register" element={
-                <div className="min-h-screen flex items-center justify-center">
-                  <Register onRegisterSuccess={() => navigate('/login')} />
-                </div>
-              } />
-              <Route path="/forgot-password" element={
-                <div className="min-h-screen flex items-center justify-center">
-                  <ForgotPassword />
-                </div>
-              } />
-              <Route path="/editar-perfil" element={<EditaPerfil />} />
-              <Route path="/perfil/:id?" element={
-                isLoggedIn ? <Perfil /> : <Navigate to="/login" replace state={{ from: location.pathname }} />
-              } />
-              <Route path="/sobre" element={<SobreNos />} />
-              <Route path="/quebrada-informa" element={<QuebradaInforma />} />
-              <Route path="/noticia/:id" element={<NoticiasInfo />} />
-              <Route path="/achadinhos" element={<Vendas />} />
-              <Route path="/produto/:id" element={<ProdutoInfo />} />
-              <Route path="/doacoes" element={<Doacoes />} />
-              <Route path="/doacao/:id" element={<DoacaoInfo />} />
-              <Route path="/vagas" element={<CorreCerto />} />
-              <Route path="/vaga/:id" element={<VagaInfo />} />
-              
-              {/* Rota de administração */}
-              <Route 
-                path="/admin" 
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              {/* Rota de fallback para páginas não encontradas */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
+      {!isAuthPage && <Header />}
 
-          {!isAuthPage && <Footer />}
-        </div>
+      <main
+        id="main-content"
+        role="main"
+        className="flex-1"
+        aria-live="polite"
+      >
+        <Routes>
+          <Route path="/" element={<QuebradaInforma />} />
+
+          <Route
+            path="/login"
+            element={
+              <div className="min-h-screen flex items-center justify-center">
+                <Login onLoginSuccess={() => navigate("/")} />
+              </div>
+            }
+          />
+
+          <Route
+            path="/register"
+            element={
+              <div className="min-h-screen flex items-center justify-center">
+                <Register onRegisterSuccess={() => navigate("/login")} />
+              </div>
+            }
+          />
+
+          <Route
+            path="/forgot-password"
+            element={
+              <div className="min-h-screen flex items-center justify-center">
+                <ForgotPassword />
+              </div>
+            }
+          />
+
+          <Route path="/editar-perfil" element={<EditaPerfil />} />
+
+          <Route
+            path="/perfil/:id?"
+            element={
+              isLoggedIn ? (
+                <Perfil />
+              ) : (
+                <Navigate
+                  to="/login"
+                  replace
+                  state={{ from: location.pathname }}
+                />
+              )
+            }
+          />
+
+          <Route path="/sobre" element={<SobreNos />} />
+          <Route path="/quebrada-informa" element={<QuebradaInforma />} />
+          <Route path="/noticia/:id" element={<NoticiasInfo />} />
+
+          <Route path="/achadinhos" element={<Vendas />} />
+          <Route path="/produto/:id" element={<ProdutoInfo />} />
+
+          <Route path="/doacoes" element={<Doacoes />} />
+          <Route path="/doacao/:id" element={<DoacaoInfo />} />
+
+          <Route path="/vagas" element={<CorreCerto />} />
+          <Route path="/vaga/:id" element={<VagaInfo />} />
+
+          {/* Rota de administração */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rota de fallback para páginas não encontradas */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+
+      {!isAuthPage && <Footer />}
+    </div>
   );
 }
 

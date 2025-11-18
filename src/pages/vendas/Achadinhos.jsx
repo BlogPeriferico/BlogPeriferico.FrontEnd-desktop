@@ -19,7 +19,7 @@ export default function Vendas() {
   const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const navigate = useNavigate();
-  
+
   // Verifica se o usuário é um visitante
   const isVisitor = !user || user.isVisitor === true;
 
@@ -42,35 +42,38 @@ export default function Vendas() {
     telefone: p.telefone || p.contato || p.celular || p.whatsapp || "",
     contato: p.contato || p.telefone || "",
     imagem: p.imagem || "",
-    categoria: p.categoria || "Outros"
+    categoria: p.categoria || "Outros",
   });
 
   // Função para recarregar os produtos mantendo o filtro de região
   const recarregarProdutos = useCallback(async () => {
     try {
       setLoadingProdutos(true);
-      
+
       // Busca todos os produtos
       const response = await VendasService.getAnuncios();
       const dados = Array.isArray(response) ? response : [];
-      
+
       // Normaliza os dados dos produtos
       const produtosNormalizados = dados.map(mapProdutoFromDTO);
-      
+
       // Ordena por data de criação (mais recentes primeiro)
-      const produtosOrdenados = [...produtosNormalizados].sort((a, b) => 
-        new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
+      const produtosOrdenados = [...produtosNormalizados].sort(
+        (a, b) => new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
-      
+
       // Filtra por região se necessário (trata Central vs Centro)
       let produtosFiltrados = produtosOrdenados;
       if (regiao) {
-        const regiaoFiltro = regiao.toLowerCase() === 'central' ? 'Centro' : regiao;
-        produtosFiltrados = produtosOrdenados.filter(produto => 
-          produto.regiao && produto.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
+        const regiaoFiltro =
+          regiao.toLowerCase() === "central" ? "Centro" : regiao;
+        produtosFiltrados = produtosOrdenados.filter(
+          (produto) =>
+            produto.regiao &&
+            produto.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
         );
       }
-      
+
       setProdutos(produtosFiltrados);
     } catch (err) {
       // Erro silencioso
@@ -78,7 +81,7 @@ export default function Vendas() {
       setLoadingProdutos(false);
     }
   }, [regiao]);
-  
+
   // Busca os produtos quando a região mudar
   useEffect(() => {
     recarregarProdutos();
@@ -90,10 +93,15 @@ export default function Vendas() {
   }, [recarregarProdutos]);
 
   return (
-    <div className="max-w-6xl mx-auto pt-24 px-6 relative">
+    <main
+      className="max-w-6xl mx-auto pt-24 px-6 relative"
+      role="main"
+      aria-label="Página de anúncios de vendas"
+    >
       {/* Botão flutuante de adicionar */}
       <div className="fixed top-28 right-6 z-50 hover:scale-105">
         <button
+          type="button"
           onClick={() => {
             if (!isVisitor) {
               setModalAberto(true);
@@ -104,8 +112,9 @@ export default function Vendas() {
           className="bg-[color:var(--corPrincipal)] text-white p-3 rounded-full shadow-lg hover:bg-opacity-90"
           style={{ backgroundColor: corPrincipal }}
           title="Adicionar novo produto"
+          aria-label="Adicionar novo produto"
         >
-          <FiPlus size={24} />
+          <FiPlus size={24} aria-hidden="true" />
         </button>
       </div>
 
@@ -118,7 +127,7 @@ export default function Vendas() {
           setShowAuthModal(false);
           // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
           setTimeout(() => {
-            navigate('/login');
+            navigate("/login");
           }, 100);
         }}
       />
@@ -133,11 +142,16 @@ export default function Vendas() {
         />
       )}
 
-      <div className="mb-16">
+      {/* Carrossel de vendas */}
+      <section className="mb-16" aria-label="Carrossel de produtos em destaque">
         <CarrosselVendas produtos={produtos} />
-      </div>
+      </section>
 
-      <div className="relative mb-16">
+      {/* Cabeçalho e botão de atualizar anúncios */}
+      <section
+        className="relative mb-16"
+        aria-label="Listagem de anúncios recentes"
+      >
         <div className="flex justify-between items-center">
           <div className="text-center w-full">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
@@ -153,25 +167,34 @@ export default function Vendas() {
           </div>
           <div className="absolute right-0 top-0">
             <button
+              type="button"
               onClick={recarregarProdutos}
               disabled={loadingProdutos}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                loadingProdutos 
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                loadingProdutos
+                  ? "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
               } transition-colors`}
               title="Atualizar anúncios"
               aria-label="Atualizar anúncios"
+              aria-busy={loadingProdutos}
             >
-              <FiRefreshCw className={`w-5 h-5 ${loadingProdutos ? 'animate-spin' : ''}`} />
-              <span className="text-sm font-medium">Atualizar</span>
+              <FiRefreshCw
+                className={`w-5 h-5 ${loadingProdutos ? "animate-spin" : ""}`}
+                aria-hidden="true"
+              />
+              <span className="text-sm font-medium">
+                {loadingProdutos ? "Atualizando..." : "Atualizar"}
+              </span>
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* SelecaoAnuncios cuida do cabeçalho, loading e estado vazio */}
-      <SelecaoAnuncios produtos={produtos} loading={loadingProdutos} />
-    </div>
+      <section aria-label="Lista de anúncios filtrados">
+        <SelecaoAnuncios produtos={produtos} loading={loadingProdutos} />
+      </section>
+    </main>
   );
 }
