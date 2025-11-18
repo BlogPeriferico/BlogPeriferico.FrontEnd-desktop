@@ -9,14 +9,21 @@ import api from "../../services/Api";
 // Componente para os inputs de código
 const CodeInputs = ({ code, setCode, disabled }) => {
   const inputs = useRef([]);
-  
+
+  useEffect(() => {
+    // Autofocus no primeiro campo quando habilitar
+    if (!disabled && inputs.current[0]) {
+      inputs.current[0].focus();
+    }
+  }, [disabled]);
+
   const handleChange = (e, index) => {
-    const value = e.target.value.replace(/[^0-9]/g, '');
+    const value = e.target.value.replace(/[^0-9]/g, "");
     if (value) {
       const newCode = [...code];
       newCode[index] = value;
       setCode(newCode);
-      
+
       // Move para o próximo input
       if (index < 5 && inputs.current[index + 1]) {
         inputs.current[index + 1].focus();
@@ -25,18 +32,18 @@ const CodeInputs = ({ code, setCode, disabled }) => {
   };
 
   const handleKeyDown = (e, index) => {
-    if (e.key === 'Backspace') {
+    if (e.key === "Backspace") {
       const newCode = [...code];
-      
+
       // Se o campo atual está vazio, apaga o anterior
       if (!code[index] && index > 0) {
-        newCode[index - 1] = '';
+        newCode[index - 1] = "";
         setCode(newCode);
         inputs.current[index - 1].focus();
-      } 
+      }
       // Se o campo atual tem valor, limpa ele
       else if (code[index]) {
-        newCode[index] = '';
+        newCode[index] = "";
         setCode(newCode);
       }
     }
@@ -44,9 +51,9 @@ const CodeInputs = ({ code, setCode, disabled }) => {
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const paste = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+    const paste = e.clipboardData.getData("text").replace(/[^0-9]/g, "");
     if (paste.length === 6) {
-      const newCode = paste.split('').slice(0, 6);
+      const newCode = paste.split("").slice(0, 6);
       setCode(newCode);
       // Foca no último input após o paste
       if (inputs.current[5]) {
@@ -59,17 +66,18 @@ const CodeInputs = ({ code, setCode, disabled }) => {
     <div className="flex justify-center gap-4 mb-12 px-4">
       {[...Array(6)].map((_, i) => (
         <div key={i} className="relative w-20 h-20">
-          <div className={`
-            absolute inset-0 bg-white/90 backdrop-blur-sm rounded-lg 
-            transform transition-all duration-200 ease-out
-            border-2 ${code[i] ? 'border-[#828282]' : 'border-gray-300'}
-            ${!disabled && 'group-hover:border-[#828282]'}
-          `}></div>
+          <div
+            className={`
+              absolute inset-0 bg-white/90 backdrop-blur-sm rounded-lg 
+              transform transition-all duration-200 ease-out
+              border-2 ${code[i] ? "border-[#828282]" : "border-gray-300"}
+            `}
+          ></div>
           <input
-            ref={el => inputs.current[i] = el}
+            ref={(el) => (inputs.current[i] = el)}
             type="text"
             maxLength="1"
-            value={code[i] || ''}
+            value={code[i] || ""}
             onChange={(e) => handleChange(e, i)}
             onKeyDown={(e) => handleKeyDown(e, i)}
             onPaste={i === 0 ? handlePaste : null}
@@ -80,15 +88,15 @@ const CodeInputs = ({ code, setCode, disabled }) => {
               focus:ring-0 focus:outline-none
               transition-all duration-200
               text-gray-800 caret-transparent
-              ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
-              ${code[i] ? 'text-gray-800' : 'text-gray-600'}
+              ${disabled ? "cursor-not-allowed" : "cursor-pointer"}
+              ${code[i] ? "text-gray-800" : "text-gray-600"}
               leading-none
             `}
             inputMode="numeric"
             style={{
-              WebkitAppearance: 'none',
-              MozAppearance: 'textfield',
-              textShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              WebkitAppearance: "none",
+              MozAppearance: "textfield",
+              textShadow: "0 1px 2px rgba(0,0,0,0.05)",
             }}
           />
         </div>
@@ -101,32 +109,41 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState(Array(6).fill(''));
+  const [code, setCode] = useState(Array(6).fill(""));
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [mensagem, setMensagem] = useState("");
+  const [tipoMensagem, setTipoMensagem] = useState(null); // "success" | "error" | null
   const [isLoading, setIsLoading] = useState(false);
+
+  const limparMensagem = () => {
+    setMensagem("");
+    setTipoMensagem(null);
+  };
 
   const handleSolicitarCodigo = async (e) => {
     e.preventDefault();
     if (!email) {
       setMensagem("Por favor, insira seu e-mail");
+      setTipoMensagem("error");
       return;
     }
 
     setIsLoading(true);
-    setMensagem("");
+    limparMensagem();
 
     try {
       await api.post("/auth/esqueci-senha", { email });
-      setMensagem("Código de verificação enviado para o seu e-mail");
+      setMensagem("Código de verificação enviado para o seu e-mail.");
+      setTipoMensagem("success");
       setStep(2);
     } catch (error) {
       console.error("Erro ao solicitar código:", error);
       setMensagem(
         error.response?.data?.message || "Erro ao enviar código de verificação"
       );
+      setTipoMensagem("error");
     } finally {
       setIsLoading(false);
     }
@@ -134,25 +151,28 @@ export default function ForgotPassword() {
 
   const handleRedefinirSenha = async (e) => {
     e.preventDefault();
-    const codigoCompleto = code.join('');
-    
+    const codigoCompleto = code.join("");
+
     if (codigoCompleto.length !== 6) {
       setMensagem("Por favor, preencha todos os dígitos do código");
+      setTipoMensagem("error");
       return;
     }
-    
+
     if (novaSenha !== confirmarSenha) {
       setMensagem("As senhas não coincidem");
+      setTipoMensagem("error");
       return;
     }
 
     if (novaSenha.length < 6) {
       setMensagem("A senha deve ter no mínimo 6 caracteres");
+      setTipoMensagem("error");
       return;
     }
 
     setIsLoading(true);
-    setMensagem("");
+    limparMensagem();
 
     try {
       await api.post("/auth/redefinir-senha", {
@@ -160,17 +180,27 @@ export default function ForgotPassword() {
         codigo: codigoCompleto,
         novaSenha,
       });
-      
+
       setMensagem("Senha redefinida com sucesso! Redirecionando...");
+      setTipoMensagem("success");
       setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
       console.error("Erro ao redefinir senha:", error);
-      setMensagem(
-        error.response?.data?.message || "Erro ao redefinir a senha"
-      );
+      setMensagem(error.response?.data?.message || "Erro ao redefinir a senha");
+      setTipoMensagem("error");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getMensagemClasses = () => {
+    if (!tipoMensagem) {
+      return "bg-gray-100 text-gray-800";
+    }
+    if (tipoMensagem === "success") {
+      return "bg-green-100 text-green-800";
+    }
+    return "bg-red-100 text-red-800";
   };
 
   return (
@@ -180,16 +210,12 @@ export default function ForgotPassword() {
     >
       <div className="absolute inset-0 bg-black/40"></div>
 
-      <div className="relative z-10 w-full" style={{ maxWidth: '600px' }}>
+      <div className="relative z-10 w-full" style={{ maxWidth: "600px" }}>
         {/* Painel do formulário */}
         <div className="w-full bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-10 border border-white/20">
           {mensagem && (
             <div
-              className={`p-3 mb-4 rounded-md text-center ${
-                mensagem.includes("sucesso") || step === 2
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}
+              className={`p-3 mb-4 rounded-md text-center ${getMensagemClasses()}`}
             >
               {mensagem}
             </div>
@@ -249,14 +275,21 @@ export default function ForgotPassword() {
           ) : (
             <form onSubmit={handleRedefinirSenha}>
               <div className="mb-4">
-                <p className="text-lg sm:text-xl text-gray-800 mb-2 text-center font-semibold">Código de verificação</p>
-                <p className="text-sm sm:text-base text-gray-600 mb-8 text-center">Enviamos um código de 6 dígitos para<br/><span className="font-medium text-gray-800">{email}</span></p>
-                <CodeInputs 
-                  code={code} 
-                  setCode={setCode} 
-                  disabled={isLoading} 
+                <p className="text-lg sm:text-xl text-gray-800 mb-2 text-center font-semibold">
+                  Código de verificação
+                </p>
+                <p className="text-sm sm:text-base text-gray-600 mb-8 text-center">
+                  Enviamos um código de 6 dígitos para
+                  <br />
+                  <span className="font-medium text-gray-800">{email}</span>
+                </p>
+
+                <CodeInputs
+                  code={code}
+                  setCode={setCode}
+                  disabled={isLoading}
                 />
-                
+
                 <div className="relative mb-4">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -287,7 +320,7 @@ export default function ForgotPassword() {
                   placeholder="Confirmar nova senha"
                   value={confirmarSenha}
                   onChange={(e) => setConfirmarSenha(e.target.value)}
-                  className="w-full px-5 py-3 rounded-md text-black placeholder-gray-400 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 outline-none transition-all duration-400 ease-in-out transform hover:scale-[1.01] focus:scale-[1.02]"
+                  className="w-full px-6 py-5 text-xl rounded-xl bg-white/80 border border-gray-200 focus:border-[#828282] focus:ring-2 focus:ring-[#828282]/20 outline-none transition-all duration-200 placeholder-gray-400 text-gray-700 shadow-sm"
                   required
                   minLength={6}
                   disabled={isLoading}
@@ -297,7 +330,7 @@ export default function ForgotPassword() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full text-white py-3 text-lg rounded-md mb-6 transition-all duration-300 ${
+                className={`w-full text-white py-4 text-lg rounded-md mb-6 transition-all duration-300 ${
                   isLoading
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-[#828282] hover:scale-105 cursor-pointer"

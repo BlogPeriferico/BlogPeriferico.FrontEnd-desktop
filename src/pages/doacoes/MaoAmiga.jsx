@@ -7,7 +7,6 @@ import ModalDoacao from "../../components/modals/ModalDoacao";
 import { useRegiao } from "../../contexts/RegionContext";
 import { useUser } from "../../contexts/UserContext";
 import { regionColors } from "../../utils/regionColors";
-import DoacaoService from "../../services/DoacaoService";
 import api from "../../services/Api";
 import { ModalVisitantes } from "../../components/modals/ModalVisitantes";
 
@@ -20,13 +19,19 @@ export default function Doacoes() {
   const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const navigate = useNavigate();
-  
+
   // Verifica se o usuário é um visitante
   const isVisitor = !user || user.isVisitor === true;
 
+  // Controla o scroll do body quando qualquer modal está aberto
   useEffect(() => {
-    document.body.style.overflow = modalAberto ? "hidden" : "auto";
-  }, [modalAberto]);
+    const algumModalAberto = modalAberto || showAuthModal;
+    document.body.style.overflow = algumModalAberto ? "hidden" : "auto";
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [modalAberto, showAuthModal]);
 
   // Função para normalizar os dados da doação
   const mapDoacaoFromDTO = (d) => ({
@@ -36,38 +41,37 @@ export default function Doacoes() {
     imagem: d.imagem || "",
     regiao: d.regiao || d.zona || d.local || "Centro",
     dataHoraCriacao: d.dataHoraCriacao || new Date().toISOString(),
-    status: d.status || "Ativa"
+    status: d.status || "Ativa",
   });
 
   // Função para recarregar as doações mantendo o filtro de região
   const recarregarDoacoes = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Busca todas as doações
+
       const response = await api.get("/doacoes");
       const dados = Array.isArray(response.data) ? response.data : [];
-      
-      // Normaliza os dados das doações
+
       const doacoesNormalizadas = dados.map(mapDoacaoFromDTO);
-      
-      // Ordena por data de criação (mais recentes primeiro)
-      const doacoesOrdenadas = [...doacoesNormalizadas].sort((a, b) => 
-        new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
+
+      const doacoesOrdenadas = [...doacoesNormalizadas].sort(
+        (a, b) => new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
-      
-      // Filtra por região se necessário (trata Central vs Centro)
+
       let doacoesFiltradas = doacoesOrdenadas;
       if (regiao) {
-        const regiaoFiltro = regiao.toLowerCase() === 'central' ? 'Centro' : regiao;
-        doacoesFiltradas = doacoesOrdenadas.filter(doacao => 
-          doacao.regiao && doacao.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
+        const regiaoFiltro =
+          regiao.toLowerCase() === "central" ? "Centro" : regiao;
+        doacoesFiltradas = doacoesOrdenadas.filter(
+          (doacao) =>
+            doacao.regiao &&
+            doacao.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
         );
       }
-      
+
       setDoacoes(doacoesFiltradas);
     } catch (err) {
-      // Erro ao carregar doações
+      console.error("Erro ao carregar doações:", err);
     } finally {
       setLoading(false);
     }
@@ -93,16 +97,22 @@ export default function Doacoes() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto pt-24 px-6 relative">
-      {/* Botão de adicionar doação */}
+    <main
+      className="max-w-6xl mx-auto pt-24 px-6 relative"
+      role="main"
+      aria-label="Página de doações"
+    >
+      {/* Botão flutuante de adicionar doação */}
       <div className="fixed top-28 right-6 z-50 hover:scale-105">
         <button
+          type="button"
           onClick={abrirModal}
-          className="bg-[color:var(--corPrincipal)] text-white p-3 rounded-full shadow-lg hover:bg-opacity-90"
+          className="text-white p-3 rounded-full shadow-lg hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           style={{ backgroundColor: corPrincipal }}
           title="Adicionar sua doação"
+          aria-label="Adicionar nova doação"
         >
-          <FiPlus size={24} />
+          <FiPlus size={24} aria-hidden="true" />
         </button>
       </div>
 
@@ -111,11 +121,9 @@ export default function Doacoes() {
         abrir={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onLogin={() => {
-          // Fecha o modal primeiro
           setShowAuthModal(false);
-          // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
           setTimeout(() => {
-            navigate('/login');
+            navigate("/login");
           }, 100);
         }}
       />
@@ -130,12 +138,16 @@ export default function Doacoes() {
         />
       )}
 
-      {/* Carrossel */}
-      <div className="mb-16">
+      {/* Carrossel de destaques */}
+      <section className="mb-16" aria-label="Doações em destaque">
         <CarrosselDoacao doacoes={doacoes} />
-      </div>
+      </section>
 
-      <div className="relative mb-16">
+      {/* Header da seção de lista + botão atualizar */}
+      <section
+        className="relative mb-16"
+        aria-label="Lista de doações disponíveis"
+      >
         <div className="flex justify-between items-center">
           <div className="text-center w-full">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
@@ -149,27 +161,37 @@ export default function Doacoes() {
               Encontre itens que podem fazer a diferença na vida de alguém
             </p>
           </div>
+
           <div className="absolute right-0 top-0">
             <button
+              type="button"
               onClick={recarregarDoacoes}
               disabled={loading}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                loading 
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              } transition-colors`}
+                loading
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              } transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
               title="Atualizar doações"
-              aria-label="Atualizar doações"
+              aria-label="Atualizar lista de doações"
+              aria-busy={loading ? "true" : "false"}
             >
-              <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-              <span className="text-sm font-medium">Atualizar</span>
+              <FiRefreshCw
+                className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
+                aria-hidden="true"
+              />
+              <span className="text-sm font-medium">
+                {loading ? "Atualizando..." : "Atualizar"}
+              </span>
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Seleção */}
-      <SelecaoDoacoes doacoes={doacoes} loading={loading} />
-    </div>
+      {/* Lista / grade de doações */}
+      <section aria-label="Grade de doações">
+        <SelecaoDoacoes doacoes={doacoes} loading={loading} />
+      </section>
+    </main>
   );
 }

@@ -1,29 +1,37 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FaSearch, FaMapMarkerAlt, FaBars, FaUser, FaTimes } from "react-icons/fa";
+import {
+  FaSearch,
+  FaMapMarkerAlt,
+  FaBars,
+  FaUser,
+  FaTimes,
+} from "react-icons/fa";
 import RegionSelector from "./RegionSelector";
 import { useRegiao } from "../contexts/RegionContext";
 import { useUser } from "../contexts/UserContext.jsx";
 import { regionColors } from "../utils/regionColors";
 import NoPicture from "../assets/images/NoPicture.webp";
-import ModalAuth from "./modals/ModalAuth";
+import ModalAuth from "./modals/ModalAuth"; // (continua importado se for usar depois)
 import { buscarUsuarios } from "../services/UsuarioService";
 import SearchResults from "./SearchResults";
-import { debounce } from 'lodash';
+import { debounce } from "lodash";
 
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { regiao, setRegiao } = useRegiao();
   const { user, isLoggedIn } = useUser(); // usuário atualizado do contexto
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [showRegionSelector, setShowRegionSelector] = useState(false);
   const [fotoAtual, setFotoAtual] = useState(NoPicture);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false); // reservado
+  const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+
   const searchInputRef = useRef(null);
 
   // Atualiza a foto quando o user mudar
@@ -64,12 +72,12 @@ export default function Header() {
         setIsSearching(false);
         return;
       }
-      
+
       try {
         const results = await buscarUsuarios(term);
         setSearchResults(results);
       } catch (error) {
-        console.error('Erro na busca:', error);
+        console.error("Erro na busca:", error);
         setSearchResults([]);
       } finally {
         setIsSearching(false);
@@ -79,14 +87,14 @@ export default function Header() {
 
   // Atualiza a busca quando o termo mudar
   useEffect(() => {
-    if (searchTerm.trim() === '') {
+    if (searchTerm.trim() === "") {
       setSearchResults([]);
       return;
     }
-    
+
     setIsSearching(true);
     debouncedSearch(searchTerm);
-    
+
     return () => {
       debouncedSearch.cancel();
     };
@@ -97,7 +105,7 @@ export default function Header() {
   };
 
   const clearSearch = () => {
-    setSearchTerm('');
+    setSearchTerm("");
     setSearchResults([]);
     if (searchInputRef.current) {
       searchInputRef.current.focus();
@@ -105,15 +113,20 @@ export default function Header() {
   };
 
   const handleResultClick = () => {
-    setSearchTerm('');
+    setSearchTerm("");
     setSearchResults([]);
     setIsSearchFocused(false);
+  };
+
+  const toggleMenu = () => {
+    setMenuOpen((prev) => !prev);
   };
 
   return (
     <header
       className="w-full px-6 py-3 flex items-center justify-between shadow-md border-b-2 fixed top-0 left-0 z-50"
       style={{ borderColor: corPrincipal, backgroundColor: "#ffffff" }}
+      aria-label="Cabeçalho principal do site Blog Periférico"
     >
       {/* Logo */}
       <div className="flex items-center gap-4 flex-shrink-0">
@@ -121,14 +134,18 @@ export default function Header() {
           to="/sobre"
           className="text-2xl font-bold"
           style={{ color: corPrincipal }}
+          aria-label="Ir para a página Sobre nós do Blog Periférico"
         >
           BlogPeriferico
         </Link>
       </div>
 
-      {/* Links de navegação */}
+      {/* Links de navegação (desktop) */}
       <div className="flex-1">
-        <nav className="hidden lg:flex gap-6 font-medium text-sm text-black ml-4">
+        <nav
+          className="hidden lg:flex gap-6 font-medium text-sm text-black ml-4"
+          aria-label="Navegação principal"
+        >
           {navLinks.map((link) => (
             <Link
               key={link.path}
@@ -146,22 +163,28 @@ export default function Header() {
         </nav>
       </div>
 
-      {/* Barra de pesquisa */}
+      {/* Barra de pesquisa (desktop) */}
       <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-4">
         <div className="relative w-full max-w-2xl mx-4">
           <div
             className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
-            style={{ 
+            style={{
               borderColor: isSearchFocused ? corPrincipal : "#d1d5db",
-              minWidth: '200px',
-              boxShadow: isSearchFocused ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}` : 'none',
+              minWidth: "200px",
+              boxShadow: isSearchFocused
+                ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`
+                : "none",
             }}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+            role="search"
+            aria-label="Buscar usuários"
+            aria-busy={isSearching}
           >
             <FaSearch
               className="text-gray-400 flex-shrink-0"
               style={{ color: isSearchFocused ? corPrincipal : "#9ca3af" }}
+              aria-hidden="true"
             />
             <input
               ref={searchInputRef}
@@ -170,22 +193,24 @@ export default function Header() {
               onChange={handleSearchChange}
               placeholder="Buscar usuários..."
               className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
+              aria-label="Campo de busca de usuários"
             />
             {searchTerm && (
               <button
+                type="button"
                 onClick={clearSearch}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label="Limpar busca"
               >
-                <FaTimes className="w-4 h-4" />
+                <FaTimes className="w-4 h-4" aria-hidden="true" />
               </button>
             )}
           </div>
-          
+
           {(isSearchFocused || searchTerm) && (
             <div className="absolute left-0 right-0 mt-1">
-              <SearchResults 
-                results={searchResults} 
+              <SearchResults
+                results={searchResults}
                 searchTerm={searchTerm}
                 onClose={handleResultClick}
               />
@@ -194,47 +219,70 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Direita: avatar + região */}
+      {/* Direita: menu mobile + avatar/login + região */}
       <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0 ml-2 lg:ml-4">
+        {/* Botão menu mobile */}
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
+          type="button"
+          onClick={toggleMenu}
           className="text-xl lg:hidden"
+          aria-label={
+            menuOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"
+          }
+          aria-expanded={menuOpen}
+          aria-controls="mobile-menu"
         >
-          <FaBars />
+          <FaBars aria-hidden="true" />
         </button>
 
         {/* Botão de Login/Perfil */}
         {isLoggedIn ? (
           <div className="relative group">
-            <img
-              src={fotoAtual}
-              alt={user?.nome || "Usuário"}
-              className="w-9 h-9 rounded-full border-2 cursor-pointer hover:opacity-90 transition-all duration-300 hover:ring-2 hover:ring-offset-2"
-              style={{ 
-                borderColor: corPrincipal,
-                boxShadow: `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`
-              }}
+            <button
+              type="button"
               onClick={() => navigate("/perfil")}
-            />
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+              className="focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-full"
+              aria-label={`Ir para o perfil de ${user?.nome || "usuário"}`}
+            >
+              <img
+                src={fotoAtual}
+                alt={user?.nome || "Foto de perfil do usuário"}
+                className="w-9 h-9 rounded-full border-2 cursor-pointer hover:opacity-90 transition-all duration-300 hover:ring-2 hover:ring-offset-2"
+                style={{
+                  borderColor: corPrincipal,
+                  boxShadow: `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`,
+                }}
+                decoding="async"
+              />
+            </button>
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
           </div>
         ) : (
           <div className="flex items-center gap-4">
             <button
+              type="button"
               onClick={() => navigate("/login")}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white transition-all duration-300
                 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2`}
               style={{
-                background: `linear-gradient(135deg, ${corPrincipal}, ${hexToRGBA(corPrincipal, 0.8)})`,
-                boxShadow: `0 4px 6px -1px ${hexToRGBA(corPrincipal, 0.2)}, 0 2px 4px -1px ${hexToRGBA(corPrincipal, 0.1)}`
+                background: `linear-gradient(135deg, ${corPrincipal}, ${hexToRGBA(
+                  corPrincipal,
+                  0.8
+                )})`,
+                boxShadow: `0 4px 6px -1px ${hexToRGBA(
+                  corPrincipal,
+                  0.2
+                )}, 0 2px 4px -1px ${hexToRGBA(corPrincipal, 0.1)}`,
               }}
+              aria-label="Ir para a página de login"
             >
-              <FaUser className="text-sm" />
+              <FaUser className="text-sm" aria-hidden="true" />
               <span>Entrar</span>
             </button>
             <button
+              type="button"
               onClick={() => navigate("/register")}
-              className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+              className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
             >
               Cadastrar
             </button>
@@ -244,11 +292,15 @@ export default function Header() {
         {/* Seletor de Região */}
         <div className="relative flex items-center gap-2">
           <button
-            className="w-8 h-8 flex items-center justify-center rounded-full border text-white duration-300 hover:scale-105"
+            type="button"
+            className="w-8 h-8 flex items-center justify-center rounded-full border text-white duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
             onClick={() => setShowRegionSelector(!showRegionSelector)}
             style={{ backgroundColor: corPrincipal, borderColor: corPrincipal }}
+            aria-label="Selecionar região de São Paulo"
+            aria-haspopup="dialog"
+            aria-expanded={showRegionSelector}
           >
-            <FaMapMarkerAlt />
+            <FaMapMarkerAlt aria-hidden="true" />
           </button>
           {regiao && (
             <span
@@ -270,22 +322,30 @@ export default function Header() {
       {/* Menu Mobile */}
       {menuOpen && (
         <div
+          id="mobile-menu"
           className="absolute top-14 left-0 w-full bg-white p-4 lg:hidden border-b-[2px]"
           style={{ borderColor: corPrincipal }}
         >
+          {/* Busca mobile */}
           <div className="relative w-full mb-4">
             <div
               className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
-              style={{ 
+              style={{
                 borderColor: isSearchFocused ? corPrincipal : "#d1d5db",
-                boxShadow: isSearchFocused ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}` : 'none',
+                boxShadow: isSearchFocused
+                  ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`
+                  : "none",
               }}
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+              role="search"
+              aria-label="Buscar usuários"
+              aria-busy={isSearching}
             >
               <FaSearch
                 className="text-gray-400 flex-shrink-0"
                 style={{ color: isSearchFocused ? corPrincipal : "#9ca3af" }}
+                aria-hidden="true"
               />
               <input
                 type="text"
@@ -293,22 +353,24 @@ export default function Header() {
                 onChange={handleSearchChange}
                 placeholder="Buscar usuários..."
                 className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
+                aria-label="Campo de busca de usuários"
               />
               {searchTerm && (
                 <button
+                  type="button"
                   onClick={clearSearch}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                   aria-label="Limpar busca"
                 >
-                  <FaTimes className="w-4 h-4" />
+                  <FaTimes className="w-4 h-4" aria-hidden="true" />
                 </button>
               )}
             </div>
-            
+
             {(isSearchFocused || searchTerm) && (
               <div className="absolute left-0 right-0 mt-1 z-50">
-                <SearchResults 
-                  results={searchResults} 
+                <SearchResults
+                  results={searchResults}
                   searchTerm={searchTerm}
                   onClose={handleResultClick}
                 />
@@ -316,7 +378,10 @@ export default function Header() {
             )}
           </div>
 
-          <nav className="flex flex-col gap-3">
+          <nav
+            className="flex flex-col gap-3"
+            aria-label="Navegação principal (versão mobile)"
+          >
             {navLinks.map((link) => (
               <Link
                 key={link.path}

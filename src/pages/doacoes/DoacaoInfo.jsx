@@ -50,7 +50,7 @@ export default function DoacaoInfo() {
         papel: user.papel || user.role || user.roles,
         fotoPerfil: user.fotoPerfil,
       };
-      
+
       setUsuarioLogado(userData);
     }
   }, [user]);
@@ -61,7 +61,7 @@ export default function DoacaoInfo() {
 
     if (!doacao) {
       setLoading(true);
-      
+
       const carregarDoacao = async () => {
         try {
           const data = await DoacaoService.buscarDoacaoPorId(id);
@@ -72,7 +72,7 @@ export default function DoacaoInfo() {
               const response = await api.get("/usuarios/listar");
               const doador = response.data.find((u) => u.id === data.idUsuario);
 
-              if (doador) {  
+              if (doador) {
                 data.autor = doador.nome;
                 data.fotoPerfil = doador.fotoPerfil;
                 data.idUsuario = doador.id;
@@ -85,84 +85,84 @@ export default function DoacaoInfo() {
                 // Usa o nome do autor diretamente da doação
               }
             }
-          } 
+          }
 
           setDoacao(data);
-          
+
           // Carrega os comentários
           try {
-            const comentariosData = await ComentariosService.listarComentariosDoacao(id);
-            
+            const comentariosData =
+              await ComentariosService.listarComentariosDoacao(id);
+
             // Buscar todos os usuários para obter as fotos de perfil
             const response = await api.get("/usuarios/listar");
             const usuarios = response.data;
-            
+
             // Mapear comentários e adicionar avatar
-            const comentariosComAvatar = comentariosData.map(coment => {
-              // Encontrar o usuário que fez o comentário
-              const usuarioComentario = usuarios.find(u => 
-                u.id === coment.idUsuario || u.email === coment.emailUsuario
+            const comentariosComAvatar = comentariosData.map((coment) => {
+              const usuarioComentario = usuarios.find(
+                (u) =>
+                  u.id === coment.idUsuario || u.email === coment.emailUsuario
               );
-              
-              // Se encontrou o usuário e ele tem foto de perfil, usa a foto
+
               if (usuarioComentario?.fotoPerfil) {
                 return { ...coment, avatar: usuarioComentario.fotoPerfil };
               }
-              
-              // Se for o próprio usuário logado, usa a foto do perfil atual
-              if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
+
+              if (
+                (coment.idUsuario === user?.id ||
+                  coment.emailUsuario === user?.email) &&
+                user?.fotoPerfil
+              ) {
                 return { ...coment, avatar: user.fotoPerfil };
               }
-              
-              // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
+
               return { ...coment, avatar: coment.avatar || NoPicture };
             });
-            
+
             setComentarios(comentariosComAvatar);
           } catch (err) {
             setComentarios([]);
-          };
-
+          }
         } catch (err) {
           setDoacao(null);
         } finally {
           setLoading(false);
         }
       };
-      
+
       carregarDoacao();
-    } else {
     }
 
     const carregarComentarios = async () => {
       try {
-        const comentarios = await ComentariosService.listarComentariosDoacao(id);
-        
-        // Buscar todos os usuários para obter as fotos de perfil
+        const comentarios = await ComentariosService.listarComentariosDoacao(
+          id
+        );
+
         const response = await api.get("/usuarios/listar");
         const usuarios = response.data;
-        
-        // Mapear comentários e adicionar avatar
-        const comentariosComAvatar = comentarios.map(coment => {
-          // Encontrar o usuário que fez o comentário
-          const usuarioComentario = usuarios.find(u => 
-            u.id === coment.idUsuario || u.email === coment.emailUsuario
+
+        const comentariosComAvatar = comentarios.map((coment) => {
+          const usuarioComentario = usuarios.find(
+            (u) => u.id === coment.idUsuario || u.email === coment.emailUsuario
           );
-          
-          // Se encontrou o usuário e ele tem foto de perfil, usa a foto
+
           if (usuarioComentario?.fotoPerfil) {
             return { ...coment, avatar: usuarioComentario.fotoPerfil };
           }
-          
-          // Se for o próprio usuário logado, usa a foto do perfil atual
-          if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
+
+          if (
+            (coment.idUsuario === user?.id ||
+              coment.emailUsuario === user?.email) &&
+            user?.fotoPerfil
+          ) {
             return { ...coment, avatar: user.fotoPerfil };
           }
-          
-          // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
+
           return { ...coment, avatar: coment.avatar || NoPicture };
         });
-        
+
         setComentarios(comentariosComAvatar);
       } catch (err) {
         setComentarios([]);
@@ -170,16 +170,11 @@ export default function DoacaoInfo() {
     };
 
     carregarComentarios();
-  }, [id, doacao]);
-
-  // Monitora alterações no estado da doação
-  useEffect(() => {
-    // Efeito vazio para monitorar alterações na doação
-  }, [doacao]);
+  }, [id, doacao, user?.email, user?.fotoPerfil, user?.id]);
 
   // Força o recarregamento da doação quando o componente é montado
   useEffect(() => {
-    setDoacao(null); // Isso forçará um novo carregamento
+    setDoacao(null);
   }, [id]);
 
   // Atualiza fotoPerfil da doação quando foto do usuário muda
@@ -187,22 +182,27 @@ export default function DoacaoInfo() {
     if (doacao && user?.id && doacao.idUsuario === user.id) {
       const novaFoto = user.fotoPerfil || NoPicture;
 
-      // Só atualiza se a foto realmente mudou
       if (novaFoto !== doacao.fotoPerfil) {
-        setDoacao(prevDoacao => ({
+        setDoacao((prevDoacao) => ({
           ...prevDoacao,
-          fotoPerfil: novaFoto
+          fotoPerfil: novaFoto,
         }));
       }
     }
-  }, [user?.fotoPerfil, doacao?.id, doacao?.idUsuario, user?.id]);
+  }, [user?.fotoPerfil, doacao?.id, doacao?.idUsuario, user?.id, doacao]);
 
-  // Sincroniza fotoPerfil inicial quando doação e usuário estão disponíveis
+  // Sincroniza fotoPerfil inicial
   useEffect(() => {
-    if (doacao && user?.id && doacao.idUsuario === user.id && user.fotoPerfil && !doacao.fotoPerfil) {
-      setDoacao(prevDoacao => ({
+    if (
+      doacao &&
+      user?.id &&
+      doacao.idUsuario === user.id &&
+      user.fotoPerfil &&
+      !doacao.fotoPerfil
+    ) {
+      setDoacao((prevDoacao) => ({
         ...prevDoacao,
-        fotoPerfil: user.fotoPerfil
+        fotoPerfil: user.fotoPerfil,
       }));
     }
   }, [doacao, user]);
@@ -210,21 +210,22 @@ export default function DoacaoInfo() {
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
     if (user?.id && comentarios.length > 0) {
-      setComentarios(prevComentarios => {
-        return prevComentarios.map(coment => {
-          const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
+      setComentarios((prevComentarios) => {
+        return prevComentarios.map((coment) => {
+          const isUserComment =
+            coment.idUsuario === user.id || coment.emailUsuario === user.email;
 
           if (isUserComment) {
             return {
               ...coment,
-              avatar: user.fotoPerfil || NoPicture
+              avatar: user.fotoPerfil || NoPicture,
             };
           }
           return coment;
         });
       });
     }
-  }, [user?.fotoPerfil, user?.id, comentarios.length]);
+  }, [user?.fotoPerfil, user?.id, user?.email, comentarios.length]);
 
   // Buscar nome do autor da doação
   useEffect(() => {
@@ -242,11 +243,9 @@ export default function DoacaoInfo() {
             "❌ Erro ao buscar autor (403 - backend bloqueando):",
             err
           );
-          // Fallback: usa o campo autor se existir
           setNomeAutor(doacao.autor || "Autor");
         }
       } else if (doacao && doacao.autor) {
-        // Se não tem idUsuario, usa o campo autor direto
         setNomeAutor(doacao.autor);
       }
     };
@@ -259,10 +258,9 @@ export default function DoacaoInfo() {
       setShowLoginAlert(true);
       return;
     }
-    
+
     if (!novoComentario.trim()) return;
 
-    // Aguardar o carregamento do ID do usuário
     if (!usuarioLogado.id) {
       alert("Aguarde o carregamento do perfil ou faça login novamente.");
       return;
@@ -275,10 +273,12 @@ export default function DoacaoInfo() {
         texto: novoComentario,
         idDoacao: Number(id),
         idUsuario: usuarioLogado.id,
-        tipo: "DOACAO",  
+        tipo: "DOACAO",
       };
 
-      const comentarioCriado = await ComentariosService.criarComentarioDoacao(dto);
+      const comentarioCriado = await ComentariosService.criarComentarioDoacao(
+        dto
+      );
 
       if (!comentarioCriado.nomeUsuario) {
         comentarioCriado.nomeUsuario = user.nome || "Você";
@@ -309,25 +309,23 @@ export default function DoacaoInfo() {
     }
   };
 
-  // Verificação de propriedade da doação
-  // Verifica role, roles ou papel, em qualquer caso
-  const userRole = usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
+  // Verificação de permissões da doação
+  const userRole =
+    usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
   const roleNormalizado = String(userRole).toUpperCase();
-  
-  // Verificação de permissões
-  const isAdmin = roleNormalizado.includes("ADMIN") || roleNormalizado.includes("ADMINISTRADOR");
-  const isDoador = doacao && (
-    doacao.idUsuario === usuarioLogado?.id ||
-    doacao.emailUsuario === usuarioLogado?.email ||
-    doacao.autor === usuarioLogado?.nome
-  );
-  
-  const podeExcluirDoacao = Boolean(doacao && usuarioLogado && (isAdmin || isDoador));
 
-  // Verificação de permissões
-  useEffect(() => {
-    // Efeito vazio para monitorar alterações nas permissões
-  }, [doacao, usuarioLogado, isAdmin, isDoador, podeExcluirDoacao, userRole, roleNormalizado]);
+  const isAdmin =
+    roleNormalizado.includes("ADMIN") ||
+    roleNormalizado.includes("ADMINISTRADOR");
+  const isDoador =
+    doacao &&
+    (doacao.idUsuario === usuarioLogado?.id ||
+      doacao.emailUsuario === usuarioLogado?.email ||
+      doacao.autor === usuarioLogado?.nome);
+
+  const podeExcluirDoacao = Boolean(
+    doacao && usuarioLogado && (isAdmin || isDoador)
+  );
 
   // Deletar doação
   const handleDeletarDoacao = async () => {
@@ -360,18 +358,26 @@ export default function DoacaoInfo() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      <div
+        className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100"
+        role="main"
+        aria-label="Carregando informações da doação"
+        aria-busy="true"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 mt-[80px]">
           {/* Botão Voltar */}
           <button
+            type="button"
             onClick={() => navigate("/doacoes")}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
+            aria-label="Voltar para a lista de doações"
           >
             <svg
               className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -385,16 +391,30 @@ export default function DoacaoInfo() {
 
           {/* Loading Elaborado */}
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6" style={{ borderColor: corPrincipal }}></div>
+            <div
+              className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6"
+              style={{ borderColor: corPrincipal }}
+              role="status"
+              aria-live="polite"
+              aria-label="Carregando doação"
+            ></div>
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Carregando doação...</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                Carregando doação...
+              </h2>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
                 Aguarde enquanto buscamos todos os detalhes desta doação
               </p>
               <div className="mt-6 flex items-center justify-center gap-2">
                 <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                <div
+                  className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"
+                  style={{ animationDelay: "0.4s" }}
+                ></div>
               </div>
             </div>
           </div>
@@ -405,28 +425,44 @@ export default function DoacaoInfo() {
 
   if (!doacao) {
     return (
-      <div className="max-w-6xl mx-auto p-6 mt-[80px]">
-        <button onClick={() => navigate(-1)} className="text-blue-600">
+      <div
+        className="max-w-6xl mx-auto p-6 mt-[80px]"
+        role="main"
+        aria-label="Doação não encontrada"
+      >
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="text-blue-600 hover:underline"
+          aria-label="Voltar para a página anterior"
+        >
           Voltar
         </button>
-        <p className="text-gray-600">Doação não encontrada.</p>
+        <p className="text-gray-600 mt-4">Doação não encontrada.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <main
+      className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100"
+      role="main"
+      aria-label={`Detalhes da doação ${doacao.titulo}`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 mt-[80px]">
         {/* Botão Voltar */}
         <button
+          type="button"
           onClick={() => navigate("/doacoes")}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
+          aria-label="Voltar para a lista de doações"
         >
           <svg
             className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -439,13 +475,15 @@ export default function DoacaoInfo() {
         </button>
 
         {/* Card Principal da Doação */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+        <article className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
           {/* Imagem de Capa */}
           <div className="relative h-[300px] lg:h-[500px] overflow-hidden">
             <img
               src={doacao.imagem}
-              alt={doacao.titulo}
+              alt={`Imagem da doação: ${doacao.titulo}`}
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
 
@@ -453,34 +491,55 @@ export default function DoacaoInfo() {
             <div
               className="absolute top-6 right-6 px-4 py-2 rounded-full text-white font-bold text-sm shadow-lg backdrop-blur-sm"
               style={{ backgroundColor: corPrincipal }}
+              aria-label={`Zona ${doacao.zona}`}
             >
               {doacao.zona}
             </div>
 
-            {/* Doador - MOVIDO PARA CANTO SUPERIOR ESQUERDO */}
+            {/* Doador */}
             <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
                 src={doacao.fotoPerfil || NoPicture}
-                alt={doacao.autor}
+                alt={
+                  nomeAutor
+                    ? `Foto de perfil de ${nomeAutor}`
+                    : "Foto de perfil do doador"
+                }
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                loading="lazy"
+                decoding="async"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = NoPicture;
+                }}
               />
               <div>
-                <p className="text-sm font-medium text-black" style={{ color: corPrincipal }}>Doado por</p>
-                <p className="text-lg font-bold text-black" style={{ color: corPrincipal }}>
+                <p
+                  className="text-sm font-medium text-black"
+                  style={{ color: corPrincipal }}
+                >
+                  Doado por
+                </p>
+                <p
+                  className="text-lg font-bold text-black"
+                  style={{ color: corPrincipal }}
+                >
                   {nomeAutor || "Carregando..."}
                 </p>
               </div>
             </div>
 
-            {/* Botão Excluir - CANTO INFERIOR DIREITO */}
+            {/* Botão Excluir Doação */}
             {podeExcluirDoacao && (
               <div className="absolute bottom-6 right-6">
                 <button
+                  type="button"
                   onClick={() => setModalDeletarDoacao(true)}
-                  className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-all duration-200 transform hover:scale-110"
+                  className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-all duration-200 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   title="Excluir doação"
+                  aria-label="Excluir esta doação"
                 >
-                  <FaTrash size={16} />
+                  <FaTrash size={16} aria-hidden="true" />
                 </button>
               </div>
             )}
@@ -493,14 +552,14 @@ export default function DoacaoInfo() {
               {doacao.titulo}
             </h1>
 
-            {/* Texto/Resumo da Doação - ACIMA DOS METADADOS */}
+            {/* Resumo / Descrição */}
             {(doacao.resumo || doacao.descricao) && (
               <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed">
                 {doacao.resumo || doacao.descricao}
               </p>
             )}
 
-            {/* Metadados - COM HORÁRIO */}
+            {/* Metadados */}
             <div className="flex flex-wrap items-center gap-4 pb-6 mb-6 border-b border-gray-200">
               <div className="flex items-center gap-2 text-gray-600">
                 <svg
@@ -508,6 +567,7 @@ export default function DoacaoInfo() {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -526,6 +586,7 @@ export default function DoacaoInfo() {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -552,12 +613,14 @@ export default function DoacaoInfo() {
                 href={`https://wa.me/${doacao.telefone}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-all duration-200 transform hover:scale-105"
+                className="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                aria-label={`Entrar em contato pelo WhatsApp sobre a doação ${doacao.titulo}`}
               >
                 <svg
                   className="w-6 h-6"
                   fill="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
                 </svg>
@@ -565,10 +628,13 @@ export default function DoacaoInfo() {
               </a>
             )}
           </div>
-        </div>
+        </article>
 
         {/* Comentários */}
-        <div className="mt-12 bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-200">
+        <section
+          className="mt-12 bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-200"
+          aria-label="Seção de comentários da doação"
+        >
           <div className="flex items-center gap-3 mb-6">
             <div
               className="w-1 h-8 rounded-full"
@@ -579,34 +645,73 @@ export default function DoacaoInfo() {
             </h2>
           </div>
 
-          {/* Formulário de Comentário */}
+          {/* Aviso para login */}
           {!user?.id && (
-            <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <div
+              className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4"
+              role="status"
+              aria-live="polite"
+            >
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-yellow-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-yellow-700">
-                    Você precisa estar logado para comentar. <a href="/login" className="font-medium text-yellow-700 underline hover:text-yellow-600">Faça login</a> ou <a href="/cadastro" className="font-medium text-yellow-700 underline hover:text-yellow-600">cadastre-se</a> para participar da conversa.
+                    Você precisa estar logado para comentar.{" "}
+                    <a
+                      href="/login"
+                      className="font-medium text-yellow-700 underline hover:text-yellow-600"
+                    >
+                      Faça login
+                    </a>{" "}
+                    ou{" "}
+                    <a
+                      href="/cadastro"
+                      className="font-medium text-yellow-700 underline hover:text-yellow-600"
+                    >
+                      cadastre-se
+                    </a>{" "}
+                    para participar da conversa.
                   </p>
                 </div>
               </div>
             </div>
           )}
-          
+
+          {/* Formulário de Comentário */}
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img
                 src={user?.fotoPerfil || NoPicture}
                 alt="Seu avatar"
-                className="w-10 h-10 rounded-full border-2 hidden sm:block"
+                className="w-10 h-10 rounded-full border-2 hidden sm:block object-cover"
                 style={{ borderColor: corPrincipal }}
+                loading="lazy"
+                decoding="async"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = NoPicture;
+                }}
               />
               <div className="flex-1 w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <label htmlFor="novo-comentario" className="sr-only">
+                  Escreva um comentário
+                </label>
                 <input
+                  id="novo-comentario"
                   type="text"
                   placeholder="Escreva um comentário..."
                   value={novoComentario}
@@ -617,22 +722,25 @@ export default function DoacaoInfo() {
                     !e.shiftKey &&
                     handlePublicarComentario()
                   }
-                  className="flex-1 px-4 py-3 bg-gray-50 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 transition-all duration-200"
-                  style={{
-                    focusRingColor: corPrincipal,
-                  }}
+                  className="flex-1 px-4 py-3 bg-gray-50 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-offset-0 focus:ring-blue-500 transition-all duration-200"
                 />
                 <button
+                  type="button"
                   onClick={handlePublicarComentario}
                   disabled={comentLoading || !novoComentario.trim()}
-                  className="w-full sm:w-auto px-6 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-md"
+                  className="w-full sm:w-auto px-6 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
                   style={{
                     backgroundColor: corPrincipal,
                   }}
+                  aria-label="Publicar comentário"
                 >
                   {comentLoading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <svg
+                        className="animate-spin h-4 w-4"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
                         <circle
                           className="opacity-25"
                           cx="12"
@@ -660,13 +768,17 @@ export default function DoacaoInfo() {
 
           {/* Lista de Comentários */}
           {comentarios.length === 0 ? (
-            <div className="text-center py-12">
+            <div
+              className="text-center py-12"
+              aria-label="Nenhum comentário ainda"
+            >
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
                 <svg
                   className="w-8 h-8 text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -686,16 +798,26 @@ export default function DoacaoInfo() {
           ) : (
             <div className="space-y-4">
               {comentarios.map((coment) => (
-                <div
+                <article
                   key={coment.id}
                   className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300 relative group"
+                  aria-label={`Comentário de ${
+                    coment.nomeUsuario || "Usuário"
+                  }`}
                 >
                   <div className="flex items-start gap-4">
                     <img
                       src={coment.avatar || NoPicture}
-                      alt={coment.nomeUsuario || "Usuário"}
+                      alt={
+                        coment.nomeUsuario
+                          ? `Foto de perfil de ${coment.nomeUsuario}`
+                          : "Foto de perfil do usuário"
+                      }
                       className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => {
+                        e.target.onerror = null;
                         e.target.src = NoPicture;
                       }}
                     />
@@ -720,25 +842,27 @@ export default function DoacaoInfo() {
                               : "agora"}
                           </p>
                         </div>
-                        {((coment.idUsuario === usuarioLogado.id ||
-                          coment.emailUsuario === usuarioLogado.email) ||
-                          // ✅ ADMIN pode deletar qualquer comentário
+                        {(coment.idUsuario === usuarioLogado.id ||
+                          coment.emailUsuario === usuarioLogado.email ||
                           isAdmin) && (
                           <button
+                            type="button"
                             onClick={() =>
                               setModalDeletar({
                                 isOpen: true,
                                 comentarioId: coment.id,
                               })
                             }
-                            className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200"
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                             title="Excluir comentário"
+                            aria-label="Excluir este comentário"
                           >
                             <svg
                               className="w-5 h-5"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
+                              aria-hidden="true"
                             >
                               <path
                                 strokeLinecap="round"
@@ -755,11 +879,11 @@ export default function DoacaoInfo() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
         {/* Modal de Confirmação de Exclusão de Comentário */}
         <ModalConfirmacao
@@ -785,6 +909,6 @@ export default function DoacaoInfo() {
           corBotaoConfirmar="#ef4444"
         />
       </div>
-    </div>
+    </main>
   );
 }
