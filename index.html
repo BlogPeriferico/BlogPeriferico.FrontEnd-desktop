@@ -4,51 +4,70 @@
 <head>
   <meta charset="UTF-8" />
 
+  <!-- Ícone do site -->
   <link rel="icon" type="image/svg+xml" href="./src/assets/images/blog-icon.png" />
 
+  <!-- Responsivo -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Título da aba -->
   <title>Blog Periférico — Notícias, vagas, doações e achadinhos da quebrada</title>
 
+  <!-- Descrição (aparece no Google) -->
   <meta name="description"
     content="Blog Periférico: notícias, vagas de emprego, doações, anúncios e histórias da periferia. Informando a quebrada, conectando a comunidade." />
 
+  <!-- Palavras-chave -->
   <meta name="keywords"
     content="blog periférico, periferia, notícias da periferia, vagas de emprego, doações, achadinhos, anúncios, comunidade, São Paulo" />
 
   <meta name="author" content="Blog Periférico" />
-
   <meta name="robots" content="index, follow" />
-
   <meta name="theme-color" content="#1D4ED8" />
 
+  <!-- URL canônica -->
   <link rel="canonical" href="https://blogperiferico.azurewebsites.net/" />
 
+  <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="pt_BR" />
   <meta property="og:title" content="Blog Periférico — Informação que vira mudança social" />
   <meta property="og:description"
     content="Notícias, vagas, doações e achadinhos da periferia. Um espaço para fortalecer a quebrada com informação." />
- 
   <meta property="og:image" content="https://blogperiferico.azurewebsites.net/src/assets/images/blog-icon.png" />
   <meta property="og:image:alt" content="Logo do Blog Periférico" />
   <meta property="og:url" content="https://blogperiferico.azurewebsites.net/" />
   <meta property="og:site_name" content="Blog Periférico" />
 
+  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Blog Periférico — Informação da quebrada" />
   <meta name="twitter:description"
     content="Acompanhe notícias, vagas, doações e anúncios feitos pela comunidade da periferia." />
   <meta name="twitter:image" content="https://blogperiferico.azurewebsites.net/src/assets/images/blog-icon.png" />
 
+  <!-- Fonte Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Poppins:wght@400;600;700&display=swap"
     rel="stylesheet" />
 
-  
+  <!-- (Opcional) Google Ads / Analytics: quando tiver o script, cola aqui -->
 </head>
 
 <body>
   <div id="root"></div>
+
+  <!-- VLibras -->
+  <div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+      <div class="vw-plugin-top-wrapper"></div>
+    </div>
+  </div>
+  <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+  <script>
+    new window.VLibras.Widget("https://vlibras.gov.br/app");
+  </script>
+
   <script type="module" src="/src/main.jsx"></script>
 </body>
 
