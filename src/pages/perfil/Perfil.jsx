@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useUser } from "../../contexts/UserContext.jsx";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
-import { FaEdit, FaMapMarkerAlt, FaNewspaper, FaShoppingCart, FaHandHoldingHeart, FaBriefcase, FaArrowLeft } from "react-icons/fa";
+import { FaEdit, FaMapMarkerAlt, FaNewspaper, FaShoppingCart, FaHandHoldingHeart, FaBriefcase, FaArrowLeft, FaUserCog } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import NoticiaService from "../../services/NoticiasService";
 import AnuncioService from "../../services/AnuncioService";
@@ -217,6 +217,16 @@ export default function Perfil() {
     );
   };
 
+  // Verifica se o usuário é admin
+  const isAdmin = usuarioAutenticado?.roles === 'ROLE_ADMINISTRADOR' || usuarioAutenticado?.admin === true;
+  
+  // Debug
+  console.log('=== PERFIL - DADOS DO USUÁRIO ===');
+  console.log('Usuário autenticado:', usuarioAutenticado);
+  console.log('É admin?', isAdmin);
+  console.log('Roles:', usuarioAutenticado?.roles);
+  console.log('Propriedade admin:', usuarioAutenticado?.admin);
+
   return (
     <main className="min-h-screen bg-gray-50 pt-24 px-4 md:px-8">
       {/* Header e Abas juntos */}
@@ -234,24 +244,48 @@ export default function Perfil() {
                   e.target.src = NoPicture;
                 }}
               />
+              {/* Botão de editar perfil ao lado da foto */}
               {isMeuPerfil && (
-                <Link
-                  to="/editar-perfil"
-                  className="absolute -bottom-2 -right-2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200"
-                  style={{ color: corPrincipal }}
-                >
-                  <FaEdit />
-                </Link>
+                <div className="absolute -bottom-2 -right-2">
+                  <Link
+                    to="/editar-perfil"
+                    className="bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200 inline-flex items-center justify-center"
+                    style={{ color: corPrincipal }}
+                    title="Editar perfil"
+                  >
+                    <FaEdit />
+                  </Link>
+                </div>
               )}
             </div>
 
-            <div className="text-center md:text-left flex-1 space-y-2">
-              <h1 className="text-3xl font-bold text-gray-900">
-                {perfilUsuario.nome}
-              </h1>
-              <p className="text-gray-500 text-base">@{perfilUsuario.username || perfilUsuario.email}</p>
+            <div className="text-center md:text-left flex-1 space-y-2 relative">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    {perfilUsuario.nome}
+                  </h1>
+                  <p className="text-gray-500 text-base">@{perfilUsuario.username || perfilUsuario.email}</p>
+                </div>
+                
+                {/* Botão de administração - visível apenas para admin */}
+                {isAdmin && (
+                  <div className="mt-2 md:mt-0">
+                    <button
+                      onClick={() => navigate('/admin')}
+                      className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-full px-4 py-2 shadow-lg transition-all duration-200 border border-blue-700 hover:shadow-xl"
+                      title="Painel de Administração"
+                    >
+                      <FaUserCog className="text-lg" />
+                      <span className="text-sm font-medium">
+                        Painel Admin
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
               {perfilUsuario.bio && (
-                <p className="text-gray-700 text-sm leading-relaxed max-w-md">{perfilUsuario.bio}</p>
+                <p className="text-gray-700 text-sm leading-relaxed max-w-2xl">{perfilUsuario.bio}</p>
               )}
               <div className="flex items-center justify-center md:justify-start gap-2 mt-4">
                 <FaMapMarkerAlt style={{ color: corPrincipal }} size={16} />

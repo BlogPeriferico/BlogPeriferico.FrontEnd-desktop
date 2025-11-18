@@ -14,10 +14,12 @@ import Doacoes from "./pages/doacoes/MaoAmiga";
 import DoacaoInfo from "./pages/doacoes/DoacaoInfo";
 import CorreCerto from "./pages/vagas/CorreCerto";
 import VagaInfo from "./pages/vagas/VagasInfo";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { UserProvider } from "./contexts/UserContext";
 import { RegionProvider } from "./contexts/RegionContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./pages/login/ForgotPassword";
 
 function AppContent() {
@@ -66,6 +68,16 @@ function AppContent() {
               <Route path="/doacao/:id" element={<DoacaoInfo />} />
               <Route path="/vagas" element={<CorreCerto />} />
               <Route path="/vaga/:id" element={<VagaInfo />} />
+              
+              {/* Rota de administração */}
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
               {/* Rota de fallback para páginas não encontradas */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

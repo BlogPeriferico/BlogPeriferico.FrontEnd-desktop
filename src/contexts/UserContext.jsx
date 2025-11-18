@@ -13,17 +13,25 @@ export function UserProvider({ children }) {
   useEffect(() => {
     const loadUser = async () => {
       try {
+        console.log('=== INICIANDO CARREGAMENTO DO USUÁRIO ===');
         const token = localStorage.getItem("token");
+        console.log('Token encontrado:', !!token);
         
         if (!token) {
+          console.log('Nenhum token encontrado, definindo como visitante');
           setUser({ isVisitor: true });
           return;
         }
 
         // Verifica se já temos os dados do usuário no localStorage
         const savedUser = localStorage.getItem("user");
+        console.log('Usuário salvo no localStorage:', savedUser);
+        
         if (savedUser) {
           const parsedUser = JSON.parse(savedUser);
+          console.log('Usuário do localStorage (parseado):', parsedUser);
+          console.log('Admin status no localStorage:', parsedUser.admin);
+          console.log('Roles no localStorage:', parsedUser.roles);
           setUser(parsedUser);
         }
 
@@ -41,18 +49,28 @@ export function UserProvider({ children }) {
           if (!usuarioEncontrado.fotoPerfil) {
             usuarioEncontrado.fotoPerfil = NoPicture;
           }
-          setUser({
-            ...usuarioEncontrado,
-            isVisitor: false
-          });
           
-          // Atualiza o localStorage
-          localStorage.setItem("user", JSON.stringify({
+          const isAdmin = usuarioEncontrado.roles === 'ROLE_ADMINISTRADOR';
+          const userData = {
             ...usuarioEncontrado,
+            admin: isAdmin,
             isVisitor: false
-          }));
+          };
+          
+          console.log('=== DADOS DO USUÁRIO ===');
+          console.log('Usuário encontrado:', usuarioEncontrado);
+          console.log('Roles:', usuarioEncontrado.roles);
+          console.log('É admin?', isAdmin);
+          
+          setUser(userData);
+          localStorage.setItem("user", JSON.stringify(userData));
         } else if (savedUser) {
           // Se não encontrou no servidor mas tem no localStorage, mantém o do localStorage
+          const parsedUser = JSON.parse(savedUser);
+          setUser({
+            ...parsedUser,
+            isVisitor: false
+          });
         } else {
           // Se não encontrou em lugar nenhum, mantém como visitante
           setUser({ isVisitor: true });
@@ -75,7 +93,12 @@ export function UserProvider({ children }) {
   // Atualiza localStorage sempre que o user mudar
   useEffect(() => {
     if (user && user.id) {
-      localStorage.setItem("user", JSON.stringify(user));
+      // Garante que a propriedade admin esteja sempre atualizada
+      const updatedUser = {
+        ...user,
+        admin: user.roles === 'ROLE_ADMINISTRADOR' || user.admin === true
+      };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
     }
   }, [user]);
 
@@ -98,17 +121,24 @@ export function UserProvider({ children }) {
             usuarioEncontrado.fotoPerfil = NoPicture;
           }
           
-          // Atualiza o estado do usuário
-          setUser({
+          // Verifica se é admin
+          const isAdmin = usuarioEncontrado.roles === 'ROLE_ADMINISTRADOR';
+          const userData = {
             ...usuarioEncontrado,
+            admin: isAdmin,
             isVisitor: false
-          });
+          };
+          
+          console.log('=== LOGIN - DADOS DO USUÁRIO ===');
+          console.log('Usuário encontrado:', usuarioEncontrado);
+          console.log('Roles:', usuarioEncontrado.roles);
+          console.log('É admin?', isAdmin);
+          
+          // Atualiza o estado do usuário
+          setUser(userData);
           
           // Salva no localStorage
-          localStorage.setItem("user", JSON.stringify({
-            ...usuarioEncontrado,
-            isVisitor: false
-          }));
+          localStorage.setItem("user", JSON.stringify(userData));
           
           return usuarioEncontrado;
         }

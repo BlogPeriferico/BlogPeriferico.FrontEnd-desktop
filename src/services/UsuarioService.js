@@ -19,3 +19,12 @@ export const getUsuarioPorId = async (id) => {
     throw error;
   }
 };
+
+export const deletarUsuario = async (id) => {
+  try {
+    await api.delete(`/usuarios/deletar/${id}`);
+  } catch (error) {
+    console.error('Erro ao deletar usuário:', error);
+    throw error;
+  }
+};
