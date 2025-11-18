@@ -1,32 +1,41 @@
 // src/contexts/UserContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
 import api from "../services/Api"; // sua instância Axios
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import NoPicture from "../assets/images/NoPicture.webp";
 
 export const UserContext = createContext();
 
 export function UserProvider({ children }) {
-  const [user, setUser] = useState(null); // começa null até carregar
+  const [user, setUser] = useState({ isVisitor: true }); // Inicia como visitante
 
   // Carrega usuário do token/localStorage ao iniciar
   useEffect(() => {
     const loadUser = async () => {
-      // Verifica o token no localStorage
-      const token = localStorage.getItem("token");
-      
-      if (!token) {
-        console.log("🔍 Nenhum token encontrado no localStorage");
-        // fallback: tenta carregar do localStorage
-        const savedUser = localStorage.getItem("user");
-        if (savedUser) {
-          console.log("🔍 Carregando usuário do localStorage:", JSON.parse(savedUser));
-          setUser(JSON.parse(savedUser));
-        }
-        return;
-      }
-
       try {
+        console.log('=== INICIANDO CARREGAMENTO DO USUÁRIO ===');
+        const token = localStorage.getItem("token");
+        console.log('Token encontrado:', !!token);
+        
+        if (!token) {
+          console.log('Nenhum token encontrado, definindo como visitante');
+          setUser({ isVisitor: true });
+          return;
+        }
+
+        // Verifica se já temos os dados do usuário no localStorage
+        const savedUser = localStorage.getItem("user");
+        console.log('Usuário salvo no localStorage:', savedUser);
+        
+        if (savedUser) {
+          const parsedUser = JSON.parse(savedUser);
+          console.log('Usuário do localStorage (parseado):', parsedUser);
+          console.log('Admin status no localStorage:', parsedUser.admin);
+          console.log('Roles no localStorage:', parsedUser.roles);
+          setUser(parsedUser);
+        }
+
+        // Busca os dados mais recentes do servidor
         const decoded = jwtDecode(token);
         const email = decoded.sub;
 
@@ -36,20 +45,45 @@ export function UserProvider({ children }) {
         const usuarioEncontrado = usuarios.find((u) => u.email === email);
 
         if (usuarioEncontrado) {
-          // garante campo fotoPerfil
-          if (!usuarioEncontrado.fotoPerfil) usuarioEncontrado.fotoPerfil = NoPicture;
-          console.log("🔄 UserContext - Inicializando usuário:", usuarioEncontrado);
-          setUser(usuarioEncontrado);
-          localStorage.setItem("user", JSON.stringify(usuarioEncontrado));
+          // Garante que o usuário tenha uma foto de perfil
+          if (!usuarioEncontrado.fotoPerfil) {
+            usuarioEncontrado.fotoPerfil = NoPicture;
+          }
+          
+          const isAdmin = usuarioEncontrado.roles === 'ROLE_ADMINISTRADOR';
+          const userData = {
+            ...usuarioEncontrado,
+            admin: isAdmin,
+            isVisitor: false
+          };
+          
+          console.log('=== DADOS DO USUÁRIO ===');
+          console.log('Usuário encontrado:', usuarioEncontrado);
+          console.log('Roles:', usuarioEncontrado.roles);
+          console.log('É admin?', isAdmin);
+          
+          setUser(userData);
+          localStorage.setItem("user", JSON.stringify(userData));
+        } else if (savedUser) {
+          // Se não encontrou no servidor mas tem no localStorage, mantém o do localStorage
+          const parsedUser = JSON.parse(savedUser);
+          setUser({
+            ...parsedUser,
+            isVisitor: false
+          });
         } else {
-          // fallback: localStorage
-          const savedUser = localStorage.getItem("user");
-          if (savedUser) setUser(JSON.parse(savedUser));
+          // Se não encontrou em lugar nenhum, mantém como visitante
+          setUser({ isVisitor: true });
         }
       } catch (error) {
-        console.error("Erro ao carregar usuário:", error);
+        console.error("❌ Erro ao carregar usuário:", error);
+        // Em caso de erro, tenta carregar do localStorage
         const savedUser = localStorage.getItem("user");
-        if (savedUser) setUser(JSON.parse(savedUser));
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        } else {
+          setUser({ isVisitor: true });
+        }
       }
     };
 
@@ -59,30 +93,64 @@ export function UserProvider({ children }) {
   // Atualiza localStorage sempre que o user mudar
   useEffect(() => {
     if (user && user.id) {
-      localStorage.setItem("user", JSON.stringify(user));
+      // Garante que a propriedade admin esteja sempre atualizada
+      const updatedUser = {
+        ...user,
+        admin: user.roles === 'ROLE_ADMINISTRADOR' || user.admin === true
+      };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
     }
   }, [user]);
 
   // login
-  const login = (userData) => {
-    // Obtém o papel do usuário, verificando todos os possíveis nomes de campo
-    const role = userData.role || userData.roles || userData.papel || "USUARIO";
-    const roleNormalizado = String(role).toUpperCase();
-    
-    const userWithDefaults = {
-      id: userData.id,
-      nome: userData.nome || "Usuário",
-      email: userData.email,
-      token: userData.token,
-      fotoPerfil: userData.fotoPerfil || NoPicture,
-      role: roleNormalizado,          // Padroniza como 'role'
-      roles: roleNormalizado,         // Mantém compatibilidade com 'roles'
-      papel: roleNormalizado,         // Mantém compatibilidade com 'papel'
-    };
-    
-    console.log(" Login realizado:", userWithDefaults);
-    setUser(userWithDefaults);
-    localStorage.setItem("user", JSON.stringify(userWithDefaults));
+  const login = async (userData) => {
+    try {
+      // Se for um login com token, decodifica para obter o email
+      if (userData.token) {
+        const decoded = jwtDecode(userData.token);
+        const email = decoded.sub;
+        
+        // Busca os dados completos do usuário
+        const response = await api.get("/usuarios/listar");
+        const usuarios = response.data;
+        const usuarioEncontrado = usuarios.find((u) => u.email === email);
+        
+        if (usuarioEncontrado) {
+          // Garante que o usuário tenha uma foto de perfil
+          if (!usuarioEncontrado.fotoPerfil) {
+            usuarioEncontrado.fotoPerfil = NoPicture;
+          }
+          
+          // Verifica se é admin
+          const isAdmin = usuarioEncontrado.roles === 'ROLE_ADMINISTRADOR';
+          const userData = {
+            ...usuarioEncontrado,
+            admin: isAdmin,
+            isVisitor: false
+          };
+          
+          console.log('=== LOGIN - DADOS DO USUÁRIO ===');
+          console.log('Usuário encontrado:', usuarioEncontrado);
+          console.log('Roles:', usuarioEncontrado.roles);
+          console.log('É admin?', isAdmin);
+          
+          // Atualiza o estado do usuário
+          setUser(userData);
+          
+          // Salva no localStorage
+          localStorage.setItem("user", JSON.stringify(userData));
+          
+          return usuarioEncontrado;
+        }
+      }
+      
+      // Se não encontrou o usuário ou não tem token, mantém como visitante
+      console.warn("⚠️ Usuário não encontrado ou token inválido");
+      return null;
+    } catch (error) {
+      console.error("❌ Erro ao fazer login:", error);
+      throw error;
+    }
   };
 
   // logout
@@ -93,7 +161,6 @@ export function UserProvider({ children }) {
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
     localStorage.removeItem("email");
-    console.log(' Logout concluído. Dados removidos do localStorage.');
   };
 
   // updateProfile (usado no EditaPerfil)
@@ -111,7 +178,6 @@ export function UserProvider({ children }) {
       if (!updatedUser.fotoPerfil) updatedUser.fotoPerfil = NoPicture;
 
       // atualiza contexto e localStorage
-      console.log("🔄 UserContext - Atualizando usuário:", updatedUser);
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
     } catch (error) {
@@ -123,11 +189,12 @@ export function UserProvider({ children }) {
   return (
     <UserContext.Provider
       value={{
-        user,
+        user: user || { isVisitor: true },
         login,
         logout,
         updateProfile,
         isLoggedIn: !!user?.id,
+        isVisitor: !user?.id || user.isVisitor,
         setUser, // exposto para atualizações diretas (opcional)
       }}
     >

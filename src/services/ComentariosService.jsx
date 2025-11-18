@@ -2,15 +2,10 @@ import api from "./Api";
 
 const ComentariosService = {
   criarComentario: async (comentarioData) => {
-    console.log("📤 Criando comentário:", comentarioData);
-
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("❌ Nenhum token encontrado no localStorage");
       throw new Error("Usuário não está logado. Faça login novamente.");
     }
-
-    console.log("🔑 Token sendo usado:", token.substring(0, 10) + "...");
 
     try {
       const response = await api.post("/comentarios", comentarioData, {
@@ -19,7 +14,6 @@ const ComentariosService = {
           'Authorization': `Bearer ${token}`
         }
       });
-      console.log("✅ Comentário criado:", response.data);
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao criar comentário:", err.response?.data || err);
@@ -69,14 +63,11 @@ const ComentariosService = {
   },
 
   criarComentarioDoacao: async (comentarioData) => {
-    console.log("📤 Criando comentário na doação:", comentarioData);
-
     const token = localStorage.getItem("token");
     if (!token) throw new Error("Usuário não está logado. Faça login novamente.");
 
     try {
       const response = await api.post("/comentarios", comentarioData);
-      console.log("✅ Comentário criado na doação:", response.data);
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao criar comentário na doação:", err.response?.data || err);
@@ -85,15 +76,10 @@ const ComentariosService = {
   },
 
   criarComentarioVaga: async (comentarioData) => {
-    console.log("📤 Criando comentário na vaga:", comentarioData);
-
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("❌ Nenhum token encontrado no localStorage");
       throw new Error("Usuário não está logado. Faça login novamente.");
     }
-
-    console.log("🔑 Token sendo usado:", token.substring(0, 10) + "...");
 
     try {
       const response = await api.post("/comentarios", comentarioData, {
@@ -102,7 +88,6 @@ const ComentariosService = {
           'Authorization': `Bearer ${token}`
         }
       });
-      console.log("✅ Comentário criado na vaga:", response.data);
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao criar comentário na vaga:", err.response?.data || err);
@@ -112,15 +97,10 @@ const ComentariosService = {
   },
 
   excluirComentario: async (idComentario) => {
-    console.log("🗑️ Excluindo comentário com ID:", idComentario);
-    
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("❌ Nenhum token encontrado no localStorage");
       throw new Error("Usuário não está logado. Faça login novamente.");
     }
-
-    console.log("🔑 Token sendo usado:", token.substring(0, 10) + "...");
 
     try {
       const response = await api.delete(`/comentarios/${idComentario}`, {
@@ -129,7 +109,6 @@ const ComentariosService = {
           'Authorization': `Bearer ${token}`
         }
       });
-      console.log(`✅ Comentário ${idComentario} excluído.`, response.data);
       return response.data;
     } catch (err) {
       console.error(`❌ Erro ao excluir comentário ${idComentario}:`, err.response?.data || err);

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
-const API_URL = "https://backblog.azurewebsites.net";
+const API_URL = "http://localhost:8080";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -11,13 +11,13 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-    
+
     if (token) {
       // Verifica se o token está expirado
       try {
         const decodedToken = jwtDecode(token);
         const currentTime = Date.now() / 1000;
-        
+
         if (decodedToken.exp < currentTime) {
           console.warn("⚠️ Token expirado");
           // Remove o token expirado
@@ -25,25 +25,18 @@ api.interceptors.request.use(
           window.location.href = "/login";
           return Promise.reject(new Error("Sessão expirada"));
         }
-        
+
         // Adiciona o token ao cabeçalho
         config.headers.Authorization = `Bearer ${token}`;
-        console.log("🔑 Token válido para:", config.url);
-        
       } catch (error) {
-        console.error("Erro ao decodificar token:", error);
         localStorage.removeItem("token");
-        window.location.href = "/login";
         return Promise.reject(error);
       }
-    } else {
-      console.log("ℹ️ Nenhum token encontrado para:", config.url);
     }
-    
+
     return config;
   },
   (error) => {
-    console.error("Erro no interceptor de requisição:", error);
     return Promise.reject(error);
   }
 );
@@ -68,7 +61,7 @@ api.interceptors.response.use(
     } else {
       console.error("Erro:", error.message);
     }
-    
+
     return Promise.reject(error);
   }
 );

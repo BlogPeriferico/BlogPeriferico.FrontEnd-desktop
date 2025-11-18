@@ -35,6 +35,7 @@ export default function DoacaoInfo() {
     comentarioId: null,
   });
   const [modalDeletarDoacao, setModalDeletarDoacao] = useState(false);
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
   const [nomeAutor, setNomeAutor] = useState(null);
 
   // Carregar perfil do usuário usando UserContext
@@ -50,120 +51,120 @@ export default function DoacaoInfo() {
         fotoPerfil: user.fotoPerfil,
       };
       
-      console.log('🔄 Dados do usuário do contexto:', user);
-      console.log('🔄 Dados normalizados do usuário:', userData);
-      
       setUsuarioLogado(userData);
     }
   }, [user]);
 
   // Carregar doação e comentários
   useEffect(() => {
-    console.log('🚀 [1] - Iniciando carregamento da doação e comentários');
-    console.log('   - ID da doação:', id);
-    console.log('   - Doação atual no estado:', doacao);
     window.scrollTo(0, 0);
 
     if (!doacao) {
-      console.log('🔄 [2] - Doação não carregada ainda, iniciando carregamento...');
       setLoading(true);
       
       const carregarDoacao = async () => {
-        console.log('📡 [3] - Iniciando busca da doação no servidor...');
         try {
-          console.log('🔎 [4] - Chamando DoacaoService.buscarDoacaoPorId com ID:', id);
           const data = await DoacaoService.buscarDoacaoPorId(id);
-          console.log('✅ [5] - Dados da doação recebidos:');
-          console.log('   - Tipo:', typeof data);
-          console.log('   - Conteúdo:', data);
-          console.log('   - idUsuario:', data?.idUsuario);
-          console.log('   - autor:', data?.autor);
-          console.log('   - JSON:', JSON.stringify(data, null, 2));
 
           // Buscar dados do usuário junto com a doação
           if (data.idUsuario) {
-            console.log('👤 [6] - ID do usuário encontrado na doação:', data.idUsuario);
             try {
-              console.log('🔍 [7] - Buscando dados do doador na API...');
               const response = await api.get("/usuarios/listar");
-              console.log('👥 [8] - Lista de usuários recebida:');
-              console.log('   - Total de usuários:', response.data.length);
-              console.log('   - IDs dos usuários:', response.data.map(u => u.id).join(', '));
-              console.log('   - Buscando usuário com ID:', data.idUsuario);
-              
               const doador = response.data.find((u) => u.id === data.idUsuario);
-              console.log('🔎 [9] - Resultado da busca:');
-              console.log('   - ID procurado:', data.idUsuario);
-              console.log('   - Doador encontrado:', doador ? 'Sim' : 'Não');
-              console.log('   - Dados do doador:', doador);
 
-              if (doador) {
-                console.log('✅ [10] - Dados do doador encontrados:', {
-                  id: doador.id,
-                  nome: doador.nome,
-                  temFoto: !!doador.fotoPerfil,
-                  zona: doador.zona || 'Não informada'
-                });
-
-                // Inclui fotoPerfil e nome do autor diretamente na doação
-                data.fotoPerfil = doador.fotoPerfil || NoPicture;
+              if (doador) {  
                 data.autor = doador.nome;
-                
-                console.log('🔄 [11] - Atualizando dados da doação com informações do doador');
-                console.log('   - fotoPerfil:', data.fotoPerfil ? 'Definida' : 'Não definida');
-                console.log('   - autor:', data.autor);
-
-                // Se a zona não estiver definida na doação, usa a do usuário
-                if (!data.zona && doador.zona) {
-                  console.log('📍 [12] - Usando zona do perfil do usuário:', doador.zona);
-                  data.zona = doador.zona;
-                }
-              } else {
-                console.warn('⚠️ [13] - Doador não encontrado na lista de usuários');
+                data.fotoPerfil = doador.fotoPerfil;
+                data.idUsuario = doador.id;
+              } else if (data.autor) {
+                // Usa o nome do autor diretamente da doação
               }
             } catch (err) {
-              console.error('❌ [14] - Erro ao buscar dados do doador:', err);
-              console.error('Detalhes do erro:', {
-                status: err.response?.status,
-                data: err.response?.data,
-                message: err.message
-              });
+              // Erro ao buscar dados do doador, continua com os dados que tem
+              if (data.autor) {
+                // Usa o nome do autor diretamente da doação
+              }
             }
-          } else {
-            console.warn('⚠️ [15] - Doação não possui idUsuario definido');
-          }
+          } 
 
-          console.log('💾 [16] - Salvando doação no estado');
           setDoacao(data);
-          console.log('✅ [17] - Estado da doação atualizado com sucesso');
           
+          // Carrega os comentários
+          try {
+            const comentariosData = await ComentariosService.listarComentariosDoacao(id);
+            
+            // Buscar todos os usuários para obter as fotos de perfil
+            const response = await api.get("/usuarios/listar");
+            const usuarios = response.data;
+            
+            // Mapear comentários e adicionar avatar
+            const comentariosComAvatar = comentariosData.map(coment => {
+              // Encontrar o usuário que fez o comentário
+              const usuarioComentario = usuarios.find(u => 
+                u.id === coment.idUsuario || u.email === coment.emailUsuario
+              );
+              
+              // Se encontrou o usuário e ele tem foto de perfil, usa a foto
+              if (usuarioComentario?.fotoPerfil) {
+                return { ...coment, avatar: usuarioComentario.fotoPerfil };
+              }
+              
+              // Se for o próprio usuário logado, usa a foto do perfil atual
+              if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
+                return { ...coment, avatar: user.fotoPerfil };
+              }
+              
+              // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
+              return { ...coment, avatar: coment.avatar || NoPicture };
+            });
+            
+            setComentarios(comentariosComAvatar);
+          } catch (err) {
+            setComentarios([]);
+          };
+
         } catch (err) {
-          console.error('❌ [18] - Erro ao carregar doação:', err);
-          console.error('Detalhes do erro:', {
-            status: err.response?.status,
-            data: err.response?.data,
-            message: err.message
-          });
           setDoacao(null);
         } finally {
-          console.log('🏁 [19] - Finalizando carregamento (loading = false)');
           setLoading(false);
         }
       };
       
       carregarDoacao();
     } else {
-      console.log('ℹ️ [20] - Doação já carregada, pulando busca');
     }
 
     const carregarComentarios = async () => {
-      console.log('💬 [21] - Iniciando carregamento de comentários');
       try {
-        const dados = await ComentariosService.listarComentariosDoacao(id);
-        console.log('💬 [22] - Comentários carregados:', dados.length, 'comentários');
-        setComentarios(dados);
+        const comentarios = await ComentariosService.listarComentariosDoacao(id);
+        
+        // Buscar todos os usuários para obter as fotos de perfil
+        const response = await api.get("/usuarios/listar");
+        const usuarios = response.data;
+        
+        // Mapear comentários e adicionar avatar
+        const comentariosComAvatar = comentarios.map(coment => {
+          // Encontrar o usuário que fez o comentário
+          const usuarioComentario = usuarios.find(u => 
+            u.id === coment.idUsuario || u.email === coment.emailUsuario
+          );
+          
+          // Se encontrou o usuário e ele tem foto de perfil, usa a foto
+          if (usuarioComentario?.fotoPerfil) {
+            return { ...coment, avatar: usuarioComentario.fotoPerfil };
+          }
+          
+          // Se for o próprio usuário logado, usa a foto do perfil atual
+          if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
+            return { ...coment, avatar: user.fotoPerfil };
+          }
+          
+          // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
+          return { ...coment, avatar: coment.avatar || NoPicture };
+        });
+        
+        setComentarios(comentariosComAvatar);
       } catch (err) {
-        console.error('❌ [23] - Erro ao buscar comentários:', err);
         setComentarios([]);
       }
     };
@@ -173,28 +174,11 @@ export default function DoacaoInfo() {
 
   // Monitora alterações no estado da doação
   useEffect(() => {
-    console.log('🔍 [25] - Estado da doação alterado:', {
-      id: doacao?.id,
-      idUsuario: doacao?.idUsuario,
-      autor: doacao?.autor,
-      temFoto: !!doacao?.fotoPerfil,
-      zona: doacao?.zona
-    });
+    // Efeito vazio para monitorar alterações na doação
   }, [doacao]);
-
-  console.log('🔄 [24] - Renderização do componente DoacaoInfo');
-  console.log('   - doacao:', doacao ? 'Carregada' : 'Não carregada');
-  if (doacao) {
-    console.log('   - idUsuario:', doacao.idUsuario);
-    console.log('   - autor:', doacao.autor);
-    console.log('   - zona:', doacao.zona);
-  }
-  console.log('   - loading:', loading);
-  console.log('   - comentarios:', comentarios.length, 'comentários');
 
   // Força o recarregamento da doação quando o componente é montado
   useEffect(() => {
-    console.log('🔄 [26] - Componente montado, forçando recarregamento da doação');
     setDoacao(null); // Isso forçará um novo carregamento
   }, [id]);
 
@@ -205,18 +189,10 @@ export default function DoacaoInfo() {
 
       // Só atualiza se a foto realmente mudou
       if (novaFoto !== doacao.fotoPerfil) {
-        console.log("🔄 DoacaoInfo - Atualizando fotoPerfil da doação:", doacao.id);
-        console.log("📷 Foto antes:", doacao.fotoPerfil);
-        console.log("📷 Foto depois:", novaFoto);
-
         setDoacao(prevDoacao => ({
           ...prevDoacao,
           fotoPerfil: novaFoto
         }));
-
-        console.log("✅ DoacaoInfo - fotoPerfil atualizada");
-      } else {
-        console.log("🔄 DoacaoInfo - Foto já está atualizada:", novaFoto);
       }
     }
   }, [user?.fotoPerfil, doacao?.id, doacao?.idUsuario, user?.id]);
@@ -224,45 +200,28 @@ export default function DoacaoInfo() {
   // Sincroniza fotoPerfil inicial quando doação e usuário estão disponíveis
   useEffect(() => {
     if (doacao && user?.id && doacao.idUsuario === user.id && user.fotoPerfil && !doacao.fotoPerfil) {
-      console.log("🔄 DoacaoInfo - Sincronizando fotoPerfil inicial:", doacao.id);
-      console.log("📷 Foto do usuário:", user.fotoPerfil);
-
       setDoacao(prevDoacao => ({
         ...prevDoacao,
         fotoPerfil: user.fotoPerfil
       }));
-
-      console.log("✅ DoacaoInfo - fotoPerfil inicial sincronizada");
     }
   }, [doacao, user]);
 
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
-    console.log("🔄 DoacaoInfo - User mudou:", {
-      id: user?.id,
-      fotoPerfil: user?.fotoPerfil,
-      comentariosCount: comentarios.length
-    });
-
     if (user?.id && comentarios.length > 0) {
-      console.log("🔄 DoacaoInfo - Atualizando comentários existentes...");
-
       setComentarios(prevComentarios => {
-        const updated = prevComentarios.map(coment => {
+        return prevComentarios.map(coment => {
           const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
 
           if (isUserComment) {
-            console.log(`✅ DoacaoInfo - Atualizando comentário ${coment.id}:`, {
-              de: coment.avatar,
-              para: user.fotoPerfil || NoPicture
-            });
-            return { ...coment, avatar: user.fotoPerfil || NoPicture };
+            return {
+              ...coment,
+              avatar: user.fotoPerfil || NoPicture
+            };
           }
           return coment;
         });
-
-        console.log("✅ DoacaoInfo - Comentários atualizados:", updated.length);
-        return updated;
       });
     }
   }, [user?.fotoPerfil, user?.id, comentarios.length]);
@@ -277,7 +236,6 @@ export default function DoacaoInfo() {
           const autor = usuarios.find((u) => u.id === doacao.idUsuario);
           if (autor) {
             setNomeAutor(autor.nome);
-            console.log("✅ Autor da doação:", autor.nome);
           }
         } catch (err) {
           console.error(
@@ -297,6 +255,11 @@ export default function DoacaoInfo() {
 
   // Publicar comentário
   const handlePublicarComentario = async () => {
+    if (!user?.id) {
+      setShowLoginAlert(true);
+      return;
+    }
+    
     if (!novoComentario.trim()) return;
 
     // Aguardar o carregamento do ID do usuário
@@ -314,8 +277,6 @@ export default function DoacaoInfo() {
         idUsuario: usuarioLogado.id,
         tipo: "DOACAO",  
       };
-
-      console.log("📤 Enviando comentário:", dto);
 
       const comentarioCriado = await ComentariosService.criarComentarioDoacao(dto);
 
@@ -363,28 +324,9 @@ export default function DoacaoInfo() {
   
   const podeExcluirDoacao = Boolean(doacao && usuarioLogado && (isAdmin || isDoador));
 
-  // Debug: log detalhado
+  // Verificação de permissões
   useEffect(() => {
-    if (doacao && usuarioLogado?.id) {
-      console.log("🔍 DETALHES DE PERMISSÕES:", {
-        usuario: usuarioLogado.nome,
-        role: userRole,
-        roleNormalizado,
-        isAdmin,
-        isDoador,
-        podeExcluirDoacao,
-        doacaoId: doacao.id,
-        doacaoDoador: doacao.autor || doacao.nomeAutor,
-        usuarioLogado: { 
-          id: usuarioLogado.id, 
-          nome: usuarioLogado.nome,
-          email: usuarioLogado.email,
-          role: usuarioLogado.role,
-          roles: usuarioLogado.roles,
-          papel: usuarioLogado.papel
-        }
-      });
-    }
+    // Efeito vazio para monitorar alterações nas permissões
   }, [doacao, usuarioLogado, isAdmin, isDoador, podeExcluirDoacao, userRole, roleNormalizado]);
 
   // Deletar doação
@@ -638,6 +580,23 @@ export default function DoacaoInfo() {
           </div>
 
           {/* Formulário de Comentário */}
+          {!user?.id && (
+            <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">
+                    Você precisa estar logado para comentar. <a href="/login" className="font-medium text-yellow-700 underline hover:text-yellow-600">Faça login</a> ou <a href="/cadastro" className="font-medium text-yellow-700 underline hover:text-yellow-600">cadastre-se</a> para participar da conversa.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img

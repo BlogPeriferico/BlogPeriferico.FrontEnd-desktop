@@ -1,19 +1,28 @@
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiRefreshCw } from "react-icons/fi";
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/Api";
 import ModalCorreCerto from "../../components/modals/ModalCorreCerto";
 import { useRegiao } from "../../contexts/RegionContext";
+import { useUser } from "../../contexts/UserContext";
 import { regionColors } from "../../utils/regionColors";
 import CarrosselCorreCerto from "../../components/carrossels/CarrosselCorreCerto";
 import SelecaoCorreCerto from "../../components/selecoes/SelecaoCorreCerto";
 import CorreCertoService from "../../services/CorreCertoService";
+import { ModalVisitantes } from "../../components/modals/ModalVisitantes";
 
 export default function CorreCerto() {
   const [modalAberto, setModalAberto] = useState(false);
-  const [correcertos, setCorrecertos] = useState([]); // aqui vai o array do backend
-  const [loading, setLoading] = useState(true); // ✅ Estado de loading
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [correcertos, setCorrecertos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { regiao } = useRegiao();
+  const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
+  const navigate = useNavigate();
+  
+  // Verifica se o usuário é um visitante
+  const isVisitor = !user || user.isVisitor === true;
 
   useEffect(() => {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
@@ -35,11 +44,10 @@ export default function CorreCerto() {
     imagem: v.imagem || ""
   });
 
-  // Busca as vagas baseado na região atual
-  const carregarCorrecertos = useCallback(async () => {
+  // Função para recarregar as vagas mantendo o filtro de região
+  const recarregarVagas = useCallback(async () => {
     try {
       setLoading(true);
-      console.log(`Buscando vagas para a região: ${regiao || 'Todas as regiões'}`);
       
       // Busca todas as vagas
       const response = await api.get("/vagas");
@@ -63,25 +71,35 @@ export default function CorreCerto() {
       }
       
       setCorrecertos(vagasFiltradas);
-      console.log(`✅ ${vagasFiltradas.length} vagas carregadas`);
     } catch (err) {
-      console.error("❌ Erro ao carregar vagas:", err);
+      // Erro silencioso
     } finally {
       setLoading(false);
     }
   }, [regiao]);
   
-  // Atualiza quando a região mudar
+  // Função para carregar as vagas (mantida para compatibilidade)
+  const carregarCorrecertos = useCallback(async () => {
+    await recarregarVagas();
+  }, [recarregarVagas]);
+
+  // Busca as vagas quando a região mudar
   useEffect(() => {
-    carregarCorrecertos();
-  }, [carregarCorrecertos]);
+    recarregarVagas();
+  }, [recarregarVagas]);
 
   return (
     <div className="max-w-6xl mx-auto pt-24 px-6 relative">
       {/* Botão flutuante de adicionar vaga */}
       <div className="fixed top-28 right-6 z-50 hover:scale-105">
         <button
-          onClick={() => setModalAberto(true)}
+          onClick={() => {
+            if (!isVisitor) {
+              setModalAberto(true);
+            } else {
+              setShowAuthModal(true);
+            }
+          }}
           className="bg-[color:var(--corPrincipal)] text-white p-3 rounded-full shadow-lg hover:bg-opacity-90"
           style={{ backgroundColor: corPrincipal }}
           title="Adicionar sua Vaga de emprego"
@@ -90,17 +108,66 @@ export default function CorreCerto() {
         </button>
       </div>
 
-      {/* Modal de adicionar vaga */}
-      {modalAberto && (
+      {/* Modal de autenticação para visitantes */}
+      <ModalVisitantes
+        abrir={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLogin={() => {
+          // Fecha o modal primeiro
+          setShowAuthModal(false);
+          // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
+          setTimeout(() => {
+            navigate('/login');
+          }, 100);
+        }}
+      />
+
+      {/* Modal de adicionar vaga - Só mostra se não for visitante */}
+      {!isVisitor && modalAberto && (
         <ModalCorreCerto
           modalAberto={modalAberto}
           setModalAberto={setModalAberto}
           corPrincipal={corPrincipal}
-          atualizarCorrecertos={carregarCorrecertos} // atualiza a lista após criar
+          atualizarCorrecertos={carregarCorrecertos}
         />
       )}
 
-      <CarrosselCorreCerto />
+      <div className="mb-16">
+        <CarrosselCorreCerto />
+      </div>
+
+      <div className="relative mb-16">
+        <div className="flex justify-between items-center">
+          <div className="text-center w-full">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
+              Vagas Recentes
+              <div
+                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
+                style={{ backgroundColor: corPrincipal }}
+              ></div>
+            </h2>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Encontre as melhores oportunidades de trabalho na sua região
+            </p>
+          </div>
+          <div className="absolute right-0 top-0">
+            <button
+              onClick={recarregarVagas}
+              disabled={loading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                loading 
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              } transition-colors`}
+              title="Atualizar vagas"
+              aria-label="Atualizar vagas"
+            >
+              <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              <span className="text-sm font-medium">Atualizar</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* SelecaoCorreCerto sempre visível: título estático e conteúdo alterna entre spinner e grid */}
       <SelecaoCorreCerto correcertos={correcertos} loading={loading} />

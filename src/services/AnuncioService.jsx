@@ -3,8 +3,6 @@ import api from "./Api";
 const AnuncioService = {
   // Criar novo anúncio
   criarAnuncio: async (anuncioData) => {
-    console.log("📤 Criando anúncio com dados (antes de limpar):", anuncioData);
-
     // Remove id caso seja um objeto normal
     if (!(anuncioData instanceof FormData) && anuncioData.id !== undefined) {
       delete anuncioData.id;
@@ -28,7 +26,6 @@ const AnuncioService = {
 
     try {
       const response = await api.post("/vendas", anuncioData, config);
-      console.log("✅ Resposta do backend ao criar anúncio:", response.data);
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao criar anúncio:", err.response?.data || err);
@@ -38,10 +35,8 @@ const AnuncioService = {
 
   // Listar todos os anúncios
   getAnuncios: async () => {
-    console.log("📥 Carregando lista de anúncios...");
     try {
       const response = await api.get("/vendas");
-      console.log("✅ Lista de anúncios recebida:", response.data);
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao listar anúncios:", err.response?.data || err);
@@ -51,10 +46,8 @@ const AnuncioService = {
 
   // Buscar anúncio por ID
   buscarAnuncioPorId: async (id) => {
-    console.log("🔍 Buscando anúncio com ID:", id);
     try {
       const response = await api.get(`/vendas/${id}`);
-      console.log("✅ Dados do anúncio recebidos:", response.data);
       return response.data;
     } catch (err) {
       console.error(`❌ Erro ao buscar anúncio ${id}:`, err.response?.data || err);
@@ -64,8 +57,6 @@ const AnuncioService = {
 
   // Atualizar anúncio
   atualizarAnuncio: async (id, anuncioData) => {
-    console.log(`✏️ Atualizando anúncio ${id} com dados:`, anuncioData);
-
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("⚠️ Usuário não está logado.");
@@ -84,7 +75,6 @@ const AnuncioService = {
 
     try {
       const response = await api.put(`/vendas/${id}`, anuncioData, config);
-      console.log(`✅ Anúncio ${id} atualizado com sucesso:`, response.data);
       return response.data;
     } catch (err) {
       console.error(`❌ Erro ao atualizar anúncio ${id}:`, err.response?.data || err);
@@ -94,8 +84,6 @@ const AnuncioService = {
 
   // Excluir anúncio
   excluirAnuncio: async (id) => {
-    console.log("🗑️ Excluindo anúncio com ID:", id);
-
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
@@ -110,10 +98,8 @@ const AnuncioService = {
 
     try {
       const response = await api.delete(`/vendas/${id}`, config);
-      console.log(`✅ Anúncio ${id} excluído com sucesso`);
       return response.data;
     } catch (err) {
-      console.error(`❌ Erro ao excluir anúncio ${id}:`, err.response?.data || err);
       // Melhora a mensagem de erro para o usuário
       if (err.response?.status === 403) {
         throw new Error("Você não tem permissão para excluir este anúncio.");

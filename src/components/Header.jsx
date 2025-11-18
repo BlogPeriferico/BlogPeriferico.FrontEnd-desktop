@@ -1,20 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FaSearch, FaMapMarkerAlt, FaBars } from "react-icons/fa";
+import { FaSearch, FaMapMarkerAlt, FaBars, FaUser, FaTimes } from "react-icons/fa";
 import RegionSelector from "./RegionSelector";
 import { useRegiao } from "../contexts/RegionContext";
 import { useUser } from "../contexts/UserContext.jsx";
 import { regionColors } from "../utils/regionColors";
 import NoPicture from "../assets/images/NoPicture.webp";
+import ModalAuth from "./modals/ModalAuth";
+import { buscarUsuarios } from "../services/UsuarioService";
+import SearchResults from "./SearchResults";
+import { debounce } from 'lodash';
 
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { regiao, setRegiao } = useRegiao();
-  const { user } = useUser(); // usuário atualizado do contexto
+  const { user, isLoggedIn } = useUser(); // usuário atualizado do contexto
   const [menuOpen, setMenuOpen] = useState(false);
   const [showRegionSelector, setShowRegionSelector] = useState(false);
   const [fotoAtual, setFotoAtual] = useState(NoPicture);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef(null);
 
   // Atualiza a foto quando o user mudar
   useEffect(() => {
@@ -46,6 +56,60 @@ export default function Header() {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  // Função de busca com debounce
+  const debouncedSearch = useRef(
+    debounce(async (term) => {
+      if (!term.trim()) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+      
+      try {
+        const results = await buscarUsuarios(term);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Erro na busca:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300)
+  ).current;
+
+  // Atualiza a busca quando o termo mudar
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    debouncedSearch(searchTerm);
+    
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [searchTerm, debouncedSearch]);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setSearchResults([]);
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
+
+  const handleResultClick = () => {
+    setSearchTerm('');
+    setSearchResults([]);
+    setIsSearchFocused(false);
+  };
+
   return (
     <header
       className="w-full px-6 py-3 flex items-center justify-between shadow-md border-b-2 fixed top-0 left-0 z-50"
@@ -53,13 +117,17 @@ export default function Header() {
     >
       {/* Logo */}
       <div className="flex items-center gap-4 flex-shrink-0">
-        <Link to="/sobre" className="text-2xl font-bold" style={{ color: corPrincipal }}>
+        <Link
+          to="/sobre"
+          className="text-2xl font-bold"
+          style={{ color: corPrincipal }}
+        >
           BlogPeriferico
         </Link>
       </div>
 
-      {/* Centro: Links + pesquisa */}
-      <div className="flex-1 flex items-center gap-6">
+      {/* Links de navegação */}
+      <div className="flex-1">
         <nav className="hidden lg:flex gap-6 font-medium text-sm text-black ml-4">
           {navLinks.map((link) => (
             <Link
@@ -68,51 +136,110 @@ export default function Header() {
               className={`transition duration-200 hover:underline ${
                 location.pathname === link.path ? "font-semibold" : ""
               }`}
-              style={location.pathname === link.path ? { color: corPrincipal } : {}}
+              style={
+                location.pathname === link.path ? { color: corPrincipal } : {}
+              }
             >
               {link.label}
             </Link>
           ))}
         </nav>
+      </div>
 
-        <div
-          className="hidden lg:flex items-center bg-white rounded-full shadow-md px-4 py-2 w-72 border gap-2 transition-all duration-300 ml-auto"
-          style={{ borderColor: "#d1d5db" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = corPrincipal;
-            e.currentTarget.style.boxShadow = `0 0 10px ${hexToRGBA(corPrincipal, 0.3)}`;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "#d1d5db";
-            e.currentTarget.style.boxShadow = "0 0 0 rgba(0,0,0,0)";
-          }}
-        >
-          <input
-            type="text"
-            placeholder="O que deseja encontrar?"
-            className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
-          />
-          <FaSearch
-            className="text-gray-400 cursor-pointer transition-colors duration-200"
-            onMouseEnter={(e) => (e.currentTarget.style.color = hexToRGBA(corPrincipal, 0.6))}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
-          />
+      {/* Barra de pesquisa */}
+      <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-4">
+        <div className="relative w-full max-w-2xl mx-4">
+          <div
+            className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
+            style={{ 
+              borderColor: isSearchFocused ? corPrincipal : "#d1d5db",
+              minWidth: '200px',
+              boxShadow: isSearchFocused ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}` : 'none',
+            }}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+          >
+            <FaSearch
+              className="text-gray-400 flex-shrink-0"
+              style={{ color: isSearchFocused ? corPrincipal : "#9ca3af" }}
+            />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Buscar usuários..."
+              className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
+            />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Limpar busca"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          
+          {(isSearchFocused || searchTerm) && (
+            <div className="absolute left-0 right-0 mt-1">
+              <SearchResults 
+                results={searchResults} 
+                searchTerm={searchTerm}
+                onClose={handleResultClick}
+              />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Direita: avatar + região */}
-      <div className="flex items-center gap-5 flex-shrink-0">
-        <button onClick={() => setMenuOpen(!menuOpen)} className="text-xl lg:hidden">
+      <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0 ml-2 lg:ml-4">
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="text-xl lg:hidden"
+        >
           <FaBars />
         </button>
 
-        {/* Avatar do usuário */}
-        <img
-          src={fotoAtual} // usa state local atualizado
-          alt={user?.nome || "Usuário"}
-          className="w-8 h-8 ml-4 rounded-full border border-gray-300 duration-300 hover:scale-105 cursor-pointer"
-          onClick={() => navigate("/perfil")}
-        />
+        {/* Botão de Login/Perfil */}
+        {isLoggedIn ? (
+          <div className="relative group">
+            <img
+              src={fotoAtual}
+              alt={user?.nome || "Usuário"}
+              className="w-9 h-9 rounded-full border-2 cursor-pointer hover:opacity-90 transition-all duration-300 hover:ring-2 hover:ring-offset-2"
+              style={{ 
+                borderColor: corPrincipal,
+                boxShadow: `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`
+              }}
+              onClick={() => navigate("/perfil")}
+            />
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/login")}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white transition-all duration-300
+                hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2`}
+              style={{
+                background: `linear-gradient(135deg, ${corPrincipal}, ${hexToRGBA(corPrincipal, 0.8)})`,
+                boxShadow: `0 4px 6px -1px ${hexToRGBA(corPrincipal, 0.2)}, 0 2px 4px -1px ${hexToRGBA(corPrincipal, 0.1)}`
+              }}
+            >
+              <FaUser className="text-sm" />
+              <span>Entrar</span>
+            </button>
+            <button
+              onClick={() => navigate("/register")}
+              className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+            >
+              Cadastrar
+            </button>
+          </div>
+        )}
 
         {/* Seletor de Região */}
         <div className="relative flex items-center gap-2">
@@ -124,33 +251,69 @@ export default function Header() {
             <FaMapMarkerAlt />
           </button>
           {regiao && (
-            <span className="hidden sm:inline text-sm font-medium capitalize" style={{ color: corPrincipal }}>
+            <span
+              className="hidden sm:inline text-sm font-medium capitalize"
+              style={{ color: corPrincipal }}
+            >
               {regiao}
             </span>
           )}
           {showRegionSelector && (
-            <RegionSelector onClose={() => setShowRegionSelector(false)} onSelect={handleRegiaoSelecionada} />
+            <RegionSelector
+              onClose={() => setShowRegionSelector(false)}
+              onSelect={handleRegiaoSelecionada}
+            />
           )}
         </div>
       </div>
 
       {/* Menu Mobile */}
       {menuOpen && (
-        <div className="absolute top-14 left-0 w-full bg-white p-4 lg:hidden border-b-[2px]" style={{ borderColor: corPrincipal }}>
-          <div
-            className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300 mb-4"
-            style={{ borderColor: "#d1d5db" }}
-          >
-            <input
-              type="text"
-              placeholder="O que deseja encontrar?"
-              className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
-            />
-            <FaSearch
-              className="text-gray-400 cursor-pointer transition-colors duration-200"
-              onMouseEnter={(e) => (e.currentTarget.style.color = hexToRGBA(corPrincipal, 0.6))}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
-            />
+        <div
+          className="absolute top-14 left-0 w-full bg-white p-4 lg:hidden border-b-[2px]"
+          style={{ borderColor: corPrincipal }}
+        >
+          <div className="relative w-full mb-4">
+            <div
+              className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
+              style={{ 
+                borderColor: isSearchFocused ? corPrincipal : "#d1d5db",
+                boxShadow: isSearchFocused ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}` : 'none',
+              }}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+            >
+              <FaSearch
+                className="text-gray-400 flex-shrink-0"
+                style={{ color: isSearchFocused ? corPrincipal : "#9ca3af" }}
+              />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Buscar usuários..."
+                className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
+              />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Limpar busca"
+                >
+                  <FaTimes className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            
+            {(isSearchFocused || searchTerm) && (
+              <div className="absolute left-0 right-0 mt-1 z-50">
+                <SearchResults 
+                  results={searchResults} 
+                  searchTerm={searchTerm}
+                  onClose={handleResultClick}
+                />
+              </div>
+            )}
           </div>
 
           <nav className="flex flex-col gap-3">
@@ -162,7 +325,9 @@ export default function Header() {
                   location.pathname === link.path ? "font-semibold" : ""
                 }`}
                 onClick={() => setMenuOpen(false)}
-                style={location.pathname === link.path ? { color: corPrincipal } : {}}
+                style={
+                  location.pathname === link.path ? { color: corPrincipal } : {}
+                }
               >
                 {link.label}
               </Link>

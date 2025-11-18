@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import NoticiaService from "../../services/NoticiasService";
@@ -19,9 +18,6 @@ export default function NoticiasInfo() {
   const { regiao } = useRegiao();
   const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
-  
-  // Log para depuração
-  console.log('🔍 UserContext - user:', user);
 
   const [noticia, setNoticia] = useState(location.state || null);
   const [loading, setLoading] = useState(!location.state);
@@ -53,10 +49,7 @@ export default function NoticiasInfo() {
         papel: user.papel || user.role || user.roles,
         fotoPerfil: user.fotoPerfil,
       };
-      
-      console.log('🔄 Dados do usuário do contexto:', user);
-      console.log('🔄 Dados normalizados do usuário:', userData);
-      
+
       setUsuarioLogado(userData);
     }
   }, [user]);
@@ -67,27 +60,19 @@ export default function NoticiasInfo() {
 
     if (!noticia) {
       setLoading(true);
-      console.log("🔍 NoticiasInfo - Carregando notícia do backend...");
       NoticiaService.buscarNoticiaPorId(id)
         .then(async (data) => {
-          console.log("✅ NoticiasInfo - Notícia carregada:", data);
-
-          // ✅ Buscar dados do usuário junto com a notícia
+          // Buscar dados do usuário junto com a notícia
           if (data.idUsuario) {
             try {
-              console.log("🔍 Buscando dados do autor ID:", data.idUsuario);
               const response = await api.get("/usuarios/listar");
               const usuarios = response.data;
               const autor = usuarios.find((u) => u.id === data.idUsuario);
 
               if (autor) {
-                // ✅ Inclui fotoPerfil diretamente na notícia
+                // Inclui fotoPerfil diretamente na notícia
                 data.fotoPerfil = autor.fotoPerfil;
                 data.nomeAutor = autor.nome;
-                console.log("✅ Dados do autor incluídos:", {
-                  nome: autor.nome,
-                  fotoPerfil: autor.fotoPerfil ? "Presente" : "Ausente"
-                });
               }
             } catch (err) {
               console.error("❌ Erro ao buscar autor:", err);
@@ -106,8 +91,39 @@ export default function NoticiasInfo() {
 
   const carregarComentarios = async () => {
     try {
-      const dados = await ComentariosService.listarComentariosNoticia(id);
-      setComentarios(dados);
+      // Buscar comentários
+      const comentarios = await ComentariosService.listarComentariosNoticia(id);
+
+      // Buscar todos os usuários para obter as fotos de perfil
+      const response = await api.get("/usuarios/listar");
+      const usuarios = response.data;
+
+      // Mapear comentários e adicionar avatar
+      const comentariosComAvatar = comentarios.map((coment) => {
+        // Encontrar o usuário que fez o comentário
+        const usuarioComentario = usuarios.find(
+          (u) => u.id === coment.idUsuario || u.email === coment.emailUsuario
+        );
+
+        // Se encontrou o usuário e ele tem foto de perfil, usa a foto
+        if (usuarioComentario?.fotoPerfil) {
+          return { ...coment, avatar: usuarioComentario.fotoPerfil };
+        }
+
+        // Se for o próprio usuário logado, usa a foto do perfil atual
+        if (
+          (coment.idUsuario === user?.id ||
+            coment.emailUsuario === user?.email) &&
+          user?.fotoPerfil
+        ) {
+          return { ...coment, avatar: user.fotoPerfil };
+        }
+
+        // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
+        return { ...coment, avatar: coment.avatar || NoPicture };
+      });
+
+      setComentarios(comentariosComAvatar);
     } catch (err) {
       console.error("❌ Erro ao buscar comentários:", err);
       setComentarios([]);
@@ -122,9 +138,10 @@ export default function NoticiasInfo() {
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
     if (user?.id && comentarios.length > 0) {
-      setComentarios(prevComentarios => {
-        const updated = prevComentarios.map(coment => {
-          const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
+      setComentarios((prevComentarios) => {
+        const updated = prevComentarios.map((coment) => {
+          const isUserComment =
+            coment.idUsuario === user.id || coment.emailUsuario === user.email;
 
           if (isUserComment) {
             return { ...coment, avatar: user.fotoPerfil || NoPicture };
@@ -154,20 +171,8 @@ export default function NoticiasInfo() {
       }
     };
     buscarAutor();
-  }, [noticia?.idUsuario, nomeAutor]); // Dependências corretas
+  }, [noticia?.idUsuario, nomeAutor]);
 
-  // Monitorar mudanças na notícia para debug
-  useEffect(() => {
-    if (noticia) {
-      console.log("🔍 NoticiasInfo - Notícia mudou:", {
-        id: noticia.id,
-        idUsuario: noticia.idUsuario,
-        titulo: noticia.titulo
-      });
-    }
-  }, [noticia]);
-
-  // Publicar comentário
   const handlePublicarComentario = async () => {
     if (!novoComentario.trim()) return;
 
@@ -219,43 +224,26 @@ export default function NoticiasInfo() {
 
   // Verificação de propriedade da notícia
   // Verifica role, roles ou papel, em qualquer caso
-  const userRole = usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
+  const userRole =
+    usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
   const roleNormalizado = String(userRole).toUpperCase();
   const papelStr = roleNormalizado; // Adicionando papelStr para compatibilidade
-  
-  // Verificação de permissões
-  const isAdmin = roleNormalizado.includes("ADMIN") || roleNormalizado.includes("ADMINISTRADOR");
-  const isAutor = noticia && (
-    noticia.idUsuario === usuarioLogado?.id ||
-    noticia.emailUsuario === usuarioLogado?.email ||
-    noticia.autor === usuarioLogado?.nome
-  );
-  
-  const podeExcluirNoticia = Boolean(noticia && usuarioLogado && (isAdmin || isAutor));
 
-  // Debug: log detalhado
-  useEffect(() => {
-    if (noticia && usuarioLogado?.id) {
-      console.log("🔍 DETALHES DE PERMISSÕES:", {
-        usuario: usuarioLogado.nome,
-        role: userRole,
-        roleNormalizado,
-        isAdmin,
-        isAutor,
-        podeExcluirNoticia,
-        noticiaId: noticia.id,
-        noticiaAutor: noticia.autor || noticia.nomeAutor,
-        usuarioLogado: { 
-          id: usuarioLogado.id, 
-          nome: usuarioLogado.nome,
-          email: usuarioLogado.email,
-          role: usuarioLogado.role,
-          roles: usuarioLogado.roles,
-          papel: usuarioLogado.papel
-        }
-      });
-    }
-  }, [noticia, usuarioLogado, isAdmin, isAutor, podeExcluirNoticia, userRole, roleNormalizado]);
+  // Verificação de permissões
+  const isAdmin =
+    roleNormalizado.includes("ADMIN") ||
+    roleNormalizado.includes("ADMINISTRADOR");
+  const isAutor =
+    noticia &&
+    (noticia.idUsuario === usuarioLogado?.id ||
+      noticia.emailUsuario === usuarioLogado?.email ||
+      noticia.autor === usuarioLogado?.nome);
+
+  const podeExcluirNoticia = Boolean(
+    noticia && usuarioLogado && (isAdmin || isAutor)
+  );
+
+  // Verificação de permissões
 
   // Deletar notícia
   const handleDeletarNoticia = async () => {
@@ -313,16 +301,27 @@ export default function NoticiasInfo() {
 
           {/* Loading Elaborado */}
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6" style={{ borderColor: corPrincipal }}></div>
+            <div
+              className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6"
+              style={{ borderColor: corPrincipal }}
+            ></div>
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Carregando notícia...</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                Carregando notícia...
+              </h2>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
                 Aguarde enquanto buscamos todos os detalhes desta notícia
               </p>
               <div className="mt-6 flex items-center justify-center gap-2">
                 <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                <div
+                  className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"
+                  style={{ animationDelay: "0.4s" }}
+                ></div>
               </div>
             </div>
           </div>
@@ -396,8 +395,16 @@ export default function NoticiasInfo() {
                 }}
               />
               <div>
-                <p className="text-sm font-medium" style={{ color: corPrincipal }}>Publicado por</p>
-                <p className="text-lg font-bold" style={{ color: corPrincipal }}>
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: corPrincipal }}
+                >
+                  Publicado por
+                </p>
+                <p
+                  className="text-lg font-bold"
+                  style={{ color: corPrincipal }}
+                >
                   {nomeAutor || noticia.autor || "Carregando..."}
                 </p>
               </div>
@@ -625,11 +632,11 @@ export default function NoticiasInfo() {
                               : "agora"}
                           </p>
                         </div>
-                        {((coment.idUsuario === usuarioLogado.id ||
-                          coment.emailUsuario === usuarioLogado.email) ||
+                        {(coment.idUsuario === usuarioLogado.id ||
+                          coment.emailUsuario === usuarioLogado.email ||
                           // ✅ ADMIN pode deletar qualquer comentário
-                          (papelStr.includes("ADMINISTRADOR") ||
-                           papelStr.includes("ADMIN"))) && (
+                          papelStr.includes("ADMINISTRADOR") ||
+                          papelStr.includes("ADMIN")) && (
                           <button
                             onClick={() =>
                               setModalDeletar({
