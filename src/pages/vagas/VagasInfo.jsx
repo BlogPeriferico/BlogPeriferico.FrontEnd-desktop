@@ -1,4 +1,4 @@
- import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import CorreCertoService from "../../services/CorreCertoService";
 import ComentariosService from "../../services/ComentariosService";
@@ -24,8 +24,16 @@ export default function VagaInfo() {
   const [comentarios, setComentarios] = useState([]);
   const [novoComentario, setNovoComentario] = useState("");
   const [comentLoading, setComentLoading] = useState(false);
-  const [usuarioLogado, setUsuarioLogado] = useState({ id: null, email: null, nome: "Visitante", papel: null });
-  const [modalDeletar, setModalDeletar] = useState({ isOpen: false, comentarioId: null });
+  const [usuarioLogado, setUsuarioLogado] = useState({
+    id: null,
+    email: null,
+    nome: "Visitante",
+    papel: null,
+  });
+  const [modalDeletar, setModalDeletar] = useState({
+    isOpen: false,
+    comentarioId: null,
+  });
   const [modalDeletarVaga, setModalDeletarVaga] = useState(false);
   const [showLoginAlert, setShowLoginAlert] = useState(false);
   const [nomeAutor, setNomeAutor] = useState(null);
@@ -58,19 +66,21 @@ export default function VagaInfo() {
           return {
             id: response.data.id,
             nome: response.data.nome,
-            fotoPerfil: response.data.fotoPerfil || NoPicture
+            fotoPerfil: response.data.fotoPerfil || NoPicture,
           };
         }
       } catch (err) {
         // Se falhar, tenta listar todos e filtrar localmente
         try {
-          const response = await api.get('/usuarios/listar');
-          const usuario = response.data.find(u => u.id === vagaData.idUsuario);
+          const response = await api.get("/usuarios/listar");
+          const usuario = response.data.find(
+            (u) => u.id === vagaData.idUsuario
+          );
           if (usuario) {
             return {
               id: usuario.id,
               nome: usuario.nome,
-              fotoPerfil: usuario.fotoPerfil || NoPicture
+              fotoPerfil: usuario.fotoPerfil || NoPicture,
             };
           }
         } catch (listErr) {
@@ -82,13 +92,15 @@ export default function VagaInfo() {
     // Se não encontrou por ID, tenta por email
     if (vagaData.emailUsuario) {
       try {
-        const response = await api.get('/usuarios/listar');
-        const usuario = response.data.find(u => u.email === vagaData.emailUsuario);
+        const response = await api.get("/usuarios/listar");
+        const usuario = response.data.find(
+          (u) => u.email === vagaData.emailUsuario
+        );
         if (usuario) {
           return {
             id: usuario.id,
             nome: usuario.nome,
-            fotoPerfil: usuario.fotoPerfil || NoPicture
+            fotoPerfil: usuario.fotoPerfil || NoPicture,
           };
         }
       } catch (err) {
@@ -101,7 +113,7 @@ export default function VagaInfo() {
       return {
         id: vagaData.idUsuario || null,
         nome: vagaData.autor,
-        fotoPerfil: NoPicture
+        fotoPerfil: NoPicture,
       };
     }
 
@@ -139,17 +151,19 @@ export default function VagaInfo() {
 
         // Carrega os comentários
         try {
-          const comentariosData = await ComentariosService.listarComentariosVaga(id);
+          const comentariosData =
+            await ComentariosService.listarComentariosVaga(id);
 
           // Buscar todos os usuários para obter as fotos de perfil
           const response = await api.get("/usuarios/listar");
           const usuarios = response.data;
 
           // Mapear comentários e adicionar avatar
-          const comentariosComAvatar = comentariosData.map(coment => {
+          const comentariosComAvatar = comentariosData.map((coment) => {
             // Encontrar o usuário que fez o comentário
-            const usuarioComentario = usuarios.find(u =>
-              u.id === coment.idUsuario || u.email === coment.emailUsuario
+            const usuarioComentario = usuarios.find(
+              (u) =>
+                u.id === coment.idUsuario || u.email === coment.emailUsuario
             );
 
             // Se encontrou o usuário e ele tem foto de perfil, usa a foto
@@ -158,7 +172,11 @@ export default function VagaInfo() {
             }
 
             // Se for o próprio usuário logado, usa a foto do perfil atual
-            if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
+            if (
+              (coment.idUsuario === user?.id ||
+                coment.emailUsuario === user?.email) &&
+              user?.fotoPerfil
+            ) {
               return { ...coment, avatar: user.fotoPerfil };
             }
 
@@ -170,13 +188,13 @@ export default function VagaInfo() {
             setComentarios(comentariosComAvatar);
           }
         } catch (err) {
-          console.error('Erro ao carregar comentários:', err);
+          console.error("Erro ao carregar comentários:", err);
           if (isMounted) {
             setComentarios([]);
           }
         }
       } catch (err) {
-        console.error('Erro ao carregar vaga:', err);
+        console.error("Erro ao carregar vaga:", err);
         if (isMounted) {
           setVaga(null);
         }
@@ -210,9 +228,9 @@ export default function VagaInfo() {
 
       // Só atualiza se a foto realmente mudou
       if (novaFoto !== vaga.fotoPerfil) {
-        setVaga(prevVaga => ({
+        setVaga((prevVaga) => ({
           ...prevVaga,
-          fotoPerfil: novaFoto
+          fotoPerfil: novaFoto,
         }));
       }
     }
@@ -220,10 +238,16 @@ export default function VagaInfo() {
 
   // Sincroniza fotoPerfil inicial quando vaga e usuário estão disponíveis
   useEffect(() => {
-    if (vaga && user?.id && vaga.idUsuario === user.id && user.fotoPerfil && !vaga.fotoPerfil) {
-      setVaga(prevVaga => ({
+    if (
+      vaga &&
+      user?.id &&
+      vaga.idUsuario === user.id &&
+      user.fotoPerfil &&
+      !vaga.fotoPerfil
+    ) {
+      setVaga((prevVaga) => ({
         ...prevVaga,
-        fotoPerfil: user.fotoPerfil
+        fotoPerfil: user.fotoPerfil,
       }));
     }
   }, [vaga, user]);
@@ -231,14 +255,15 @@ export default function VagaInfo() {
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
     if (user?.id && comentarios.length > 0) {
-      setComentarios(prevComentarios => {
-        return prevComentarios.map(coment => {
-          const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
+      setComentarios((prevComentarios) => {
+        return prevComentarios.map((coment) => {
+          const isUserComment =
+            coment.idUsuario === user.id || coment.emailUsuario === user.email;
 
           if (isUserComment) {
             return {
               ...coment,
-              avatar: user.fotoPerfil || "https://i.pravatar.cc/40"
+              avatar: user.fotoPerfil || "https://i.pravatar.cc/40",
             };
           }
           return coment;
@@ -248,17 +273,22 @@ export default function VagaInfo() {
   }, [user?.fotoPerfil, user?.id, comentarios.length]);
 
   // Verificação de permissões (alinhado a Notícias/Achadinhos)
-  const userRole = usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
+  const userRole =
+    usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
   const roleNormalized = String(userRole).toUpperCase();
-  const isAdmin = roleNormalized.includes("ADMINISTRADOR") || roleNormalized.includes("ADMIN");
+  const isAdmin =
+    roleNormalized.includes("ADMINISTRADOR") ||
+    roleNormalized.includes("ADMIN");
   const isAutor = Boolean(
-    vaga && usuarioLogado && (
-      vaga.idUsuario === usuarioLogado.id ||
-      vaga.emailUsuario === usuarioLogado.email ||
-      vaga.autor === usuarioLogado.nome
-    )
+    vaga &&
+      usuarioLogado &&
+      (vaga.idUsuario === usuarioLogado.id ||
+        vaga.emailUsuario === usuarioLogado.email ||
+        vaga.autor === usuarioLogado.nome)
   );
-  const podeExcluirVaga = Boolean(vaga && usuarioLogado && (isAdmin || isAutor));
+  const podeExcluirVaga = Boolean(
+    vaga && usuarioLogado && (isAdmin || isAutor)
+  );
 
   // Efeito para verificar permissões
   useEffect(() => {
@@ -284,14 +314,24 @@ export default function VagaInfo() {
       if (status === 403 || status === 401) {
         alert(
           "❌ ERRO DE AUTORIZAÇÃO\n\n" +
-          "Você não tem permissão para excluir esta vaga.\n\n" +
-          "Detalhes técnicos:\n" +
-          "- ID do usuário logado: " + usuarioLogado?.id + "\n" +
-          "- ID do autor da vaga: " + vaga?.idUsuario + "\n" +
-          "- Nome do usuário: " + usuarioLogado?.nome + "\n" +
-          "- Nome do autor: " + nomeAutor + "\n" +
-          "- Papel do usuário: " + usuarioLogado?.papel + "\n\n" +
-          "Apenas o autor da vaga ou um administrador podem excluí-la."
+            "Você não tem permissão para excluir esta vaga.\n\n" +
+            "Detalhes técnicos:\n" +
+            "- ID do usuário logado: " +
+            usuarioLogado?.id +
+            "\n" +
+            "- ID do autor da vaga: " +
+            vaga?.idUsuario +
+            "\n" +
+            "- Nome do usuário: " +
+            usuarioLogado?.nome +
+            "\n" +
+            "- Nome do autor: " +
+            nomeAutor +
+            "\n" +
+            "- Papel do usuário: " +
+            usuarioLogado?.papel +
+            "\n\n" +
+            "Apenas o autor da vaga ou um administrador podem excluí-la."
         );
       } else {
         alert("Não foi possível excluir a vaga. Tente novamente.");
@@ -324,7 +364,9 @@ export default function VagaInfo() {
         tipo: "VAGA", // ✅ Especifica o tipo de comentário
       };
 
-      const comentarioCriado = await ComentariosService.criarComentarioVaga(dto);
+      const comentarioCriado = await ComentariosService.criarComentarioVaga(
+        dto
+      );
 
       if (!comentarioCriado.nomeUsuario) {
         comentarioCriado.nomeUsuario = user.nome || "Você";
@@ -383,16 +425,27 @@ export default function VagaInfo() {
 
           {/* Loading Elaborado */}
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6" style={{ borderColor: corPrincipal }}></div>
+            <div
+              className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6"
+              style={{ borderColor: corPrincipal }}
+            ></div>
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Carregando vaga...</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                Carregando vaga...
+              </h2>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
                 Aguarde enquanto buscamos todos os detalhes desta vaga
               </p>
               <div className="mt-6 flex items-center justify-center gap-2">
                 <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                <div
+                  className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"
+                  style={{ animationDelay: "0.4s" }}
+                ></div>
               </div>
             </div>
           </div>
@@ -465,8 +518,16 @@ export default function VagaInfo() {
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
               />
               <div>
-                <p className="text-sm font-medium text-white" style={{ color: corPrincipal }}>Publicado por</p>
-                <p className="text-lg font-bold text-black" style={{ color: corPrincipal }}>
+                <p
+                  className="text-sm font-medium text-white"
+                  style={{ color: corPrincipal }}
+                >
+                  Publicado por
+                </p>
+                <p
+                  className="text-lg font-bold text-black"
+                  style={{ color: corPrincipal }}
+                >
                   {nomeAutor || "Carregando..."}
                 </p>
               </div>
@@ -602,19 +663,42 @@ export default function VagaInfo() {
             <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-yellow-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-yellow-700">
-                    Você precisa estar logado para comentar. <a href="/login" className="font-medium text-yellow-700 underline hover:text-yellow-600">Faça login</a> ou <a href="/cadastro" className="font-medium text-yellow-700 underline hover:text-yellow-600">cadastre-se</a> para participar da conversa.
+                    Você precisa estar logado para comentar.{" "}
+                    <a
+                      href="/login"
+                      className="font-medium text-yellow-700 underline hover:text-yellow-600"
+                    >
+                      Faça login
+                    </a>{" "}
+                    ou{" "}
+                    <a
+                      href="/cadastro"
+                      className="font-medium text-yellow-700 underline hover:text-yellow-600"
+                    >
+                      cadastre-se
+                    </a>{" "}
+                    para participar da conversa.
                   </p>
                 </div>
               </div>
             </div>
           )}
-          
+
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img
@@ -726,8 +810,8 @@ export default function VagaInfo() {
                               : "agora"}
                           </p>
                         </div>
-                        {((coment.idUsuario === usuarioLogado.id ||
-                          coment.emailUsuario === usuarioLogado.email) ||
+                        {(coment.idUsuario === usuarioLogado.id ||
+                          coment.emailUsuario === usuarioLogado.email ||
                           isAdmin) && (
                           <button
                             onClick={() =>

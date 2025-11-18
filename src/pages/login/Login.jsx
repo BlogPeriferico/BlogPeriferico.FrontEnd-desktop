@@ -24,7 +24,7 @@ import AuthService from "../../services/AuthService";
 import { UserContext } from "../../contexts/UserContext";
 
 // Adiciona o estilo ao documento
-const styleElement = document.createElement('style');
+const styleElement = document.createElement("style");
 styleElement.textContent = styles;
 document.head.appendChild(styleElement);
 
@@ -44,30 +44,30 @@ export default function Login({ onLoginSuccess }) {
       setMensagem("Por favor, preencha todos os campos");
       return;
     }
-    
+
     setIsLoading(true);
     setMensagem("");
-    
+
     try {
       // 1. Faz o login no servidor para obter o token
       const data = await AuthService.login({ email, senha });
-      
+
       if (!data || !data.token) {
         throw new Error("Token não recebido do servidor");
       }
-      
+
       // Salva o token no localStorage
       localStorage.setItem("token", data.token);
-      
+
       // 3. Atualiza o contexto do usuário
       const userData = await login({ token: data.token });
-      
+
       if (!userData) {
         throw new Error("Falha ao carregar os dados do usuário");
       }
-      
+
       setMensagem("Login realizado com sucesso!");
-      
+
       // 4. Redireciona ou chama o callback de sucesso
       if (onLoginSuccess) {
         onLoginSuccess();
@@ -117,9 +117,13 @@ export default function Login({ onLoginSuccess }) {
         {/* Painel do formulário */}
         <div className="flex-1 md:w-[45%] bg-white/70 p-8 md:p-12 shadow-lg flex flex-col justify-center">
           {mensagem && (
-            <div className={`p-3 mb-4 rounded-md text-center ${
-              mensagem.includes('sucesso') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
+            <div
+              className={`p-3 mb-4 rounded-md text-center ${
+                mensagem.includes("sucesso")
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
               {mensagem}
             </div>
           )}
@@ -157,11 +161,11 @@ export default function Login({ onLoginSuccess }) {
               className="w-full px-5 py-3 rounded-md text-black placeholder-gray-400 pr-10 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 outline-none transition-all duration-400 ease-in-out transform hover:scale-[1.01] focus:scale-[1.02]"
               style={{
                 // Esconde o ícone de olho nativo do Chrome/Edge
-                '::-ms-reveal': {
-                  display: 'none',
+                "::-ms-reveal": {
+                  display: "none",
                 },
-                '::-ms-clear': {
-                  display: 'none',
+                "::-ms-clear": {
+                  display: "none",
                 },
               }}
               required
@@ -197,14 +201,20 @@ export default function Login({ onLoginSuccess }) {
             type="submit"
             onClick={handleLogin}
             disabled={isLoading}
-            className={`w-full text-white py-3 text-lg rounded-md mb-6 transition-all duration-300 ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#828282] hover:scale-105 cursor-pointer'}`}
+            className={`w-full text-white py-3 text-lg rounded-md mb-6 transition-all duration-300 ${
+              isLoading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#828282] hover:scale-105 cursor-pointer"
+            }`}
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                 Entrando...
               </div>
-            ) : 'Entrar'}
+            ) : (
+              "Entrar"
+            )}
           </button>
 
           <p className="text-red-500 text-center mb-4">{mensagem}</p>
@@ -217,11 +227,15 @@ export default function Login({ onLoginSuccess }) {
 
           <button
             type="button"
-            className={`w-full bg-white/40 py-3 rounded-md mb-6 transition-all duration-300 ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 cursor-pointer'}`}
+            className={`w-full bg-white/40 py-3 rounded-md mb-6 transition-all duration-300 ${
+              isLoading
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:scale-105 cursor-pointer"
+            }`}
             onClick={entrarComoVisitante}
             disabled={isLoading}
           >
-            {isLoading ? 'Carregando...' : 'Entrar como visitante'}
+            {isLoading ? "Carregando..." : "Entrar como visitante"}
           </button>
 
           <div className="mt-6 text-center">

@@ -19,7 +19,6 @@ export default function NoticiasInfo() {
   const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
-
   const [noticia, setNoticia] = useState(location.state || null);
   const [loading, setLoading] = useState(!location.state);
   const [comentarios, setComentarios] = useState([]);
@@ -50,7 +49,6 @@ export default function NoticiasInfo() {
         papel: user.papel || user.role || user.roles,
         fotoPerfil: user.fotoPerfil,
       };
-
 
       setUsuarioLogado(userData);
     }
@@ -95,32 +93,36 @@ export default function NoticiasInfo() {
     try {
       // Buscar comentários
       const comentarios = await ComentariosService.listarComentariosNoticia(id);
-      
+
       // Buscar todos os usuários para obter as fotos de perfil
       const response = await api.get("/usuarios/listar");
       const usuarios = response.data;
-      
+
       // Mapear comentários e adicionar avatar
-      const comentariosComAvatar = comentarios.map(coment => {
+      const comentariosComAvatar = comentarios.map((coment) => {
         // Encontrar o usuário que fez o comentário
-        const usuarioComentario = usuarios.find(u => 
-          u.id === coment.idUsuario || u.email === coment.emailUsuario
+        const usuarioComentario = usuarios.find(
+          (u) => u.id === coment.idUsuario || u.email === coment.emailUsuario
         );
-        
+
         // Se encontrou o usuário e ele tem foto de perfil, usa a foto
         if (usuarioComentario?.fotoPerfil) {
           return { ...coment, avatar: usuarioComentario.fotoPerfil };
         }
-        
+
         // Se for o próprio usuário logado, usa a foto do perfil atual
-        if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
+        if (
+          (coment.idUsuario === user?.id ||
+            coment.emailUsuario === user?.email) &&
+          user?.fotoPerfil
+        ) {
           return { ...coment, avatar: user.fotoPerfil };
         }
-        
+
         // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
         return { ...coment, avatar: coment.avatar || NoPicture };
       });
-      
+
       setComentarios(comentariosComAvatar);
     } catch (err) {
       console.error("❌ Erro ao buscar comentários:", err);
@@ -169,7 +171,7 @@ export default function NoticiasInfo() {
       }
     };
     buscarAutor();
-  }, [noticia?.idUsuario, nomeAutor]); 
+  }, [noticia?.idUsuario, nomeAutor]);
 
   const handlePublicarComentario = async () => {
     if (!novoComentario.trim()) return;
