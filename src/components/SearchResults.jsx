@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import NoPicture from '../assets/images/NoPicture.webp';
+import { FaSpinner } from 'react-icons/fa';
 
-const SearchResults = ({ results, onClose, searchTerm }) => {
+const SearchResults = ({ results, onClose, searchTerm, isLoading = false }) => {
   const resultsRef = useRef(null);
 
   // Fechar os resultados ao clicar fora
@@ -18,6 +19,20 @@ const SearchResults = ({ results, onClose, searchTerm }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [onClose]);
+
+  if (isLoading) {
+    return (
+      <div 
+        ref={resultsRef}
+        className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 py-4 max-h-80 overflow-y-auto"
+      >
+        <div className="flex justify-center items-center p-4 text-gray-500">
+          <FaSpinner className="animate-spin mr-2" />
+          <span>Buscando usuários...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!results || results.length === 0) {
     return (

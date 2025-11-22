@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaSearch, FaMapMarkerAlt, FaBars, FaUser, FaTimes } from "react-icons/fa";
 import RegionSelector from "./RegionSelector";
@@ -8,7 +8,9 @@ import { regionColors } from "../utils/regionColors";
 import NoPicture from "../assets/images/NoPicture.webp";
 import ModalAuth from "./modals/ModalAuth";
 import { buscarUsuarios } from "../services/UsuarioService";
+import { buscarPosts } from "../services/PostService";
 import SearchResults from "./SearchResults";
+import PostSearchResults from "./PostSearchResults";
 import { debounce } from 'lodash';
 
 export default function Header() {
@@ -21,9 +23,13 @@ export default function Header() {
   const [fotoAtual, setFotoAtual] = useState(NoPicture);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState({
+    usuarios: [],
+    posts: []
+  });
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [activeSearchTab, setActiveSearchTab] = useState('usuarios');
   const searchInputRef = useRef(null);
 
   // Atualiza a foto quando o user mudar
@@ -58,39 +64,44 @@ export default function Header() {
 
   // Função de busca com debounce
   const debouncedSearch = useRef(
-    debounce(async (term) => {
+    debounce(async (term, tab) => {
       if (!term.trim()) {
-        setSearchResults([]);
+        setSearchResults({ usuarios: [], posts: [] });
         setIsSearching(false);
         return;
       }
       
       try {
-        const results = await buscarUsuarios(term);
-        setSearchResults(results);
+        if (tab === 'usuarios') {
+          const usuarios = await buscarUsuarios(term);
+          setSearchResults(prev => ({ ...prev, usuarios }));
+        } else {
+          const posts = await buscarPosts(term);
+          setSearchResults(prev => ({ ...prev, posts }));
+        }
       } catch (error) {
         console.error('Erro na busca:', error);
-        setSearchResults([]);
+        setSearchResults(prev => ({ ...prev, [tab === 'usuarios' ? 'usuarios' : 'posts']: [] }));
       } finally {
         setIsSearching(false);
       }
     }, 300)
   ).current;
 
-  // Atualiza a busca quando o termo mudar
+  // Atualiza a busca quando o termo ou a aba ativa mudar
   useEffect(() => {
     if (searchTerm.trim() === '') {
-      setSearchResults([]);
+      setSearchResults({ usuarios: [], posts: [] });
       return;
     }
     
     setIsSearching(true);
-    debouncedSearch(searchTerm);
+    debouncedSearch(searchTerm, activeSearchTab);
     
     return () => {
       debouncedSearch.cancel();
     };
-  }, [searchTerm, debouncedSearch]);
+  }, [searchTerm, activeSearchTab, debouncedSearch]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -98,7 +109,7 @@ export default function Header() {
 
   const clearSearch = () => {
     setSearchTerm('');
-    setSearchResults([]);
+    setSearchResults({ usuarios: [], posts: [] });
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
@@ -106,8 +117,71 @@ export default function Header() {
 
   const handleResultClick = () => {
     setSearchTerm('');
-    setSearchResults([]);
+    setSearchResults({ usuarios: [], posts: [] });
     setIsSearchFocused(false);
+  };
+
+  // Renderiza os resultados da busca
+  const renderSearchResults = () => {
+    if (!isSearchFocused && !searchTerm) return null;
+
+    return (
+      <div className="absolute left-0 right-0 mt-2 bg-white rounded-lg shadow-xl z-50 overflow-hidden">
+        {/* Abas de busca */}
+        <div className="flex border-b">
+          <button
+            onClick={() => setActiveSearchTab('usuarios')}
+            className={`flex-1 py-2 font-medium text-sm ${
+              activeSearchTab === 'usuarios' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            Usuários
+          </button>
+          <button
+            onClick={() => setActiveSearchTab('posts')}
+            className={`flex-1 py-2 font-medium text-sm ${
+              activeSearchTab === 'posts'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            Posts
+          </button>
+        </div>
+
+        {/* Conteúdo dos resultados */}
+        <div className="max-h-80 overflow-y-auto">
+          {isSearching ? (
+            <div className="p-4 text-center text-gray-500">Buscando...</div>
+          ) : activeSearchTab === 'usuarios' ? (
+            searchResults.usuarios && searchResults.usuarios.length > 0 ? (
+              <SearchResults 
+                results={searchResults.usuarios} 
+                searchTerm={searchTerm}
+                onClose={handleResultClick}
+                isLoading={isSearching && activeSearchTab === 'usuarios'}
+              />
+            ) : (
+              <div className="p-4 text-center text-gray-500">
+                Nenhum usuário encontrado
+              </div>
+            )
+          ) : searchResults.posts && searchResults.posts.length > 0 ? (
+            <PostSearchResults 
+              results={searchResults.posts}
+              onClose={handleResultClick}
+              isLoading={isSearching && activeSearchTab === 'posts'}
+            />
+          ) : (
+            <div className="p-4 text-center text-gray-500">
+              Nenhum post encontrado
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -168,7 +242,7 @@ export default function Header() {
               type="text"
               value={searchTerm}
               onChange={handleSearchChange}
-              placeholder="Buscar usuários..."
+              placeholder={activeSearchTab === 'usuarios' ? 'Buscar usuários...' : 'Buscar posts...'}
               className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
             />
             {searchTerm && (
@@ -182,15 +256,8 @@ export default function Header() {
             )}
           </div>
           
-          {(isSearchFocused || searchTerm) && (
-            <div className="absolute left-0 right-0 mt-1">
-              <SearchResults 
-                results={searchResults} 
-                searchTerm={searchTerm}
-                onClose={handleResultClick}
-              />
-            </div>
-          )}
+          {/* Resultados da busca */}
+          {(isSearchFocused || searchTerm) && renderSearchResults()}
         </div>
       </div>
 
@@ -274,46 +341,101 @@ export default function Header() {
           style={{ borderColor: corPrincipal }}
         >
           <div className="relative w-full mb-4">
-            <div
-              className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
-              style={{ 
-                borderColor: isSearchFocused ? corPrincipal : "#d1d5db",
-                boxShadow: isSearchFocused ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}` : 'none',
-              }}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-            >
-              <FaSearch
-                className="text-gray-400 flex-shrink-0"
-                style={{ color: isSearchFocused ? corPrincipal : "#9ca3af" }}
-              />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="Buscar usuários..."
-                className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
-              />
-              {searchTerm && (
-                <button
-                  onClick={clearSearch}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                  aria-label="Limpar busca"
-                >
-                  <FaTimes className="w-4 h-4" />
-                </button>
+            <div className="relative">
+              <div
+                className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
+                style={{ 
+                  borderColor: isSearchFocused ? corPrincipal : "#d1d5db",
+                  boxShadow: isSearchFocused ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}` : 'none',
+                }}
+              >
+                <FaSearch
+                  className="text-gray-400 flex-shrink-0"
+                  style={{ color: isSearchFocused ? corPrincipal : "#9ca3af" }}
+                />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder={activeSearchTab === 'usuarios' ? 'Buscar usuários...' : 'Buscar posts...'}
+                  className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
+                  onFocus={() => setIsSearchFocused(true)}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={clearSearch}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Limpar busca"
+                  >
+                    <FaTimes className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Resultados da busca no menu móvel */}
+              {(isSearchFocused || searchTerm) && (
+                <div className="mt-1">
+                  <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div className="flex border-b">
+                      <button
+                        onClick={() => setActiveSearchTab('usuarios')}
+                        className={`flex-1 py-2 font-medium text-sm ${
+                          activeSearchTab === 'usuarios' 
+                            ? 'text-blue-600 border-b-2 border-blue-600' 
+                            : 'text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        Usuários
+                      </button>
+                      <button
+                        onClick={() => setActiveSearchTab('posts')}
+                        className={`flex-1 py-2 font-medium text-sm ${
+                          activeSearchTab === 'posts'
+                            ? 'text-blue-600 border-b-2 border-blue-600'
+                            : 'text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        Posts
+                      </button>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {isSearching ? (
+                        <div className="p-4 text-center text-gray-500">Buscando...</div>
+                      ) : activeSearchTab === 'usuarios' ? (
+                        searchResults.usuarios && searchResults.usuarios.length > 0 ? (
+                          <SearchResults 
+                            results={searchResults.usuarios} 
+                            searchTerm={searchTerm}
+                            onClose={() => {
+                              handleResultClick();
+                              setMenuOpen(false);
+                            }}
+                            isLoading={isSearching && activeSearchTab === 'usuarios'}
+                          />
+                        ) : (
+                          <div className="p-4 text-center text-gray-500">
+                            Nenhum usuário encontrado
+                          </div>
+                        )
+                      ) : searchResults.posts && searchResults.posts.length > 0 ? (
+                        <PostSearchResults 
+                          results={searchResults.posts}
+                          onClose={() => {
+                            handleResultClick();
+                            setMenuOpen(false);
+                          }}
+                          isLoading={isSearching && activeSearchTab === 'posts'}
+                        />
+                      ) : (
+                        <div className="p-4 text-center text-gray-500">
+                          Nenhum post encontrado
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-            
-            {(isSearchFocused || searchTerm) && (
-              <div className="absolute left-0 right-0 mt-1 z-50">
-                <SearchResults 
-                  results={searchResults} 
-                  searchTerm={searchTerm}
-                  onClose={handleResultClick}
-                />
-              </div>
-            )}
           </div>
 
           <nav className="flex flex-col gap-3">
