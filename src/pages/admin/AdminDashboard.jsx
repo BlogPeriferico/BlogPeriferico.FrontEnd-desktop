@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaUser, FaNewspaper, FaSearch, FaTrash, FaUserCog, FaCheck, FaTimes } from 'react-icons/fa';
 import { useRegiao } from '../../contexts/RegionContext';
@@ -11,6 +11,8 @@ import DoacaoService from '../../services/DoacaoService';
 import CorreCertoService from '../../services/CorreCertoService';
 import AnuncioService from '../../services/AnuncioService';
 import ComentariosService from '../../services/ComentariosService';
+import { buscarPosts } from '../../services/PostService';
+import { debounce } from 'lodash';
 
 // Função para formatar a data no formato "DD/MM/YYYY às HH:MM"
 const formatarData = (dataString) => {
@@ -77,6 +79,8 @@ export default function AdminDashboard() {
   const [editingUser, setEditingUser] = useState(null);
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPostId, setDeletingPostId] = useState(null);
+  const [postsBuscados, setPostsBuscados] = useState([]);
+  const [isSearchingPosts, setIsSearchingPosts] = useState(false);
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
@@ -100,11 +104,27 @@ export default function AdminDashboard() {
         const postData = post.attributes || post;
         
         // Encontrar o autor do post
-        const autor = usuarios.find(u => u.id === (postData.idUsuario || postData.attributes?.idUsuario)) || { 
-          nome: postData.nomeAnunciante || postData.nomeDoador || 'Anônimo',
-          id: null,
-          fotoPerfil: null
+        const idUsuarioPost = postData.idUsuario || postData.attributes?.idUsuario || postData.usuarioId || postData.usuario?.id;
+        const autor = usuarios.find(u => {
+          // Comparar IDs convertendo ambos para string para evitar problemas de tipo
+          return String(u.id) === String(idUsuarioPost);
+        });
+        
+        // Se não encontrou o autor, usar fallback
+        const autorFinal = autor || { 
+          nome: postData.nomeAnunciante || postData.nomeDoador || postData.usuario?.nome || 'Anônimo',
+          id: idUsuarioPost || null,
+          fotoPerfil: postData.usuario?.fotoPerfil || null
         };
+        
+        // Debug: log apenas se não encontrou o autor
+        if (!autor && idUsuarioPost) {
+          console.warn('Autor não encontrado para post:', {
+            postId: post.id || postData.id,
+            idUsuarioPost,
+            usuariosDisponiveis: usuarios.length
+          });
+        }
         
         // Extrair e formatar a data de criação
         let dataCriacao = postData.dataHoraCriacao || 
@@ -129,9 +149,9 @@ export default function AdminDashboard() {
                 postData.fotoCapa ||
                 null,
           autor: {
-            id: autor.id,
-            nome: autor.nome || 'Anônimo',
-            fotoPerfil: autor.fotoPerfil || NoPicture
+            id: autorFinal.id || idUsuarioPost || null,
+            nome: autorFinal.nome || 'Anônimo',
+            fotoPerfil: autorFinal.fotoPerfil || NoPicture
           },
           regiao: postData.regiao?.data?.attributes?.nome || 
                 postData.regiao?.nome || 
@@ -372,25 +392,157 @@ export default function AdminDashboard() {
     }
   };
 
+  // Função de busca de posts com debounce (similar ao Header.jsx)
+  const debouncedSearchPosts = useRef(
+    debounce(async (term) => {
+      if (!term.trim()) {
+        setPostsBuscados([]);
+        setIsSearchingPosts(false);
+        return;
+      }
+      
+      try {
+        setIsSearchingPosts(true);
+        const resultados = await buscarPosts(term, 0, 100); // Busca até 100 resultados
+        setPostsBuscados(resultados || []);
+      } catch (error) {
+        console.error('Erro ao buscar posts:', error);
+        setPostsBuscados([]);
+      } finally {
+        setIsSearchingPosts(false);
+      }
+    }, 300)
+  ).current;
+
+  // Efeito para buscar posts quando o termo de busca mudar (apenas na aba de posts)
+  useEffect(() => {
+    if (activeTab === 'posts' && searchTerm.trim()) {
+      setIsSearchingPosts(true);
+      debouncedSearchPosts(searchTerm);
+    } else {
+      setPostsBuscados([]);
+      setIsSearchingPosts(false);
+    }
+    
+    return () => {
+      debouncedSearchPosts.cancel();
+    };
+  }, [searchTerm, activeTab, debouncedSearchPosts]);
+
   // Filtros
   const usuariosFiltrados = usuarios.filter(usuario => 
     usuario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     usuario.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Filtrar posts com base no termo de busca
+  // Filtrar posts com base no termo de busca (busca local - usado quando não há termo de busca)
+  // Filtra apenas posts que COMEÇAM com o termo pesquisado
   const getPostsFiltrados = (postsList) => {
+    if (!searchTerm.trim()) {
+      return postsList;
+    }
+    const termoLower = searchTerm.toLowerCase().trim();
     return postsList.filter(post => 
-      (post.titulo?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (post.conteudo?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (post.descricao?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+      (post.titulo?.toLowerCase() || '').startsWith(termoLower)
     );
   };
 
   // Obter os posts ativos com base na aba selecionada
   const [activePostType, setActivePostType] = useState('noticias');
   const postsAtivos = posts[activePostType] || [];
-  const postsFiltrados = getPostsFiltrados(postsAtivos);
+  
+  // Função para processar posts da busca da API com dados do autor
+  const processarPostsBuscados = useCallback(async (postsBuscados) => {
+    if (!Array.isArray(postsBuscados) || postsBuscados.length === 0) {
+      return [];
+    }
+
+    try {
+      // Buscar todos os usuários para mapear os autores
+      const usuariosResponse = await api.get('/usuarios/listar');
+      const usuarios = usuariosResponse.data || [];
+
+      return postsBuscados.map(post => {
+        // Processar os posts retornados da API para o formato esperado
+        const tipoPost = post.tipo || post.tipoPost || '';
+        const tipoMapeado = tipoPost === 'noticia' ? 'noticias' :
+                           tipoPost === 'doacao' ? 'doacoes' :
+                           tipoPost === 'vaga' ? 'vagas' :
+                           tipoPost === 'achadinho' || tipoPost === 'venda' ? 'achadinhos' : 'noticias';
+        
+        // Buscar o autor do post usando o idUsuario
+        const idUsuarioPost = post.idUsuario || post.usuarioId || post.usuario?.id || null;
+        const autor = usuarios.find(u => {
+          // Comparar IDs convertendo ambos para string para evitar problemas de tipo
+          return String(u.id) === String(idUsuarioPost);
+        });
+        
+        // Se não encontrou o autor, usar fallback
+        const autorFinal = autor || {
+          nome: post.nomeAutor || post.autor?.nome || post.autor || post.nomeAnunciante || post.nomeDoador || post.usuario?.nome || 'Anônimo',
+          id: idUsuarioPost,
+          fotoPerfil: post.fotoAutor || post.autor?.fotoPerfil || post.fotoPerfil || post.usuario?.fotoPerfil || NoPicture
+        };
+        
+        // Debug: log apenas se não encontrou o autor
+        if (!autor && idUsuarioPost) {
+          console.warn('Autor não encontrado para post buscado:', {
+            postId: post.id,
+            idUsuarioPost,
+            usuariosDisponiveis: usuarios.length
+          });
+        }
+
+        return {
+          ...post,
+          tipo: tipoMapeado,
+          titulo: post.titulo || 'Sem título',
+          imagem: post.imagemCapa || post.imagem || post.urlImagem || null,
+          conteudo: post.descricao || post.texto || post.conteudo || '',
+          descricao: post.descricao || post.resumo || '',
+          regiao: post.regiao || post.local || post.zona || 'Geral',
+          dataHoraCriacao: post.dataPublicacao || post.dataHoraCriacao || post.dataCriacao || post.createdAt,
+          autor: {
+            id: autorFinal.id || idUsuarioPost,
+            nome: autorFinal.nome || 'Anônimo',
+            fotoPerfil: autorFinal.fotoPerfil || NoPicture
+          }
+        };
+      });
+    } catch (error) {
+      console.error('Erro ao processar posts buscados:', error);
+      return [];
+    }
+  }, []);
+
+  // Estado para armazenar posts processados da busca
+  const [postsBuscadosProcessados, setPostsBuscadosProcessados] = useState([]);
+
+  // Processar posts buscados quando postsBuscados mudar
+  useEffect(() => {
+    if (activeTab === 'posts' && searchTerm.trim() && !isSearchingPosts && postsBuscados.length > 0) {
+      processarPostsBuscados(postsBuscados).then(processed => {
+        setPostsBuscadosProcessados(processed);
+      });
+    } else {
+      setPostsBuscadosProcessados([]);
+    }
+  }, [postsBuscados, isSearchingPosts, activeTab, searchTerm, processarPostsBuscados]);
+
+  // Se houver termo de busca na aba de posts, usar os resultados da API processados
+  // Caso contrário, usar os posts locais filtrados
+  const postsFiltrados = activeTab === 'posts' && searchTerm.trim()
+    ? (isSearchingPosts 
+        ? [] // Enquanto busca, não mostra nada (o loading será exibido)
+        : postsBuscadosProcessados
+            // Filtrar apenas posts que COMEÇAM com o termo pesquisado
+            .filter(post => {
+              const termoLower = searchTerm.toLowerCase().trim();
+              return (post.titulo?.toLowerCase() || '').startsWith(termoLower);
+            })
+            // Filtrar pelo tipo ativo selecionado nas abas
+            .filter(post => post.tipo === activePostType))
+    : getPostsFiltrados(postsAtivos);
   
   // Calcular totais
   const totais = {
@@ -429,7 +581,11 @@ export default function AdminDashboard() {
             <div className="w-full max-w-4xl">
                 <div className="flex rounded-lg overflow-hidden" style={{ backgroundColor: `${corPrincipal}33` }}>
                 <button
-                  onClick={() => setActiveTab('usuarios')}
+                  onClick={() => {
+                    setActiveTab('usuarios');
+                    setSearchTerm('');
+                    setPostsBuscados([]);
+                  }}
                   className={`flex-1 py-4 font-medium text-lg flex items-center justify-center gap-2 transition-all duration-300 ${
                     activeTab === 'usuarios' 
                     ? 'bg-white shadow-md' 
@@ -440,7 +596,11 @@ export default function AdminDashboard() {
                   <span>Usuários</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab('posts')}
+                  onClick={() => {
+                    setActiveTab('posts');
+                    setSearchTerm('');
+                    setPostsBuscados([]);
+                  }}
                   className={`flex-1 py-4 font-medium text-lg flex items-center justify-center gap-2 transition-all duration-300 ${
                     activeTab === 'posts' 
                     ? 'bg-white shadow-md' 
@@ -668,15 +828,23 @@ export default function AdminDashboard() {
                   {/* Barra de pesquisa */}
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaSearch className="h-4 w-4 text-gray-400" />
+                      <FaSearch className={`h-4 w-4 ${isSearchingPosts ? 'text-blue-500' : 'text-gray-400'}`} />
                     </div>
                     <input
                       type="text"
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Pesquisar posts..."
+                      className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="Pesquisar posts por título..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                    {isSearchingPosts && (
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <div 
+                          className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2"
+                          style={{ borderColor: corPrincipal }}
+                        ></div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -688,6 +856,16 @@ export default function AdminDashboard() {
                       style={{ borderColor: corPrincipal }}
                     ></div>
                   </div>
+                ) : (activeTab === 'posts' && searchTerm.trim() && isSearchingPosts) ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div className="text-center">
+                      <div 
+                        className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 mx-auto mb-4"
+                        style={{ borderColor: corPrincipal }}
+                      ></div>
+                      <p className="text-gray-600">Buscando posts...</p>
+                    </div>
+                  </div>
                 ) : postsFiltrados.length === 0 ? (
                   <div className="text-center py-16 bg-white rounded-lg shadow-sm">
                     <div className="text-gray-400 mb-2">
@@ -696,9 +874,13 @@ export default function AdminDashboard() {
                       </svg>
                     </div>
                     <h3 className="text-lg font-medium text-gray-900">Nenhum post encontrado</h3>
-                    <p className="mt-1 text-sm text-gray-500">Não há posts para exibir nesta categoria.</p>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {searchTerm.trim() 
+                        ? `Nenhum post encontrado com o termo "${searchTerm}"` 
+                        : 'Não há posts para exibir nesta categoria.'}
+                    </p>
                   </div>
-                ) : (
+                ) : (activeTab === 'posts' && searchTerm.trim() && isSearchingPosts) ? null : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {postsFiltrados.map((post) => {
                       const tipoPost = getCorTipoPost(post.tipo);
