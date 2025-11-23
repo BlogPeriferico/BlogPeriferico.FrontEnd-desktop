@@ -10,6 +10,57 @@ import NoticiaService from '../../services/NoticiasService';
 import DoacaoService from '../../services/DoacaoService';
 import CorreCertoService from '../../services/CorreCertoService';
 import AnuncioService from '../../services/AnuncioService';
+import ComentariosService from '../../services/ComentariosService';
+
+// Função para formatar a data no formato "DD/MM/YYYY às HH:MM"
+const formatarData = (dataString) => {
+  if (!dataString) return 'Data não disponível';
+  
+  const data = new Date(dataString);
+  if (isNaN(data.getTime())) return 'Data inválida';
+  
+  const dia = String(data.getDate()).padStart(2, '0');
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const ano = data.getFullYear();
+  const horas = String(data.getHours()).padStart(2, '0');
+  const minutos = String(data.getMinutes()).padStart(2, '0');
+  
+  return `${dia}/${mes}/${ano} às ${horas}:${minutos}`;
+};
+
+// Função para obter a cor do tipo de post
+const getCorTipoPost = (tipo) => {
+  switch(tipo) {
+    case 'noticias':
+      return { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200' };
+    case 'doacoes':
+      return { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-200' };
+    case 'vagas':
+      return { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200' };
+    case 'achadinhos':
+      return { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-200' };
+    default:
+      return { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-200' };
+  }
+};
+
+// Função para obter a cor da região
+const getCorRegiao = (regiao) => {
+  if (!regiao) return { bg: 'bg-gray-100', text: 'text-gray-800' };
+  
+  const regiaoLower = regiao.toLowerCase();
+  
+  if (regiaoLower.includes('norte')) return { bg: 'bg-[#015E98]', text: 'text-white' };
+  if (regiaoLower.includes('sul')) return { bg: 'bg-[#01A5D9]', text: 'text-white' };
+  if (regiaoLower.includes('leste')) return { bg: 'bg-[#ED1D25]', text: 'text-white' };
+  if (regiaoLower.includes('oeste')) return { bg: 'bg-[#FF6A00]', text: 'text-white' };
+  if (regiaoLower.includes('centro')) return { bg: 'bg-[#8F8F8F]', text: 'text-white' };
+  if (regiaoLower.includes('sudoeste')) return { bg: 'bg-[#9C0B10]', text: 'text-white' };
+  if (regiaoLower.includes('sudeste')) return { bg: 'bg-[#046465]', text: 'text-white' };
+  if (regiaoLower.includes('noroeste')) return { bg: 'bg-[#E8CC00]', text: 'text-gray-900' };
+  
+  return { bg: 'bg-gray-100', text: 'text-gray-800' };
+};
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -257,18 +308,67 @@ export default function AdminDashboard() {
     }
   };
 
-  const deletarPost = async (postId) => {
-    if (window.confirm('Tem certeza que deseja excluir este post?')) {
-      setDeletingPostId(postId);
-      try {
-        await api.delete(`/posts/${postId}`);
-        await carregarDados();
-      } catch (error) {
-        console.error('Erro ao excluir post:', error);
-        alert('Ocorreu um erro ao excluir o post. Por favor, tente novamente.');
-      } finally {
-        setDeletingPostId(null);
+  const deletarPost = async (postId, tipo) => {
+    if (!window.confirm('Tem certeza que deseja excluir este post? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    setDeletingPostId(postId);
+    
+    try {
+      // Se for uma notícia, primeiro remove os comentários associados
+      if (tipo === 'noticias') {
+        try {
+          // Tenta listar os comentários da notícia
+          const comentarios = await ComentariosService.listarComentariosNoticia(postId);
+          
+          // Remove cada comentário encontrado
+          for (const comentario of comentarios) {
+            await ComentariosService.excluirComentario(comentario.id);
+          }
+        } catch (error) {
+          console.warn('Aviso ao tentar remover comentários:', error);
+          // Continua mesmo se houver erro ao remover comentários
+        }
       }
+
+      // Determina qual serviço usar com base no tipo de post
+      switch(tipo) {
+        case 'noticias':
+          await NoticiaService.excluirNoticia(postId);
+          break;
+        case 'doacoes':
+          await DoacaoService.excluirDoacao(postId);
+          break;
+        case 'vagas':
+          await CorreCertoService.excluirVaga(postId);
+          break;
+        case 'achadinhos':
+          await AnuncioService.excluirAnuncio(postId);
+          break;
+        default:
+          throw new Error('Tipo de post não suportado');
+      }
+      
+      // Recarrega os dados após a exclusão
+      await carregarDados();
+      alert('Post excluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir post:', error);
+      let errorMessage = 'Ocorreu um erro ao excluir o post.';
+      
+      // Mensagens de erro mais específicas
+      if (error.response?.status === 500) {
+        errorMessage = 'Erro interno no servidor. Tente novamente mais tarde.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      alert(`Erro: ${errorMessage}`);
+    } finally {
+      setDeletingPostId(null);
     }
   };
 
@@ -600,120 +700,140 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {postsFiltrados.map((post) => (
-                      <div 
-                        key={post.id} 
-                        className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow duration-300"
-                      >
-                        {/* Imagem do post */}
-                        <div className="h-48 bg-gray-100 overflow-hidden">
-                          <img
-                            src={post.imagem || 'https://via.placeholder.com/400x200?text=Sem+imagem'}
-                            alt={post.titulo}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = 'https://via.placeholder.com/400x200?text=Imagem+não+disponível';
-                            }}
-                          />
-                        </div>
+                    {postsFiltrados.map((post) => {
+                      const tipoPost = getCorTipoPost(post.tipo);
+                      const dataFormatada = formatarData(post.dataHoraCriacao);
+                      
+                      return (
+                        <div 
+                          key={post.id} 
+                          className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col h-full"
+                        >
+                          {/* Cabeçalho do post com imagem */}
+                          <div className="relative h-48 overflow-hidden group">
+                            <img
+                              src={post.imagem || 'https://via.placeholder.com/600x400?text=Sem+imagem'}
+                              alt={post.titulo}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://via.placeholder.com/600x400?text=Imagem+não+disponível';
+                              }}
+                            />
+                            
+                            {/* Overlay e badge de região */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            
+                            {/* Badge de tipo de post */}
+                            <div className="absolute top-3 left-3 right-3 flex justify-between">
+                              <div className={`px-3 py-1 rounded-full text-xs font-semibold ${tipoPost.bg} ${tipoPost.text} ${tipoPost.border} border`}>
+                                {post.tipo === 'noticias' ? 'Notícia' : 
+                                 post.tipo === 'doacoes' ? 'Doação' : 
+                                 post.tipo === 'vagas' ? 'Vaga' : 'Achadinho'}
+                              </div>
+                              
+                              {/* Badge de zona/região */}
+                              {(() => {
+                                const regiaoTexto = post.zona || post.regiao || 'Geral';
+                                const corRegiao = getCorRegiao(regiaoTexto);
+                                return (
+                                  <div className={`px-3 py-1 rounded-full text-xs font-semibold ${corRegiao.bg} ${corRegiao.text} shadow-md`}>
+                                    {regiaoTexto}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </div>
 
-                        {/* Conteúdo do post */}
-                        <div className="p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-start">
-                              <img
-                                src={post.autor?.fotoPerfil || NoPicture}
-                                alt={post.autor?.nome || 'Autor'}
-                                className="w-8 h-8 rounded-full mr-2 object-cover flex-shrink-0"
-                                style={{ width: '32px', height: '32px' }}
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = NoPicture;
-                                }}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center flex-wrap">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
+                          {/* Conteúdo do post */}
+                          <div className="p-5 flex-1 flex flex-col">
+                            {/* Cabeçalho com foto do autor */}
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center">
+                                <div className="relative">
+                                  <img
+                                    src={post.autor?.fotoPerfil || NoPicture}
+                                    alt={post.autor?.nome || 'Autor'}
+                                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
+                                    onError={(e) => {
+                                      e.target.onerror = null;
+                                      e.target.src = NoPicture;
+                                    }}
+                                  />
+                                </div>
+                                <div className="ml-3">
+                                  <p className="text-sm font-medium text-gray-900">
                                     {post.autor?.nome || 'Anônimo'}
                                   </p>
-                                  {post.tipo === 'doacoes' && post.categoria && (
-                                    <span className="ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
-                                      {post.categoria}
-                                    </span>
-                                  )}
                                 </div>
-                                <p className="text-xs text-gray-500">
-                                  {post.dataHoraCriacao ? (
-                                    <>
-                                      {new Date(post.dataHoraCriacao).toLocaleDateString('pt-BR', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric'
-                                      })}{' '}
-                                      às{' '}
-                                      {new Date(post.dataHoraCriacao).toLocaleTimeString('pt-BR', {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })}
-                                    </>
-                                  ) : 'Data não disponível'}
-                                </p>
                               </div>
                             </div>
-                            {post.regiao && (
-                              <span className="ml-2 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full whitespace-nowrap">
-                                {post.regiao}
-                              </span>
-                            )}
-                          </div>
 
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                            {post.titulo}
-                          </h3>
-                          
-                          {/* Conteúdo do post */}
-                          <p className="text-gray-600 text-sm mb-3">
-                            {post.conteudo}
-                          </p>
-                          
-                          {/* Preço (apenas para achadinhos) */}
-                          {post.tipo === 'achadinhos' && post.preco !== undefined && post.preco !== null && (
-                            <div className="mb-2">
-                              <span className="text-lg font-bold text-green-600">
-                                R$ {Number(post.preco).toFixed(2).replace('.', ',')}
-                              </span>
+                            {/* Título e descrição */}
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 leading-snug">
+                                {post.titulo}
+                              </h3>
+                              
+                              <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                                {post.descricao || post.conteudo || 'Sem descrição disponível.'}
+                              </p>
                             </div>
-                          )}
-                          
-                          {/* Telefone para contato (mostrar apenas se existir) */}
-                          {post.telefone && (
-                            <div className="mt-2 flex items-center text-sm text-blue-600">
-                              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                              </svg>
-                              {post.telefone}
-                            </div>
-                          )}
 
-                          {/* Ações */}
-                          <div className="flex justify-end border-t border-gray-100 pt-3">
-                            <button
-                              onClick={() => deletarPost(post.id)}
-                              className={`p-2 ${deletingPostId === post.id ? 'text-gray-400' : 'text-red-600 hover:bg-red-50'} rounded-full transition-colors`}
-                              title="Excluir"
-                              disabled={deletingPostId === post.id}
-                            >
-                              {deletingPostId === post.id ? (
-                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-                              ) : (
-                                <FaTrash className="w-4 h-4" />
+                            {/* Divisor */}
+                            <div className="my-3 border-t border-gray-100"></div>
+
+                            {/* Informações adicionais */}
+                            <div className="mt-auto pt-1">
+                              {/* Preço (apenas para achadinhos) */}
+                              {post.tipo === 'achadinhos' && post.preco !== undefined && post.preco !== null && (
+                                <div className="mb-3">
+                                  <span className="text-xl font-bold text-green-600">
+                                    R$ {Number(post.preco).toFixed(2).replace('.', ',')}
+                                  </span>
+                                </div>
                               )}
-                            </button>
+                              
+                              {/* Telefone para contato (mostrar apenas se existir) */}
+                              {post.telefone && (
+                                <div className="flex items-center text-sm text-blue-600 mb-3">
+                                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                                  </svg>
+                                  {post.telefone}
+                                </div>
+                              )}
+
+                              {/* Ações e Data */}
+                              <div className="flex justify-between items-center pt-2">
+                                <div className="text-xs text-gray-500">
+                                  {dataFormatada}
+                                </div>
+                                
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() => deletarPost(post.id, post.tipo)}
+                                    className={`p-2 rounded-full transition-colors ${
+                                      deletingPostId === post.id 
+                                        ? 'text-gray-400' 
+                                        : 'text-red-600 hover:bg-red-50'
+                                    }`}
+                                    title="Excluir"
+                                    disabled={deletingPostId === post.id}
+                                  >
+                                    {deletingPostId === post.id ? (
+                                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                      <FaTrash className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
