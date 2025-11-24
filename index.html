@@ -27,8 +27,8 @@
     <meta name="robots" content="index,follow" />
 
     <!-- Acessibilidade / UX -->
-    <meta name="theme-color" content="#000000" />
-    <meta name="color-scheme" content="light dark" />
+    <!-- deixa só claro pra não forçar modo escuro -->
+    <meta name="theme-color" content="#ffffff" />
     <meta name="format-detection" content="telephone=no" />
 
     <!-- Open Graph (compartilhamento em redes sociais) -->
@@ -42,11 +42,7 @@
       property="og:description"
       content="A voz da periferia em um só lugar: fique por dentro das notícias, vagas, doações e ações da quebrada."
     />
-    <meta
-      property="og:url"
-      content="https://blog-periferico.vercel.app"
-    />
-    <!-- Ajusta esse caminho da imagem se tiver outro -->
+    <meta property="og:url" content="https://blog-periferico.vercel.app" />
     <meta
       property="og:image"
       content="https://blog-periferico.vercel.app/og-image.png"
@@ -107,14 +103,10 @@
       Periférico.
     </noscript>
 
-    <!-- Script VLibras (mais seguro pra não quebrar o app) -->
-    <script src="https://vlibras.gov.br/app/vlibras-plugin.js" defer></script>
+    <!-- Script VLibras (snippet padrão) -->
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
     <script>
-      window.addEventListener("load", function () {
-        if (window.VLibras) {
-          new window.VLibras.Widget("https://vlibras.gov.br/app");
-        }
-      });
+      new window.VLibras.Widget("https://vlibras.gov.br/app");
     </script>
 
     <!-- App React -->
