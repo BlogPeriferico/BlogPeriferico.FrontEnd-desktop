@@ -1,37 +1,102 @@
-name: Deploy Blog Periférico Front-End
+name: CI/CD Blog Periférico Front-End
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  APP_NAME: "BlogPeriferico"
+  NODE_VERSION: "20"
+
+concurrency:
+  group: blog-periferico-frontend-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  # ========================
+  # 1) JOB DE CI (build + lint + test)
+  # ========================
+  ci:
+    name: 🔍 Build, Lint e Testes
     runs-on: ubuntu-latest
 
     steps:
       - name: 📥 Checkout do código
         uses: actions/checkout@v4
 
-      - name: ⚙️ Configurar Node.js 20
+      - name: ⚙️ Configurar Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-
-      # (opcional, só pra garantir que não tenha build velho)
-      - name: 🧹 Limpar build local anterior
-        run: rm -rf build
 
       - name: 📦 Instalar dependências
         run: npm ci
 
-      - name: 🏗️ Build do projeto
+      - name: 🧹 Limpar build anterior (dist)
+        run: rm -rf dist
+
+      - name: 🧪 Lint (se existir script)
+        run: npm run lint --if-present
+
+      - name: 🧪 Testes (se existir script)
+        run: npm test --if-present
+
+      - name: 🏗️ Build do projeto (Vite)
         run: npm run build
 
-      - name: 🚀 Deploy para Azure (somente pasta build)
+      - name: 📂 Listar arquivos gerados
+        run: |
+          echo "Diretório atual:"
+          pwd
+          echo "Conteúdo da raiz:"
+          ls
+          echo "Conteúdo de dist/:"
+          ls dist
+
+      - name: 📦 Salvar artefato de build (dist)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          if-no-files-found: error
+
+  # ========================
+  # 2) JOB DE DEPLOY
+  # ========================
+  deploy:
+    name: 🚀 Deploy para Azure Web App
+    needs: ci
+    runs-on: ubuntu-latest
+
+    # Só faz deploy em push na branch (não em PR)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev-matheus'
+
+    environment:
+      name: production
+
+    steps:
+      - name: 📥 Baixar artefato de build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: 👀 Conferir conteúdo antes do deploy
+        run: |
+          echo "Diretório atual:"
+          pwd
+          echo "Conteúdo de dist/:"
+          ls dist
+
+      - name: 🚀 Deploy para Azure (somente dist/)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "BlogPeriferico"
+          app-name: ${{ env.APP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./build
+          package: ./dist
+          slot-name: production
