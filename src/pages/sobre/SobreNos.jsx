@@ -1,3 +1,4 @@
+// src/pages/sobre/SobreNos.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useRegiao } from "../../contexts/RegionContext";
@@ -10,6 +11,13 @@ import megafoneIcon from "../../assets/svgs/megafone.svg";
 import lojaIcon from "../../assets/svgs/loja.svg";
 import housesIcon from "../../assets/svgs/houses.svg";
 import maoIcon from "../../assets/svgs/mao.svg";
+
+// URLs do Blob para vídeo e imagem
+const VIDEO_PAULISTA_URL =
+  "https://blogperic0.blob.core.windows.net/zonas/paulista.mp4";
+
+const FOTO_SAO_PAULO_URL =
+  "https://blogperic0.blob.core.windows.net/zonas/fotoSaoPaulo.png";
 
 export default function SobreNos() {
   const { regiao } = useRegiao();
@@ -59,12 +67,11 @@ export default function SobreNos() {
           autoPlay
           loop
           muted
+          preload="metadata"
         >
-          <source
-            src="https://blogperiferico.blob.core.windows.net/zonas/paulista.mp4"
-            type="video/mp4"
-          />
+          <source src={VIDEO_PAULISTA_URL} type="video/mp4" />
         </video>
+
         <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-30 flex items-center justify-center">
           <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-fraunces font-semibold opacity-75">
             Quem somos?
@@ -78,7 +85,7 @@ export default function SobreNos() {
         </div>
       </section>
 
-      {/* Faixa colorida */}
+      {/* Faixa colorida + texto explicativo */}
       <div className="w-full max-w-5xl mx-auto bg-white shadow-md relative">
         <div className="flex h-4">
           <div className="w-1/6"></div>
@@ -92,7 +99,6 @@ export default function SobreNos() {
           ></div>
         </div>
 
-        {/* Texto explicativo */}
         <div className="p-6">
           <p className="text-gray-500 font-fraunces text-base">Saber mais</p>
           <h2
@@ -104,9 +110,9 @@ export default function SobreNos() {
           <p className="text-gray-600 mt-2 font-fraunces">
             O Blog Periférico nasceu da vontade de trazer visibilidade às
             questões sociais e culturais das periferias. Nosso objetivo é
-            conectar pessoas e informações sobre as comunidades e suas
-            histórias, além de proporcionar um espaço para reflexão e divulgação
-            de iniciativas locais.
+            conectar pessoas e informações sobre as comunidades e suas histórias,
+            além de proporcionar um espaço para reflexão e divulgação de
+            iniciativas locais.
           </p>
           <a
             href="#funcionalidades"
@@ -124,20 +130,20 @@ export default function SobreNos() {
           <div
             className="w-full md:w-[60%] h-[300px] md:h-[400px] bg-cover bg-center shadow-lg"
             style={{
-              backgroundImage:
-                "url('src/assets/images/fotoSaoPauloSobreNos.png')",
+              backgroundImage: `url(${FOTO_SAO_PAULO_URL})`,
             }}
           ></div>
 
           <div className="bg-white shadow-lg p-6 md:p-10 md:absolute md:top-[65%] md:left-[55%] transform md:-translate-y-1/2 mt-6 md:mt-0 w-full md:w-[45%] max-w-[560px]">
             <h3 className="font-fraunces font-semibold text-2xl md:text-3xl mb-4">
-              São Paulo estado do Movimento Constante
+              São Paulo, estado do movimento constante
             </h3>
             <p className="text-gray-700 text-base md:text-lg leading-relaxed">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat.
+              São Paulo é uma cidade que não para. Carrega nas ruas a correria
+              diária, mas também a força de milhões de pessoas que constroem sua
+              história todos os dias. O Blog Periférico nasce nesse cenário: um
+              espaço para que a quebrada seja protagonista, ocupando o lugar que
+              merece nas narrativas sobre a cidade.
             </p>
           </div>
         </div>
