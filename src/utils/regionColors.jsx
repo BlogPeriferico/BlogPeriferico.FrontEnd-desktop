@@ -7,6 +7,6 @@ export const regionColors = {
     sudoeste:   ["#9C0B10", "#FF767A"],
     sudeste:    ["#046465", "#009D05"],
     nordeste:   ["#E8CC00", "#FEDF04"],
-    noroeste:  ["#4BB759", "#72FF84"],
+    noroeste:  ["#4BB759", "#75D581"],
   };
   
