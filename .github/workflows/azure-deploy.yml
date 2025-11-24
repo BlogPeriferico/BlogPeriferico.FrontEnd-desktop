@@ -3,7 +3,7 @@ name: Deploy Blog Periférico Front-End
 on:
   push:
     branches:
-      - dev-matheus
+      - main
 
 jobs:
   build-and-deploy:
@@ -17,6 +17,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
+
+      # (opcional, só pra garantir que não tenha build velho)
+      - name: 🧹 Limpar build local anterior
+        run: rm -rf build
 
       - name: 📦 Instalar dependências
         run: npm ci
@@ -24,10 +29,9 @@ jobs:
       - name: 🏗️ Build do projeto
         run: npm run build
 
-      - name: 🚀 Deploy para Azure
+      - name: 🚀 Deploy para Azure (somente pasta build)
         uses: azure/webapps-deploy@v3
         with:
           app-name: "BlogPeriferico"
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE  }}
-          package: .
-
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./build
