@@ -1,16 +1,107 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./src/assets/images/blog-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BlogPeriferico</title>
+
+    <!-- Favicon -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="./src/assets/images/blog-icon.png"
+    />
+
+    <!-- Viewport / responsividade -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <!-- SEO básico -->
+    <title>Blog Periférico | Notícias, Vagas, Doações e Cultura da Quebrada</title>
+    <meta
+      name="description"
+      content="Blog Periférico é uma plataforma da quebrada para a quebrada: notícias, vagas, doações, cultura e iniciativas sociais das periferias."
+    />
+    <meta
+      name="keywords"
+      content="blog periférico, periferia, notícias, vagas, doações, cultura, comunidade, quebrada"
+    />
+    <meta name="author" content="Equipe Blog Periférico" />
+    <meta name="robots" content="index,follow" />
+
+    <!-- Acessibilidade / UX -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Open Graph (compartilhamento em redes sociais) -->
+    <!-- Ajusta a URL e a imagem quando tiver o domínio certinho -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Blog Periférico" />
+    <meta
+      property="og:title"
+      content="Blog Periférico | Notícias, Vagas, Doações e Cultura da Quebrada"
+    />
+    <meta
+      property="og:description"
+      content="A voz da periferia em um só lugar: fique por dentro das notícias, vagas, doações e ações da quebrada."
+    />
+   
+    <meta property="og:url" content="https://blog-periferico.vercel.app" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Blog Periférico | Notícias, Vagas, Doações e Cultura da Quebrada"
+    />
+    <meta
+      name="twitter:description"
+      content="A plataforma que conecta a quebrada: notícias, vagas, doações e muito mais."
+    />
+    
 
     <!-- Fonte Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
+    <!-- Botão de acessibilidade em Libras (VLibras) -->
+    <div
+      vw
+      class="enabled"
+      aria-label="Ativar intérprete virtual de Libras"
+    >
+      <div
+        vw-access-button
+        class="active"
+        role="button"
+        aria-label="Abrir acessibilidade em Libras"
+      ></div>
+      <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+      </div>
+    </div>
+
+    <!-- Raiz da aplicação React -->
     <div id="root"></div>
+
+    <!-- Mensagem para quem está sem JavaScript -->
+    <noscript>
+      Este aplicativo funciona melhor com o JavaScript ativado. Ative o
+      JavaScript no seu navegador para acessar todos os recursos do Blog
+      Periférico.
+    </noscript>
+
+    <!-- Script VLibras -->
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script>
+      new window.VLibras.Widget("https://vlibras.gov.br/app");
+    </script>
+
+    <!-- App React -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
