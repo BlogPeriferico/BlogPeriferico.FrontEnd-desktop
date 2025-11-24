@@ -6,7 +6,7 @@ export const regionColors = {
     centro:     ["#8F8F8F", "#C4C0C0"],
     sudoeste:   ["#9C0B10", "#FF767A"],
     sudeste:    ["#046465", "#009D05"],
-    noroeste:   ["#E8CC00", "#FEDF04"],
-    noroeste2:  ["#4BB759", "#72FF84"],
+    nordeste:   ["#E8CC00", "#FEDF04"],
+    noroeste:  ["#4BB759", "#72FF84"],
   };
   
