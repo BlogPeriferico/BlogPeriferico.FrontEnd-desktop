@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 env:
   APP_NAME: "BlogPeriferico"
@@ -40,14 +37,14 @@ jobs:
       - name: 🧹 Limpar build anterior (dist)
         run: rm -rf dist
 
-      - name: 🧪 Lint (NÃO bloqueia o pipeline)
+      - name: 🧪 Lint (não bloqueia)
         run: |
-          echo "▶ Rodando ESLint (não vai travar o deploy se falhar)..."
+          echo "▶ Rodando ESLint (não trava o deploy se falhar)..."
           npm run lint --if-present || echo "⚠️ ESLint encontrou problemas. Veja os erros acima, mas o pipeline vai continuar."
 
-      - name: 🧪 Testes (NÃO bloqueia o pipeline)
+      - name: 🧪 Testes (não bloqueia)
         run: |
-          echo "▶ Rodando testes (não vai travar o deploy se falhar)..."
+          echo "▶ Rodando testes (não travam o deploy se falharem)..."
           npm test --if-present || echo "⚠️ Testes falharam. Veja os erros acima, mas o pipeline vai continuar."
 
       - name: 🏗️ Build do projeto (Vite)
@@ -76,8 +73,6 @@ jobs:
     name: 🚀 Deploy para Azure Web App
     needs: ci
     runs-on: ubuntu-latest
-
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev-matheus'
 
     environment:
       name: production
