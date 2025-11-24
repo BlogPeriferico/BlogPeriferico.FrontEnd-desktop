@@ -6,7 +6,7 @@ import { useUser } from "../../contexts/UserContext.jsx";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 import AuthService from "../../services/AuthService";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 import NoPicture from "../../assets/images/NoPicture.webp";
 
@@ -38,7 +38,10 @@ export default function EditaPerfil() {
 
     const carregarPerfil = async () => {
       const token = localStorage.getItem("token");
-      if (!token) return navigate("/");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
 
       try {
         const decoded = jwtDecode(token);
@@ -82,15 +85,18 @@ export default function EditaPerfil() {
     if (!fotoPerfil || !usuarioLogado) return;
     setLoading(true);
     setErroToast("");
+
     try {
-      const usuarioAtualizado = await AuthService.updateFoto(usuarioLogado.id, fotoPerfil);
+      const usuarioAtualizado = await AuthService.updateFoto(
+        usuarioLogado.id,
+        fotoPerfil
+      );
 
       setUsuarioLogado(usuarioAtualizado);
       setPreviewFoto(usuarioAtualizado.fotoPerfil || previewFoto);
       setFotoPerfil(null);
 
-      if (updateProfile)
-        updateProfile({ ...usuarioAtualizado });
+      if (updateProfile) updateProfile({ ...usuarioAtualizado });
 
       setSuccessToast("Foto atualizada com sucesso!");
       setTimeout(() => setSuccessToast(""), 3000);
@@ -144,22 +150,28 @@ export default function EditaPerfil() {
       const payload = {
         nome: editingField === "nome" ? tempValue : usuarioLogado.nome,
         email: editingField === "email" ? tempValue : usuarioLogado.email,
-        senhaAtual: ["senha", "email"].includes(editingField) ? tempSenhaAtual : undefined,
+        senhaAtual: ["senha", "email"].includes(editingField)
+          ? tempSenhaAtual
+          : undefined,
         novaSenha: editingField === "senha" ? tempValue : undefined,
       };
 
-      const atualizado = await AuthService.updatePerfil(usuarioLogado.id, payload);
+      const atualizado = await AuthService.updatePerfil(
+        usuarioLogado.id,
+        payload
+      );
 
       if (atualizado.token) localStorage.setItem("token", atualizado.token);
 
       const usuarioAtualizado = atualizado.usuario || atualizado;
       setUsuarioLogado(usuarioAtualizado);
 
-      if (updateProfile)
-        updateProfile({ ...usuarioAtualizado });
+      if (updateProfile) updateProfile({ ...usuarioAtualizado });
 
       setSuccessToast(
-        `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} atualizado com sucesso!`
+        `${
+          editingField.charAt(0).toUpperCase() + editingField.slice(1)
+        } atualizado com sucesso!`
       );
       setTimeout(() => setSuccessToast(""), 3000);
       closeEditModal();
@@ -230,13 +242,21 @@ export default function EditaPerfil() {
                 </button>
               )}
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">{usuarioLogado.nome}</h3>
-            <p className="text-gray-500 text-sm">Clique na câmera para alterar sua foto</p>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              {usuarioLogado.nome}
+            </h3>
+            <p className="text-gray-500 text-sm">
+              Clique na câmera para alterar sua foto
+            </p>
           </div>
 
           {/* CAMPOS */}
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl p-8 border border-gray-100 space-y-6">
-            {erroToast && <div className="p-4 bg-red-50 text-red-700 rounded">{erroToast}</div>}
+            {erroToast && (
+              <div className="p-4 bg-red-50 text-red-700 rounded">
+                {erroToast}
+              </div>
+            )}
             {successToast && (
               <div className="p-4 bg-green-50 text-green-700 rounded flex items-center gap-2">
                 <FaCheck /> {successToast}
@@ -246,10 +266,15 @@ export default function EditaPerfil() {
             {/* Nome */}
             <div className="flex justify-between items-center">
               <div>
-                <label className="block text-sm font-semibold text-gray-700">Nome Completo</label>
+                <label className="block text-sm font-semibold text-gray-700">
+                  Nome Completo
+                </label>
                 <p className="text-gray-900 text-lg">{usuarioLogado.nome}</p>
               </div>
-              <button onClick={() => openEditModal("nome", usuarioLogado.nome)} className="text-gray-400 hover:text-blue-600">
+              <button
+                onClick={() => openEditModal("nome", usuarioLogado.nome)}
+                className="text-gray-400 hover:text-blue-600"
+              >
                 <FaEdit size={16} />
               </button>
             </div>
@@ -257,10 +282,15 @@ export default function EditaPerfil() {
             {/* Email */}
             <div className="flex justify-between items-center">
               <div>
-                <label className="block text-sm font-semibold text-gray-700">Email</label>
+                <label className="block text-sm font-semibold text-gray-700">
+                  Email
+                </label>
                 <p className="text-gray-900 text-lg">{usuarioLogado.email}</p>
               </div>
-              <button onClick={() => openEditModal("email", usuarioLogado.email)} className="text-gray-400 hover:text-blue-600">
+              <button
+                onClick={() => openEditModal("email", usuarioLogado.email)}
+                className="text-gray-400 hover:text-blue-600"
+              >
                 <FaEdit size={16} />
               </button>
             </div>
@@ -268,20 +298,28 @@ export default function EditaPerfil() {
             {/* Senha */}
             <div className="flex justify-between items-center">
               <div>
-                <label className="block text-sm font-semibold text-gray-700">Senha</label>
+                <label className="block text-sm font-semibold text-gray-700">
+                  Senha
+                </label>
                 <p className="text-gray-900 text-lg">••••••••</p>
               </div>
-              <button onClick={() => openEditModal("senha", "")} className="text-gray-400 hover:text-blue-600">
+              <button
+                onClick={() => openEditModal("senha", "")}
+                className="text-gray-400 hover:text-blue-600"
+              >
                 <FaEdit size={16} />
               </button>
             </div>
 
             <div className="flex flex-col gap-4 mt-6">
-              <button onClick={handleVoltar} className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200">
+              <button
+                onClick={handleVoltar}
+                className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200"
+              >
                 Voltar ao Perfil
               </button>
-              <button 
-                onClick={handleLogout} 
+              <button
+                onClick={handleLogout}
                 className="flex items-center justify-center gap-2 w-full bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 transition-colors"
               >
                 <FaSignOutAlt />
@@ -294,14 +332,16 @@ export default function EditaPerfil() {
         {/* MODAL */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900">
-                  Redefinir  {editingField?.charAt(0).toUpperCase() + editingField?.slice(1)}
+                  Redefinir{" "}
+                  {editingField?.charAt(0).toUpperCase() +
+                    editingField?.slice(1)}
                 </h2>
                 <button
-                  onClick={handleVoltar}
-                  className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
+                  onClick={closeEditModal}
+                  className="text-gray-600 hover:text-gray-800"
                   title="Fechar"
                 >
                   <FaTimes className="text-2xl" />
@@ -311,7 +351,9 @@ export default function EditaPerfil() {
                 {editingField === "email" && (
                   <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700">Senha Atual</label>
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Senha Atual
+                      </label>
                       <input
                         type="password"
                         value={tempSenhaAtual}
@@ -321,7 +363,9 @@ export default function EditaPerfil() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700">Novo Email</label>
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Novo Email
+                      </label>
                       <input
                         type="email"
                         value={tempValue}
@@ -336,7 +380,9 @@ export default function EditaPerfil() {
                 {editingField === "senha" && (
                   <>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700">Senha Atual</label>
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Senha Atual
+                      </label>
                       <input
                         type="password"
                         value={tempSenhaAtual}
@@ -346,7 +392,9 @@ export default function EditaPerfil() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700">Nova Senha</label>
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Nova Senha
+                      </label>
                       <input
                         type="password"
                         value={tempValue}
@@ -356,7 +404,9 @@ export default function EditaPerfil() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700">Confirme a Senha</label>
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Confirme a Senha
+                      </label>
                       <input
                         type="password"
                         value={tempConfirmarSenha}
@@ -370,7 +420,9 @@ export default function EditaPerfil() {
 
                 {editingField === "nome" && (
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700">Novo Nome</label>
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Novo Nome
+                    </label>
                     <input
                       type="text"
                       value={tempValue}

@@ -1,45 +1,52 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+// src/components/Header.jsx
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  Suspense,
+} from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FaSearch, FaMapMarkerAlt, FaBars, FaUser, FaTimes } from "react-icons/fa";
-import RegionSelector from "./RegionSelector";
+import {
+  FaSearch,
+  FaMapMarkerAlt,
+  FaBars,
+  FaUser,
+  FaTimes,
+} from "react-icons/fa";
 import { useRegiao } from "../contexts/RegionContext";
 import { useUser } from "../contexts/UserContext.jsx";
 import { regionColors } from "../utils/regionColors";
 import NoPicture from "../assets/images/NoPicture.webp";
-import ModalAuth from "./modals/ModalAuth";
 import { buscarUsuarios } from "../services/UsuarioService";
 import { buscarPosts } from "../services/PostService";
-import SearchResults from "./SearchResults";
-import PostSearchResults from "./PostSearchResults";
-import { debounce } from 'lodash';
+import { debounce } from "lodash";
+
+// Lazy loading de componentes mais pesados
+const RegionSelectorLazy = React.lazy(() => import("./RegionSelector"));
+const SearchResultsLazy = React.lazy(() => import("./SearchResults"));
+const PostSearchResultsLazy = React.lazy(() => import("./PostSearchResults"));
 
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { regiao, setRegiao } = useRegiao();
-  const { user, isLoggedIn } = useUser(); // usuário atualizado do contexto
+  const { user, isLoggedIn } = useUser();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [showRegionSelector, setShowRegionSelector] = useState(false);
   const [fotoAtual, setFotoAtual] = useState(NoPicture);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+
+  const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState({
     usuarios: [],
-    posts: []
+    posts: [],
   });
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [activeSearchTab, setActiveSearchTab] = useState('usuarios');
-  const searchInputRef = useRef(null);
+  const [activeSearchTab, setActiveSearchTab] = useState("usuarios");
 
-  // Atualiza a foto quando o user mudar
-  useEffect(() => {
-    if (user?.fotoPerfil) {
-      setFotoAtual(user.fotoPerfil);
-    } else {
-      setFotoAtual(NoPicture);
-    }
-  }, [user?.fotoPerfil]);
+  const searchInputRef = useRef(null);
+  const searchContainerRef = useRef(null);
 
   const navLinks = [
     { path: "/quebrada-informa", label: "Quebrada Informa" },
@@ -50,19 +57,28 @@ export default function Header() {
 
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
+  // Atualiza foto quando user mudar
+  useEffect(() => {
+    if (user?.fotoPerfil) {
+      setFotoAtual(user.fotoPerfil);
+    } else {
+      setFotoAtual(NoPicture);
+    }
+  }, [user?.fotoPerfil]);
+
   const handleRegiaoSelecionada = (regiaoSelecionada) => {
     setRegiao(regiaoSelecionada);
     setShowRegionSelector(false);
   };
 
   const hexToRGBA = (hex, alpha = 1) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+    const r = parseInt(hex.slice(1, 3), 16) || 0;
+    const g = parseInt(hex.slice(3, 5), 16) || 0;
+    const b = parseInt(hex.slice(5, 7), 16) || 0;
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
-  // Função de busca com debounce
+  // Busca com debounce
   const debouncedSearch = useRef(
     debounce(async (term, tab) => {
       if (!term.trim()) {
@@ -70,34 +86,37 @@ export default function Header() {
         setIsSearching(false);
         return;
       }
-      
+
       try {
-        if (tab === 'usuarios') {
+        if (tab === "usuarios") {
           const usuarios = await buscarUsuarios(term);
-          setSearchResults(prev => ({ ...prev, usuarios }));
+          setSearchResults((prev) => ({ ...prev, usuarios }));
         } else {
           const posts = await buscarPosts(term);
-          setSearchResults(prev => ({ ...prev, posts }));
+          setSearchResults((prev) => ({ ...prev, posts }));
         }
       } catch (error) {
-        console.error('Erro na busca:', error);
-        setSearchResults(prev => ({ ...prev, [tab === 'usuarios' ? 'usuarios' : 'posts']: [] }));
+        console.error("Erro na busca:", error);
+        setSearchResults((prev) => ({
+          ...prev,
+          [tab === "usuarios" ? "usuarios" : "posts"]: [],
+        }));
       } finally {
         setIsSearching(false);
       }
     }, 300)
   ).current;
 
-  // Atualiza a busca quando o termo ou a aba ativa mudar
+  // Atualiza a busca quando o termo ou aba mudam
   useEffect(() => {
-    if (searchTerm.trim() === '') {
+    if (searchTerm.trim() === "") {
       setSearchResults({ usuarios: [], posts: [] });
       return;
     }
-    
+
     setIsSearching(true);
     debouncedSearch(searchTerm, activeSearchTab);
-    
+
     return () => {
       debouncedSearch.cancel();
     };
@@ -108,7 +127,7 @@ export default function Header() {
   };
 
   const clearSearch = () => {
-    setSearchTerm('');
+    setSearchTerm("");
     setSearchResults({ usuarios: [], posts: [] });
     if (searchInputRef.current) {
       searchInputRef.current.focus();
@@ -116,69 +135,103 @@ export default function Header() {
   };
 
   const handleResultClick = () => {
-    setSearchTerm('');
+    setSearchTerm("");
     setSearchResults({ usuarios: [], posts: [] });
     setIsSearchFocused(false);
   };
 
-  // Renderiza os resultados da busca
+  // Fecha o dropdown de busca se clicar fora
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target)
+      ) {
+        setIsSearchFocused(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const renderSearchResultsContent = () => {
+    if (isSearching) {
+      return (
+        <div className="p-4 text-center text-gray-500">Buscando...</div>
+      );
+    }
+
+    if (activeSearchTab === "usuarios") {
+      return searchResults.usuarios && searchResults.usuarios.length > 0 ? (
+        <Suspense fallback={<div className="p-4 text-center text-gray-500">Carregando usuários...</div>}>
+          <SearchResultsLazy
+            results={searchResults.usuarios}
+            searchTerm={searchTerm}
+            onClose={handleResultClick}
+            isLoading={isSearching && activeSearchTab === "usuarios"}
+          />
+        </Suspense>
+      ) : (
+        <div className="p-4 text-center text-gray-500">
+          Nenhum usuário encontrado
+        </div>
+      );
+    }
+
+    // posts
+    return searchResults.posts && searchResults.posts.length > 0 ? (
+      <Suspense fallback={<div className="p-4 text-center text-gray-500">Carregando posts...</div>}>
+        <PostSearchResultsLazy
+          results={searchResults.posts}
+          onClose={handleResultClick}
+          isLoading={isSearching && activeSearchTab === "posts"}
+        />
+      </Suspense>
+    ) : (
+      <div className="p-4 text-center text-gray-500">
+        Nenhum post encontrado
+      </div>
+    );
+  };
+
   const renderSearchResults = () => {
     if (!isSearchFocused && !searchTerm) return null;
 
     return (
       <div className="absolute left-0 right-0 mt-2 bg-white rounded-lg shadow-xl z-50 overflow-hidden">
-        {/* Abas de busca */}
-        <div className="flex border-b">
+        {/* Abas */}
+        <div className="flex border-b" role="tablist">
           <button
-            onClick={() => setActiveSearchTab('usuarios')}
+            type="button"
+            onClick={() => setActiveSearchTab("usuarios")}
             className={`flex-1 py-2 font-medium text-sm ${
-              activeSearchTab === 'usuarios' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
-                : 'text-gray-500 hover:bg-gray-50'
+              activeSearchTab === "usuarios"
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-500 hover:bg-gray-50"
             }`}
+            role="tab"
+            aria-selected={activeSearchTab === "usuarios"}
           >
             Usuários
           </button>
           <button
-            onClick={() => setActiveSearchTab('posts')}
+            type="button"
+            onClick={() => setActiveSearchTab("posts")}
             className={`flex-1 py-2 font-medium text-sm ${
-              activeSearchTab === 'posts'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:bg-gray-50'
+              activeSearchTab === "posts"
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-500 hover:bg-gray-50"
             }`}
+            role="tab"
+            aria-selected={activeSearchTab === "posts"}
           >
             Posts
           </button>
         </div>
 
-        {/* Conteúdo dos resultados */}
+        {/* Resultados */}
         <div className="max-h-80 overflow-y-auto">
-          {isSearching ? (
-            <div className="p-4 text-center text-gray-500">Buscando...</div>
-          ) : activeSearchTab === 'usuarios' ? (
-            searchResults.usuarios && searchResults.usuarios.length > 0 ? (
-              <SearchResults 
-                results={searchResults.usuarios} 
-                searchTerm={searchTerm}
-                onClose={handleResultClick}
-                isLoading={isSearching && activeSearchTab === 'usuarios'}
-              />
-            ) : (
-              <div className="p-4 text-center text-gray-500">
-                Nenhum usuário encontrado
-              </div>
-            )
-          ) : searchResults.posts && searchResults.posts.length > 0 ? (
-            <PostSearchResults 
-              results={searchResults.posts}
-              onClose={handleResultClick}
-              isLoading={isSearching && activeSearchTab === 'posts'}
-            />
-          ) : (
-            <div className="p-4 text-center text-gray-500">
-              Nenhum post encontrado
-            </div>
-          )}
+          {renderSearchResultsContent()}
         </div>
       </div>
     );
@@ -188,6 +241,7 @@ export default function Header() {
     <header
       className="w-full px-6 py-3 flex items-center justify-between shadow-md border-b-2 fixed top-0 left-0 z-50"
       style={{ borderColor: corPrincipal, backgroundColor: "#ffffff" }}
+      role="banner"
     >
       {/* Logo */}
       <div className="flex items-center gap-4 flex-shrink-0">
@@ -195,111 +249,149 @@ export default function Header() {
           to="/sobre"
           className="text-2xl font-bold"
           style={{ color: corPrincipal }}
+          aria-label="Ir para página Sobre Nós"
         >
           BlogPeriferico
         </Link>
       </div>
 
-      {/* Links de navegação */}
+      {/* Navegação desktop */}
       <div className="flex-1">
-        <nav className="hidden lg:flex gap-6 font-medium text-sm text-black ml-4">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`transition duration-200 hover:underline ${
-                location.pathname === link.path ? "font-semibold" : ""
-              }`}
-              style={
-                location.pathname === link.path ? { color: corPrincipal } : {}
-              }
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav
+          className="hidden lg:flex gap-6 font-medium text-sm text-black ml-4"
+          aria-label="Navegação principal"
+        >
+          {navLinks.map((link) => {
+            const isActive = location.pathname === link.path;
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`transition duration-200 hover:underline ${
+                  isActive ? "font-semibold" : ""
+                }`}
+                style={isActive ? { color: corPrincipal } : {}}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
-      {/* Barra de pesquisa */}
+      {/* Barra de pesquisa desktop */}
       <div className="hidden lg:flex items-center flex-1 max-w-2xl mx-4">
-        <div className="relative w-full max-w-2xl mx-4">
+        <div
+          className="relative w-full max-w-2xl mx-4"
+          ref={searchContainerRef}
+        >
           <div
             className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
-            style={{ 
+            style={{
               borderColor: isSearchFocused ? corPrincipal : "#d1d5db",
-              minWidth: '200px',
-              boxShadow: isSearchFocused ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}` : 'none',
+              minWidth: "200px",
+              boxShadow: isSearchFocused
+                ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`
+                : "none",
             }}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
           >
             <FaSearch
-              className="text-gray-400 flex-shrink-0"
-              style={{ color: isSearchFocused ? corPrincipal : "#9ca3af" }}
+              className="flex-shrink-0"
+              style={{
+                color: isSearchFocused ? corPrincipal : "#9ca3af",
+              }}
+              aria-hidden="true"
             />
             <input
               ref={searchInputRef}
               type="text"
               value={searchTerm}
               onChange={handleSearchChange}
-              placeholder={activeSearchTab === 'usuarios' ? 'Buscar usuários...' : 'Buscar posts...'}
+              placeholder={
+                activeSearchTab === "usuarios"
+                  ? "Buscar usuários..."
+                  : "Buscar posts..."
+              }
               className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
+              onFocus={() => setIsSearchFocused(true)}
+              aria-label="Buscar no Blog Periférico"
             />
             {searchTerm && (
               <button
+                type="button"
                 onClick={clearSearch}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
                 aria-label="Limpar busca"
               >
-                <FaTimes className="w-4 h-4" />
+                <FaTimes className="w-4 h-4" aria-hidden="true" />
               </button>
             )}
           </div>
-          
-          {/* Resultados da busca */}
+
           {(isSearchFocused || searchTerm) && renderSearchResults()}
         </div>
       </div>
 
-      {/* Direita: avatar + região */}
+      {/* Lado direito: usuário + região + menu mobile */}
       <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0 ml-2 lg:ml-4">
+        {/* Menu mobile toggle */}
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
+          type="button"
+          onClick={() => setMenuOpen((prev) => !prev)}
           className="text-xl lg:hidden"
+          aria-label="Abrir menu de navegação"
         >
-          <FaBars />
+          <FaBars aria-hidden="true" />
         </button>
 
-        {/* Botão de Login/Perfil */}
+        {/* Login / Perfil */}
         {isLoggedIn ? (
           <div className="relative group">
-            <img
-              src={fotoAtual}
-              alt={user?.nome || "Usuário"}
-              className="w-9 h-9 rounded-full border-2 cursor-pointer hover:opacity-90 transition-all duration-300 hover:ring-2 hover:ring-offset-2"
-              style={{ 
-                borderColor: corPrincipal,
-                boxShadow: `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`
-              }}
+            <button
+              type="button"
               onClick={() => navigate("/perfil")}
-            />
+              className="focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-full"
+              aria-label="Ir para o seu perfil"
+            >
+              <img
+                src={fotoAtual}
+                alt={user?.nome || "Usuário"}
+                className="w-9 h-9 rounded-full border-2 cursor-pointer hover:opacity-90 transition-all duration-300 hover:ring-2 hover:ring-offset-2 object-cover"
+                style={{
+                  borderColor: corPrincipal,
+                  boxShadow: `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`,
+                }}
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.src = NoPicture;
+                }}
+              />
+            </button>
             <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
           </div>
         ) : (
           <div className="flex items-center gap-4">
             <button
+              type="button"
               onClick={() => navigate("/login")}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white transition-all duration-300
                 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2`}
               style={{
-                background: `linear-gradient(135deg, ${corPrincipal}, ${hexToRGBA(corPrincipal, 0.8)})`,
-                boxShadow: `0 4px 6px -1px ${hexToRGBA(corPrincipal, 0.2)}, 0 2px 4px -1px ${hexToRGBA(corPrincipal, 0.1)}`
+                background: `linear-gradient(135deg, ${corPrincipal}, ${hexToRGBA(
+                  corPrincipal,
+                  0.8
+                )})`,
+                boxShadow: `0 4px 6px -1px ${hexToRGBA(
+                  corPrincipal,
+                  0.2
+                )}, 0 2px 4px -1px ${hexToRGBA(corPrincipal, 0.1)}`,
               }}
             >
-              <FaUser className="text-sm" />
+              <FaUser className="text-sm" aria-hidden="true" />
               <span>Entrar</span>
             </button>
             <button
+              type="button"
               onClick={() => navigate("/register")}
               className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
             >
@@ -311,11 +403,16 @@ export default function Header() {
         {/* Seletor de Região */}
         <div className="relative flex items-center gap-2">
           <button
-            className="w-8 h-8 flex items-center justify-center rounded-full border text-white duration-300 hover:scale-105"
-            onClick={() => setShowRegionSelector(!showRegionSelector)}
-            style={{ backgroundColor: corPrincipal, borderColor: corPrincipal }}
+            type="button"
+            className="w-8 h-8 flex items-center justify-center rounded-full border text-white duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            onClick={() => setShowRegionSelector((prev) => !prev)}
+            style={{
+              backgroundColor: corPrincipal,
+              borderColor: corPrincipal,
+            }}
+            aria-label="Selecionar região"
           >
-            <FaMapMarkerAlt />
+            <FaMapMarkerAlt aria-hidden="true" />
           </button>
           {regiao && (
             <span
@@ -326,10 +423,18 @@ export default function Header() {
             </span>
           )}
           {showRegionSelector && (
-            <RegionSelector
-              onClose={() => setShowRegionSelector(false)}
-              onSelect={handleRegiaoSelecionada}
-            />
+            <Suspense
+              fallback={
+                <div className="absolute top-10 right-0 bg-white shadow-md rounded-lg px-4 py-2 text-sm text-gray-500">
+                  Carregando regiões...
+                </div>
+              }
+            >
+              <RegionSelectorLazy
+                onClose={() => setShowRegionSelector(false)}
+                onSelect={handleRegiaoSelecionada}
+              />
+            </Suspense>
           )}
         </div>
       </div>
@@ -340,92 +445,122 @@ export default function Header() {
           className="absolute top-14 left-0 w-full bg-white p-4 lg:hidden border-b-[2px]"
           style={{ borderColor: corPrincipal }}
         >
+          {/* Busca mobile */}
           <div className="relative w-full mb-4">
-            <div className="relative">
+            <div className="relative" ref={searchContainerRef}>
               <div
                 className="flex items-center bg-white rounded-full shadow-md px-4 py-2 w-full border gap-2 transition-all duration-300"
-                style={{ 
+                style={{
                   borderColor: isSearchFocused ? corPrincipal : "#d1d5db",
-                  boxShadow: isSearchFocused ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}` : 'none',
+                  boxShadow: isSearchFocused
+                    ? `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`
+                    : "none",
                 }}
               >
                 <FaSearch
-                  className="text-gray-400 flex-shrink-0"
-                  style={{ color: isSearchFocused ? corPrincipal : "#9ca3af" }}
+                  className="flex-shrink-0"
+                  style={{
+                    color: isSearchFocused ? corPrincipal : "#9ca3af",
+                  }}
+                  aria-hidden="true"
                 />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  placeholder={activeSearchTab === 'usuarios' ? 'Buscar usuários...' : 'Buscar posts...'}
+                  placeholder={
+                    activeSearchTab === "usuarios"
+                      ? "Buscar usuários..."
+                      : "Buscar posts..."
+                  }
                   className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
                   onFocus={() => setIsSearchFocused(true)}
+                  aria-label="Buscar no Blog Periférico"
                 />
                 {searchTerm && (
                   <button
+                    type="button"
                     onClick={clearSearch}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
                     aria-label="Limpar busca"
                   >
-                    <FaTimes className="w-4 h-4" />
+                    <FaTimes className="w-4 h-4" aria-hidden="true" />
                   </button>
                 )}
               </div>
-              
-              {/* Resultados da busca no menu móvel */}
+
               {(isSearchFocused || searchTerm) && (
                 <div className="mt-1">
                   <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <div className="flex border-b">
+                    <div className="flex border-b" role="tablist">
                       <button
-                        onClick={() => setActiveSearchTab('usuarios')}
+                        type="button"
+                        onClick={() => setActiveSearchTab("usuarios")}
                         className={`flex-1 py-2 font-medium text-sm ${
-                          activeSearchTab === 'usuarios' 
-                            ? 'text-blue-600 border-b-2 border-blue-600' 
-                            : 'text-gray-500 hover:bg-gray-50'
+                          activeSearchTab === "usuarios"
+                            ? "text-blue-600 border-b-2 border-blue-600"
+                            : "text-gray-500 hover:bg-gray-50"
                         }`}
+                        role="tab"
+                        aria-selected={activeSearchTab === "usuarios"}
                       >
                         Usuários
                       </button>
                       <button
-                        onClick={() => setActiveSearchTab('posts')}
+                        type="button"
+                        onClick={() => setActiveSearchTab("posts")}
                         className={`flex-1 py-2 font-medium text-sm ${
-                          activeSearchTab === 'posts'
-                            ? 'text-blue-600 border-b-2 border-blue-600'
-                            : 'text-gray-500 hover:bg-gray-50'
+                          activeSearchTab === "posts"
+                            ? "text-blue-600 border-b-2 border-blue-600"
+                            : "text-gray-500 hover:bg-gray-50"
                         }`}
+                        role="tab"
+                        aria-selected={activeSearchTab === "posts"}
                       >
                         Posts
                       </button>
                     </div>
                     <div className="max-h-80 overflow-y-auto">
                       {isSearching ? (
-                        <div className="p-4 text-center text-gray-500">Buscando...</div>
-                      ) : activeSearchTab === 'usuarios' ? (
-                        searchResults.usuarios && searchResults.usuarios.length > 0 ? (
-                          <SearchResults 
-                            results={searchResults.usuarios} 
-                            searchTerm={searchTerm}
-                            onClose={() => {
-                              handleResultClick();
-                              setMenuOpen(false);
-                            }}
-                            isLoading={isSearching && activeSearchTab === 'usuarios'}
-                          />
+                        <div className="p-4 text-center text-gray-500">
+                          Buscando...
+                        </div>
+                      ) : activeSearchTab === "usuarios" ? (
+                        searchResults.usuarios &&
+                        searchResults.usuarios.length > 0 ? (
+                          <Suspense fallback={<div className="p-4 text-center text-gray-500">Carregando usuários...</div>}>
+                            <SearchResultsLazy
+                              results={searchResults.usuarios}
+                              searchTerm={searchTerm}
+                              onClose={() => {
+                                handleResultClick();
+                                setMenuOpen(false);
+                              }}
+                              isLoading={
+                                isSearching &&
+                                activeSearchTab === "usuarios"
+                              }
+                            />
+                          </Suspense>
                         ) : (
                           <div className="p-4 text-center text-gray-500">
                             Nenhum usuário encontrado
                           </div>
                         )
-                      ) : searchResults.posts && searchResults.posts.length > 0 ? (
-                        <PostSearchResults 
-                          results={searchResults.posts}
-                          onClose={() => {
-                            handleResultClick();
-                            setMenuOpen(false);
-                          }}
-                          isLoading={isSearching && activeSearchTab === 'posts'}
-                        />
+                      ) : searchResults.posts &&
+                        searchResults.posts.length > 0 ? (
+                        <Suspense fallback={<div className="p-4 text-center text-gray-500">Carregando posts...</div>}>
+                          <PostSearchResultsLazy
+                            results={searchResults.posts}
+                            onClose={() => {
+                              handleResultClick();
+                              setMenuOpen(false);
+                            }}
+                            isLoading={
+                              isSearching && activeSearchTab === "posts"
+                            }
+                          />
+                        </Suspense>
                       ) : (
                         <div className="p-4 text-center text-gray-500">
                           Nenhum post encontrado
@@ -438,22 +573,27 @@ export default function Header() {
             </div>
           </div>
 
-          <nav className="flex flex-col gap-3">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`py-1 transition duration-200 hover:bg-gray-200 rounded px-2 ${
-                  location.pathname === link.path ? "font-semibold" : ""
-                }`}
-                onClick={() => setMenuOpen(false)}
-                style={
-                  location.pathname === link.path ? { color: corPrincipal } : {}
-                }
-              >
-                {link.label}
-              </Link>
-            ))}
+          {/* Links de navegação mobile */}
+          <nav
+            className="flex flex-col gap-3"
+            aria-label="Navegação principal mobile"
+          >
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.path;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`py-1 transition duration-200 hover:bg-gray-200 rounded px-2 ${
+                    isActive ? "font-semibold" : ""
+                  }`}
+                  onClick={() => setMenuOpen(false)}
+                  style={isActive ? { color: corPrincipal } : {}}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
       )}

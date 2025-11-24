@@ -1,5 +1,6 @@
+// src/pages/Perfil/Perfil.jsx (ou o caminho que você estiver usando)
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUser } from "../../contexts/UserContext.jsx";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
@@ -13,7 +14,7 @@ import {
   FaArrowLeft,
   FaUserCog,
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
+
 import NoticiaService from "../../services/NoticiasService";
 import AnuncioService from "../../services/AnuncioService";
 import DoacaoService from "../../services/DoacaoService";
@@ -26,6 +27,7 @@ export default function Perfil() {
   const navigate = useNavigate();
   const { user: usuarioAutenticado } = useUser();
   const { regiao } = useRegiao();
+
   const [abaAtiva, setAbaAtiva] = useState("noticias");
   const [perfilUsuario, setPerfilUsuario] = useState(null);
   const [postsUsuario, setPostsUsuario] = useState({
@@ -34,11 +36,12 @@ export default function Perfil() {
     doacoes: [],
     vagas: [],
   });
-  const [loading, setLoading] = useState(true);
-  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [loading, setLoading] = useState(true); // loading do perfil
+  const [loadingPosts, setLoadingPosts] = useState(true); // loading dos posts
   const [fotoAtual, setFotoAtual] = useState(NoPicture);
 
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
+
   const abas = [
     {
       id: "noticias",
@@ -66,10 +69,11 @@ export default function Perfil() {
     const carregarPerfil = async () => {
       try {
         setLoading(true);
-        // Se não tiver ID, usa o perfil do usuário logado
+
+        // Se não tiver ID na URL, usa o perfil do usuário logado
         const usuarioId = id || (usuarioAutenticado && usuarioAutenticado.id);
         if (!usuarioId) {
-          // Redirecionar para login se não estiver logado e não tiver ID
+          // Se não tiver ID e não estiver logado, manda pro login
           window.location.href = "/login";
           return;
         }
@@ -90,7 +94,8 @@ export default function Perfil() {
 
     carregarPerfil();
   }, [id, usuarioAutenticado]);
-  // Carregar posts do usuário
+
+  // Carregar posts do usuário (notícias, anúncios, doações, vagas)
   useEffect(() => {
     if (!perfilUsuario?.id) return;
 
@@ -98,47 +103,61 @@ export default function Perfil() {
       setLoadingPosts(true);
       try {
         let dados = [];
-        
+
+        // Função para comparar o usuário do post com o usuário do perfil
+        const ehMesmoUsuario = (item) => {
+          const userId = Number(perfilUsuario.id);
+
+          return (
+            Number(item.idUsuario) === userId ||
+            Number(item.usuarioId) === userId ||
+            Number(item.usuario?.id) === userId
+          );
+        };
+
         switch (abaAtiva) {
-          case "noticias":
+          case "noticias": {
             dados = await NoticiaService.listarNoticias();
-            setPostsUsuario(prev => ({
+            setPostsUsuario((prev) => ({
               ...prev,
-              noticias: dados.filter(n => n.idUsuario === perfilUsuario.id)
+              noticias: (dados || []).filter(ehMesmoUsuario),
             }));
             break;
-            
-          case "anuncios":
+          }
+
+          case "anuncios": {
             dados = await AnuncioService.getAnuncios();
-            setPostsUsuario(prev => ({
+            setPostsUsuario((prev) => ({
               ...prev,
-              anuncios: dados.filter(a => a.usuarioId === perfilUsuario.id)
+              anuncios: (dados || []).filter(ehMesmoUsuario),
             }));
             break;
-            
-          case "doacoes":
+          }
+
+          case "doacoes": {
             dados = await DoacaoService.listarDoacoes();
-            setPostsUsuario(prev => ({
+            setPostsUsuario((prev) => ({
               ...prev,
-              doacoes: dados.filter(d => d.usuarioId === perfilUsuario.id)
+              doacoes: (dados || []).filter(ehMesmoUsuario),
             }));
             break;
-            
-          case "vagas":
+          }
+
+          case "vagas": {
             dados = await VagaService.listarVagas();
-            setPostsUsuario(prev => ({
+            setPostsUsuario((prev) => ({
               ...prev,
-              vagas: dados.filter(v => v.usuarioId === perfilUsuario.id)
+              vagas: (dados || []).filter(ehMesmoUsuario),
             }));
             break;
-            
+          }
+
           default:
             break;
         }
       } catch (error) {
         console.error("Erro ao carregar posts:", error);
       } finally {
-        setLoading(false);
         setLoadingPosts(false);
       }
     };
@@ -147,6 +166,7 @@ export default function Perfil() {
   }, [perfilUsuario?.id, abaAtiva]);
 
   if (loading) {
+    // loading do perfil inteiro
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
         <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl text-center">
@@ -193,6 +213,18 @@ export default function Perfil() {
     usuarioAutenticado &&
     perfilUsuario &&
     usuarioAutenticado.id === perfilUsuario.id;
+
+  // Verifica se o usuário é admin
+  const isAdmin =
+    usuarioAutenticado?.roles === "ROLE_ADMINISTRADOR" ||
+    usuarioAutenticado?.admin === true;
+
+  // Debug
+  console.log("=== PERFIL - DADOS DO USUÁRIO ===");
+  console.log("Usuário autenticado:", usuarioAutenticado);
+  console.log("É admin?", isAdmin);
+  console.log("Roles:", usuarioAutenticado?.roles);
+  console.log("Propriedade admin:", usuarioAutenticado?.admin);
 
   const renderizarPosts = () => {
     const posts = postsUsuario[abaAtiva] || [];
@@ -244,7 +276,7 @@ export default function Perfil() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="absolute top-2 left-2 bg-white/90 px-2 py-1 rounded-full text-xs font-semibold text-gray-800 shadow-sm">
-                    {post.zona || post.categoria}
+                    {post.zona || post.regiao || post.categoria}
                   </div>
                 </div>
               )}
@@ -253,7 +285,7 @@ export default function Perfil() {
                   {post.titulo}
                 </h3>
                 <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed mb-3">
-                  {post.texto || post.descricao}
+                  {post.texto || post.descricao || post.descricaoCompleta}
                 </p>
                 <div className="text-xs text-gray-400 flex justify-end items-center">
                   <span className="bg-gray-100 px-2 py-1 rounded-full">
@@ -270,21 +302,9 @@ export default function Perfil() {
     );
   };
 
-  // Verifica se o usuário é admin
-  const isAdmin =
-    usuarioAutenticado?.roles === "ROLE_ADMINISTRADOR" ||
-    usuarioAutenticado?.admin === true;
-
-  // Debug
-  console.log("=== PERFIL - DADOS DO USUÁRIO ===");
-  console.log("Usuário autenticado:", usuarioAutenticado);
-  console.log("É admin?", isAdmin);
-  console.log("Roles:", usuarioAutenticado?.roles);
-  console.log("Propriedade admin:", usuarioAutenticado?.admin);
-
   return (
     <main className="min-h-screen bg-gray-50 pt-24 px-4 md:px-8">
-      {/* Header e Abas juntos */}
+      {/* Header + Abas */}
       <div className="bg-white rounded-lg shadow-xl max-w-none mx-0">
         {/* Header do perfil */}
         <div className="p-8 border-b border-gray-200">
@@ -330,11 +350,13 @@ export default function Perfil() {
                   <div className="mt-2 md:mt-0">
                     <button
                       onClick={() => navigate("/admin")}
-                      className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-full px-4 py-2 shadow-lg transition-all duration-200 border border-blue-700 hover:shadow-xl"
+                      className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-707 hover:to-blue-700 text-white rounded-full px-4 py-2 shadow-lg transition-all duration-200 border border-blue-700 hover:shadow-xl"
                       title="Painel de Administração"
                     >
                       <FaUserCog className="text-lg" />
-                      <span className="text-sm font-medium">Painel Admin</span>
+                      <span className="text-sm font-medium">
+                        Painel Admin
+                      </span>
                     </button>
                   </div>
                 )}
@@ -395,19 +417,7 @@ export default function Perfil() {
           </div>
 
           {/* Conteúdo das abas */}
-          <div className="p-6 bg-white">
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <div
-                  className="animate-spin rounded-full h-12 w-12 border-b-2"
-                  style={{ borderColor: corPrincipal }}
-                ></div>
-                <p className="ml-4 text-gray-600">Carregando posts...</p>
-              </div>
-            ) : (
-              renderizarPosts()
-            )}
-          </div>
+          <div className="p-6 bg-white">{renderizarPosts()}</div>
         </div>
       </div>
     </main>

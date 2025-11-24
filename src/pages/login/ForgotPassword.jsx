@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+// src/pages/ForgotPassword.jsx
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import EyeOpen from "../../assets/images/view.png";
@@ -8,16 +9,15 @@ import api from "../../services/Api";
 
 // Componente para os inputs de código
 const CodeInputs = ({ code, setCode, disabled }) => {
-  const inputs = useRef([]);
-  
+  const inputs = React.useRef([]);
+
   const handleChange = (e, index) => {
-    const value = e.target.value.replace(/[^0-9]/g, '');
+    const value = e.target.value.replace(/[^0-9]/g, "");
     if (value) {
       const newCode = [...code];
       newCode[index] = value;
       setCode(newCode);
-      
-      // Move para o próximo input
+
       if (index < 5 && inputs.current[index + 1]) {
         inputs.current[index + 1].focus();
       }
@@ -25,18 +25,15 @@ const CodeInputs = ({ code, setCode, disabled }) => {
   };
 
   const handleKeyDown = (e, index) => {
-    if (e.key === 'Backspace') {
+    if (e.key === "Backspace") {
       const newCode = [...code];
-      
-      // Se o campo atual está vazio, apaga o anterior
+
       if (!code[index] && index > 0) {
-        newCode[index - 1] = '';
+        newCode[index - 1] = "";
         setCode(newCode);
         inputs.current[index - 1].focus();
-      } 
-      // Se o campo atual tem valor, limpa ele
-      else if (code[index]) {
-        newCode[index] = '';
+      } else if (code[index]) {
+        newCode[index] = "";
         setCode(newCode);
       }
     }
@@ -44,11 +41,10 @@ const CodeInputs = ({ code, setCode, disabled }) => {
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const paste = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+    const paste = e.clipboardData.getData("text").replace(/[^0-9]/g, "");
     if (paste.length === 6) {
-      const newCode = paste.split('').slice(0, 6);
+      const newCode = paste.split("").slice(0, 6);
       setCode(newCode);
-      // Foca no último input após o paste
       if (inputs.current[5]) {
         inputs.current[5].focus();
       }
@@ -59,17 +55,19 @@ const CodeInputs = ({ code, setCode, disabled }) => {
     <div className="flex justify-center gap-4 mb-12 px-4">
       {[...Array(6)].map((_, i) => (
         <div key={i} className="relative w-20 h-20">
-          <div className={`
+          <div
+            className={`
             absolute inset-0 bg-white/90 backdrop-blur-sm rounded-lg 
             transform transition-all duration-200 ease-out
-            border-2 ${code[i] ? 'border-[#828282]' : 'border-gray-300'}
-            ${!disabled && 'group-hover:border-[#828282]'}
-          `}></div>
+            border-2 ${code[i] ? "border-[#828282]" : "border-gray-300"}
+            ${!disabled && "group-hover:border-[#828282]"}
+          `}
+          ></div>
           <input
-            ref={el => inputs.current[i] = el}
+            ref={(el) => (inputs.current[i] = el)}
             type="text"
             maxLength="1"
-            value={code[i] || ''}
+            value={code[i] || ""}
             onChange={(e) => handleChange(e, i)}
             onKeyDown={(e) => handleKeyDown(e, i)}
             onPaste={i === 0 ? handlePaste : null}
@@ -80,15 +78,15 @@ const CodeInputs = ({ code, setCode, disabled }) => {
               focus:ring-0 focus:outline-none
               transition-all duration-200
               text-gray-800 caret-transparent
-              ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
-              ${code[i] ? 'text-gray-800' : 'text-gray-600'}
+              ${disabled ? "cursor-not-allowed" : "cursor-pointer"}
+              ${code[i] ? "text-gray-800" : "text-gray-600"}
               leading-none
             `}
             inputMode="numeric"
             style={{
-              WebkitAppearance: 'none',
-              MozAppearance: 'textfield',
-              textShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              WebkitAppearance: "none",
+              MozAppearance: "textfield",
+              textShadow: "0 1px 2px rgba(0,0,0,0.05)",
             }}
           />
         </div>
@@ -101,7 +99,7 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState(Array(6).fill(''));
+  const [code, setCode] = useState(Array(6).fill(""));
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -134,13 +132,13 @@ export default function ForgotPassword() {
 
   const handleRedefinirSenha = async (e) => {
     e.preventDefault();
-    const codigoCompleto = code.join('');
-    
+    const codigoCompleto = code.join("");
+
     if (codigoCompleto.length !== 6) {
       setMensagem("Por favor, preencha todos os dígitos do código");
       return;
     }
-    
+
     if (novaSenha !== confirmarSenha) {
       setMensagem("As senhas não coincidem");
       return;
@@ -160,7 +158,7 @@ export default function ForgotPassword() {
         codigo: codigoCompleto,
         novaSenha,
       });
-      
+
       setMensagem("Senha redefinida com sucesso! Redirecionando...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
@@ -180,13 +178,12 @@ export default function ForgotPassword() {
     >
       <div className="absolute inset-0 bg-black/40"></div>
 
-      <div className="relative z-10 w-full" style={{ maxWidth: '600px' }}>
-        {/* Painel do formulário */}
+      <div className="relative z-10 w-full" style={{ maxWidth: "600px" }}>
         <div className="w-full bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-10 border border-white/20">
           {mensagem && (
             <div
               className={`p-3 mb-4 rounded-md text-center ${
-                mensagem.includes("sucesso") || step === 2
+                mensagem.toLowerCase().includes("sucesso")
                   ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
               }`}
@@ -249,14 +246,16 @@ export default function ForgotPassword() {
           ) : (
             <form onSubmit={handleRedefinirSenha}>
               <div className="mb-4">
-                <p className="text-lg sm:text-xl text-gray-800 mb-2 text-center font-semibold">Código de verificação</p>
-                <p className="text-sm sm:text-base text-gray-600 mb-8 text-center">Enviamos um código de 6 dígitos para<br/><span className="font-medium text-gray-800">{email}</span></p>
-                <CodeInputs 
-                  code={code} 
-                  setCode={setCode} 
-                  disabled={isLoading} 
-                />
-                
+                <p className="text-lg sm:text-xl text-gray-800 mb-2 text-center font-semibold">
+                  Código de verificação
+                </p>
+                <p className="text-sm sm:text-base text-gray-600 mb-8 text-center">
+                  Enviamos um código de 6 dígitos para
+                  <br />
+                  <span className="font-medium text-gray-800">{email}</span>
+                </p>
+                <CodeInputs code={code} setCode={setCode} disabled={isLoading} />
+
                 <div className="relative mb-4">
                   <input
                     type={showPassword ? "text" : "password"}

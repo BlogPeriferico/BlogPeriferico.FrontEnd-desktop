@@ -1,77 +1,77 @@
-import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import NoPicture from '../assets/images/NoPicture.webp';
-import { FaSpinner } from 'react-icons/fa';
+// src/components/SearchResults.jsx
+import React from "react";
+import { Link } from "react-router-dom";
+import NoPicture from "../assets/images/NoPicture.webp";
+import { FaSpinner } from "react-icons/fa";
 
-const SearchResults = ({ results, onClose, searchTerm, isLoading = false }) => {
-  const resultsRef = useRef(null);
-
-  // Fechar os resultados ao clicar fora
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (resultsRef.current && !resultsRef.current.contains(event.target)) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [onClose]);
-
+const SearchResults = ({
+  results,
+  onClose,
+  searchTerm,
+  isLoading = false,
+}) => {
   if (isLoading) {
     return (
-      <div 
-        ref={resultsRef}
-        className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 py-4 max-h-80 overflow-y-auto"
-      >
-        <div className="flex justify-center items-center p-4 text-gray-500">
-          <FaSpinner className="animate-spin mr-2" />
-          <span>Buscando usuários...</span>
-        </div>
+      <div className="flex justify-center items-center p-4 text-gray-500">
+        <FaSpinner className="animate-spin mr-2" aria-hidden="true" />
+        <span>Buscando usuários...</span>
       </div>
     );
   }
 
   if (!results || results.length === 0) {
     return (
-      <div 
-        ref={resultsRef}
-        className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 py-2 max-h-80 overflow-y-auto"
-      >
-        <div className="p-4 text-center text-gray-500">
-          Nenhum usuário encontrado para "{searchTerm}"
-        </div>
+      <div className="p-4 text-center text-gray-500 text-sm">
+        Nenhum usuário encontrado{searchTerm ? ` para "${searchTerm}"` : ""}.
       </div>
     );
   }
 
   return (
-    <div 
-      ref={resultsRef}
-      className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 py-2 max-h-80 overflow-y-auto"
+    <ul
+      className="py-2 max-h-80 overflow-y-auto"
+      role="list"
+      aria-label="Resultados de busca de usuários"
     >
-      {results.map((usuario) => (
-        <Link
-          key={usuario.id}
-          to={`/perfil/${usuario.id}`}
-          className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors duration-200"
-          onClick={onClose}
-        >
-          <img
-            src={usuario.fotoPerfil || NoPicture}
-            alt={usuario.nome}
-            className="w-10 h-10 rounded-full object-cover mr-3 border"
-          />
-          <div>
-            <p className="font-medium text-gray-900">{usuario.nome}</p>
-            <p className="text-xs text-gray-500">@{usuario.nomeUsuario || usuario.nome?.toLowerCase().replace(/\s+/g, '')}</p>
-          </div>
-        </Link>
-      ))}
-    </div>
+      {results.map((usuario) => {
+        const nome = usuario.nome || "Usuário";
+        const userSlug =
+          usuario.nomeUsuario ||
+          nome
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/\s+/g, "");
+
+        return (
+          <li key={usuario.id} role="listitem">
+            <Link
+              to={`/perfil/${usuario.id}`}
+              className="flex items-center px-4 py-2 hover:bg-gray-100 transition-colors duration-200"
+              onClick={onClose}
+            >
+              <img
+                src={usuario.fotoPerfil || NoPicture}
+                alt={`Foto de perfil de ${nome}`}
+                className="w-10 h-10 rounded-full object-cover mr-3 border"
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = NoPicture;
+                }}
+              />
+              <div>
+                <p className="font-medium text-gray-900 text-sm">
+                  {nome}
+                </p>
+                <p className="text-xs text-gray-500">@{userSlug}</p>
+              </div>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 };
 
-export default SearchResults;
+export default React.memo(SearchResults);

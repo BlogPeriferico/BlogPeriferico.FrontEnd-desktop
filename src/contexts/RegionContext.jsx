@@ -1,16 +1,29 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+// src/contexts/RegionContext.jsx
+import { createContext, useContext, useState, useEffect } from "react";
 
 export const RegionContext = createContext();
 
+function getInitialRegion() {
+  // SSR-safe + try/catch pra não quebrar em modo privado
+  if (typeof window === "undefined") return "centro";
+  try {
+    const saved = localStorage.getItem("regiao");
+    return saved || "centro";
+  } catch {
+    return "centro";
+  }
+}
+
 export function RegionProvider({ children }) {
-  // Recuperar a região salva do localStorage ou usar "centro" como padrão
-  const savedRegion = localStorage.getItem('regiao');
-  const [regiao, setRegiao] = useState(savedRegion || "centro"); // Se não tiver no localStorage, usa "centro"
+  // lazy init -> só lê localStorage uma vez, na montagem
+  const [regiao, setRegiao] = useState(getInitialRegion);
 
   useEffect(() => {
-    // Salvar a região sempre que ela for alterada
-    if (regiao) {
-      localStorage.setItem('regiao', regiao);
+    if (!regiao) return;
+    try {
+      localStorage.setItem("regiao", regiao);
+    } catch {
+      // se der erro no localStorage, só ignora
     }
   }, [regiao]);
 

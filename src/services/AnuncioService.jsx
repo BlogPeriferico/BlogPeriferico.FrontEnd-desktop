@@ -16,7 +16,7 @@ const AnuncioService = {
 
     const config = {
       headers: {
-        Authorization: `Bearer ${token}`,
+        // Authorization vem do interceptor do axios (Api.js)
         "Content-Type":
           anuncioData instanceof FormData
             ? "multipart/form-data"
@@ -68,7 +68,7 @@ const AnuncioService = {
 
     const config = {
       headers: {
-        Authorization: `Bearer ${token}`,
+        // Authorization vem do interceptor do axios (Api.js)
         "Content-Type":
           anuncioData instanceof FormData
             ? "multipart/form-data"
@@ -93,25 +93,37 @@ const AnuncioService = {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
-      throw new Error("Usuário não está logado. Faça login novamente.");
+      const error = new Error("Usuário não está logado. Faça login novamente.");
+      error.status = 401;
+      throw error;
     }
 
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-
     try {
-      const response = await api.delete(`/vendas/${id}`, config);
+      const response = await api.delete(`/vendas/${id}`);
       return response.data;
     } catch (err) {
-      // Melhora a mensagem de erro para o usuário
-      if (err.response?.status === 403) {
-        throw new Error("Você não tem permissão para excluir este anúncio.");
-      } else if (err.response?.status === 404) {
-        throw new Error("Anúncio não encontrado ou já foi excluído.");
+      const status = err.response?.status;
+
+      // Cria erros com mensagem amigável, mas mantendo o status
+      if (status === 403) {
+        const error = new Error(
+          "Você não tem permissão para excluir este anúncio."
+        );
+        error.status = 403;
+        error.response = err.response;
+        throw error;
       }
+
+      if (status === 404) {
+        const error = new Error(
+          "Anúncio não encontrado ou já foi excluído."
+        );
+        error.status = 404;
+        error.response = err.response;
+        throw error;
+      }
+
+      // Mantém o erro original para outros status (500, etc.)
       throw err;
     }
   },

@@ -1,27 +1,44 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useUser } from '../contexts/UserContext';
+// src/components/ProtectedRoute.jsx
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useUser } from "../contexts/UserContext";
+
+function hasAdminRole(user) {
+  if (!user) return false;
+
+  const roles = [];
+
+  if (Array.isArray(user.roles)) {
+    roles.push(...user.roles);
+  } else if (user.roles) {
+    roles.push(user.roles);
+  }
+
+  if (user.role) roles.push(user.role);
+  if (user.papel) roles.push(user.papel);
+
+  const normalized = roles
+    .filter(Boolean)
+    .map((r) => String(r).toUpperCase());
+
+  return (
+    normalized.some((r) => r.includes("ADMIN")) || user.admin === true
+  );
+}
 
 export default function ProtectedRoute({ children }) {
   const { user } = useUser();
-  
-  console.log('=== PROTECTED ROUTE ===');
-  console.log('Usuário:', user);
-  console.log('É admin?', user?.roles === 'ROLE_ADMINISTRADOR' || user?.admin);
-  
+
+  // Visitante ou não logado
   if (!user || user.isVisitor) {
-    console.log('Usuário não autenticado, redirecionando para login');
     return <Navigate to="/login" replace />;
   }
-  
-  // Verifica se é admin pela role ou pela propriedade admin
-  const isAdmin = user.roles === 'ROLE_ADMINISTRADOR' || user.admin === true;
-  
+
+  const isAdmin = hasAdminRole(user);
+
   if (!isAdmin) {
-    console.log('Usuário não é admin, redirecionando para home');
     return <Navigate to="/" replace />;
   }
 
-  console.log('Acesso permitido ao painel de admin');
   return children;
 }

@@ -1,14 +1,15 @@
+// src/pages/DoacaoInfo/DoacaoInfo.jsx (ajuste o caminho conforme seu projeto)
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import DoacaoService from "../../services/DoacaoService";
 import ComentariosService from "../../services/ComentariosService";
-import AuthService from "../../services/AuthService";
 import api from "../../services/Api";
 import { useRegiao } from "../../contexts/RegionContext";
 import { useUser } from "../../contexts/UserContext.jsx";
 import { regionColors } from "../../utils/regionColors";
 import { FaTrash } from "react-icons/fa";
 import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
+import { ModalVisitantes } from "../../components/modals/ModalVisitantes";
 import NoPicture from "../../assets/images/NoPicture.webp";
 
 export default function DoacaoInfo() {
@@ -19,254 +20,175 @@ export default function DoacaoInfo() {
   const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
+  // Se vier com state da lista, usa como cache inicial
   const [doacao, setDoacao] = useState(location.state || null);
   const [loading, setLoading] = useState(!location.state);
   const [comentarios, setComentarios] = useState([]);
   const [novoComentario, setNovoComentario] = useState("");
   const [comentLoading, setComentLoading] = useState(false);
-  const [usuarioLogado, setUsuarioLogado] = useState({
-    id: null,
-    email: null,
-    nome: "Visitante",
-    papel: null,
-  });
   const [modalDeletar, setModalDeletar] = useState({
     isOpen: false,
     comentarioId: null,
   });
   const [modalDeletarDoacao, setModalDeletarDoacao] = useState(false);
-  const [showLoginAlert, setShowLoginAlert] = useState(false);
   const [nomeAutor, setNomeAutor] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Carregar perfil do usuário usando UserContext
-  useEffect(() => {
-    if (user && user.id) {
-      const userData = {
-        id: user.id,
-        email: user.email,
-        nome: user.nome,
-        role: user.role || user.roles || user.papel,
-        roles: user.roles || user.role || user.papel,
-        papel: user.papel || user.role || user.roles,
-        fotoPerfil: user.fotoPerfil,
-      };
-      
-      setUsuarioLogado(userData);
-    }
-  }, [user]);
+  // Monta um objeto do usuário logado baseado no UserContext
+  const usuarioLogado =
+    user && user.id
+      ? {
+          id: user.id,
+          email: user.email,
+          nome: user.nome,
+          role: user.role || user.roles || user.papel,
+          roles: user.roles || user.role || user.papel,
+          papel: user.papel || user.role || user.roles,
+          fotoPerfil: user.fotoPerfil,
+          admin: user.admin === true,
+        }
+      : null;
 
-  // Carregar doação e comentários
+  // Carregar doação + comentários
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    if (!doacao) {
-      setLoading(true);
-      
-      const carregarDoacao = async () => {
-        try {
-          const data = await DoacaoService.buscarDoacaoPorId(id);
-
-          // Buscar dados do usuário junto com a doação
-          if (data.idUsuario) {
-            try {
-              const response = await api.get("/usuarios/listar");
-              const doador = response.data.find((u) => u.id === data.idUsuario);
-
-              if (doador) {  
-                data.autor = doador.nome;
-                data.fotoPerfil = doador.fotoPerfil;
-                data.idUsuario = doador.id;
-              } else if (data.autor) {
-                // Usa o nome do autor diretamente da doação
-              }
-            } catch (err) {
-              // Erro ao buscar dados do doador, continua com os dados que tem
-              if (data.autor) {
-                // Usa o nome do autor diretamente da doação
-              }
-            }
-          } 
-
-          setDoacao(data);
-          
-          // Carrega os comentários
-          try {
-            const comentariosData = await ComentariosService.listarComentariosDoacao(id);
-            
-            // Buscar todos os usuários para obter as fotos de perfil
-            const response = await api.get("/usuarios/listar");
-            const usuarios = response.data;
-            
-            // Mapear comentários e adicionar avatar
-            const comentariosComAvatar = comentariosData.map(coment => {
-              // Encontrar o usuário que fez o comentário
-              const usuarioComentario = usuarios.find(u => 
-                u.id === coment.idUsuario || u.email === coment.emailUsuario
-              );
-              
-              // Se encontrou o usuário e ele tem foto de perfil, usa a foto
-              if (usuarioComentario?.fotoPerfil) {
-                return { ...coment, avatar: usuarioComentario.fotoPerfil };
-              }
-              
-              // Se for o próprio usuário logado, usa a foto do perfil atual
-              if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
-                return { ...coment, avatar: user.fotoPerfil };
-              }
-              
-              // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
-              return { ...coment, avatar: coment.avatar || NoPicture };
-            });
-            
-            setComentarios(comentariosComAvatar);
-          } catch (err) {
-            setComentarios([]);
-          };
-
-        } catch (err) {
-          setDoacao(null);
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      carregarDoacao();
-    } else {
-    }
-
-    const carregarComentarios = async () => {
+    const carregarDados = async () => {
       try {
-        const comentarios = await ComentariosService.listarComentariosDoacao(id);
-        
-        // Buscar todos os usuários para obter as fotos de perfil
-        const response = await api.get("/usuarios/listar");
-        const usuarios = response.data;
-        
-        // Mapear comentários e adicionar avatar
-        const comentariosComAvatar = comentarios.map(coment => {
-          // Encontrar o usuário que fez o comentário
-          const usuarioComentario = usuarios.find(u => 
-            u.id === coment.idUsuario || u.email === coment.emailUsuario
-          );
-          
-          // Se encontrou o usuário e ele tem foto de perfil, usa a foto
-          if (usuarioComentario?.fotoPerfil) {
-            return { ...coment, avatar: usuarioComentario.fotoPerfil };
-          }
-          
-          // Se for o próprio usuário logado, usa a foto do perfil atual
-          if ((coment.idUsuario === user?.id || coment.emailUsuario === user?.email) && user?.fotoPerfil) {
-            return { ...coment, avatar: user.fotoPerfil };
-          }
-          
-          // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
-          return { ...coment, avatar: coment.avatar || NoPicture };
-        });
-        
-        setComentarios(comentariosComAvatar);
-      } catch (err) {
-        setComentarios([]);
-      }
-    };
+        setLoading(true);
 
-    carregarComentarios();
-  }, [id, doacao]);
+        let doacaoCarregada = doacao;
 
-  // Monitora alterações no estado da doação
-  useEffect(() => {
-    // Efeito vazio para monitorar alterações na doação
-  }, [doacao]);
+        // Se não veio do location.state, busca no back
+        if (!doacaoCarregada) {
+          doacaoCarregada = await DoacaoService.buscarDoacaoPorId(id);
+        }
 
-  // Força o recarregamento da doação quando o componente é montado
-  useEffect(() => {
-    setDoacao(null); // Isso forçará um novo carregamento
-  }, [id]);
-
-  // Atualiza fotoPerfil da doação quando foto do usuário muda
-  useEffect(() => {
-    if (doacao && user?.id && doacao.idUsuario === user.id) {
-      const novaFoto = user.fotoPerfil || NoPicture;
-
-      // Só atualiza se a foto realmente mudou
-      if (novaFoto !== doacao.fotoPerfil) {
-        setDoacao(prevDoacao => ({
-          ...prevDoacao,
-          fotoPerfil: novaFoto
-        }));
-      }
-    }
-  }, [user?.fotoPerfil, doacao?.id, doacao?.idUsuario, user?.id]);
-
-  // Sincroniza fotoPerfil inicial quando doação e usuário estão disponíveis
-  useEffect(() => {
-    if (doacao && user?.id && doacao.idUsuario === user.id && user.fotoPerfil && !doacao.fotoPerfil) {
-      setDoacao(prevDoacao => ({
-        ...prevDoacao,
-        fotoPerfil: user.fotoPerfil
-      }));
-    }
-  }, [doacao, user]);
-
-  // Atualiza avatar dos comentários existentes quando foto do usuário muda
-  useEffect(() => {
-    if (user?.id && comentarios.length > 0) {
-      setComentarios(prevComentarios => {
-        return prevComentarios.map(coment => {
-          const isUserComment = coment.idUsuario === user.id || coment.emailUsuario === user.email;
-
-          if (isUserComment) {
-            return {
-              ...coment,
-              avatar: user.fotoPerfil || NoPicture
-            };
-          }
-          return coment;
-        });
-      });
-    }
-  }, [user?.fotoPerfil, user?.id, comentarios.length]);
-
-  // Buscar nome do autor da doação
-  useEffect(() => {
-    const buscarAutor = async () => {
-      if (doacao && doacao.idUsuario) {
+        // Buscar usuários para mapear autor + avatares
+        let usuarios = [];
         try {
           const response = await api.get("/usuarios/listar");
-          const usuarios = response.data;
-          const autor = usuarios.find((u) => u.id === doacao.idUsuario);
-          if (autor) {
-            setNomeAutor(autor.nome);
-          }
+          usuarios = Array.isArray(response.data) ? response.data : [];
         } catch (err) {
-          console.error(
-            "❌ Erro ao buscar autor (403 - backend bloqueando):",
-            err
-          );
-          // Fallback: usa o campo autor se existir
-          setNomeAutor(doacao.autor || "Autor");
+          console.error("Erro ao buscar usuários para doação/comentários:", err);
         }
-      } else if (doacao && doacao.autor) {
-        // Se não tem idUsuario, usa o campo autor direto
-        setNomeAutor(doacao.autor);
+
+        // Mapear autor da doação se tiver idUsuario
+        if (doacaoCarregada.idUsuario && usuarios.length > 0) {
+          const doador = usuarios.find(
+            (u) => String(u.id) === String(doacaoCarregada.idUsuario)
+          );
+
+          if (doador) {
+            doacaoCarregada = {
+              ...doacaoCarregada,
+              autor: doador.nome,
+              fotoPerfil: doador.fotoPerfil,
+              idUsuario: doador.id,
+            };
+          }
+        }
+
+        setDoacao(doacaoCarregada);
+        setNomeAutor(doacaoCarregada.autor || "Autor");
+
+        // Carregar comentários da doação
+        try {
+          const comentariosData =
+            await ComentariosService.listarComentariosDoacao(id);
+
+          const comentariosComAvatar = comentariosData.map((coment) => {
+            const usuarioComentario = usuarios.find(
+              (u) =>
+                String(u.id) === String(coment.idUsuario) ||
+                u.email === coment.emailUsuario
+            );
+
+            let avatar = coment.avatar || NoPicture;
+
+            if (usuarioComentario?.fotoPerfil) {
+              avatar = usuarioComentario.fotoPerfil;
+            } else if (
+              user &&
+              (String(coment.idUsuario) === String(user.id) ||
+                coment.emailUsuario === user.email) &&
+              user.fotoPerfil
+            ) {
+              avatar = user.fotoPerfil;
+            }
+
+            return { ...coment, avatar };
+          });
+
+          setComentarios(comentariosComAvatar);
+        } catch (err) {
+          console.error("Erro ao carregar comentários da doação:", err);
+          setComentarios([]);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar doação:", err);
+        setDoacao(null);
+      } finally {
+        setLoading(false);
       }
     };
-    buscarAutor();
-  }, [doacao]);
+
+    carregarDados();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]); // re-carrega quando o ID da rota muda
+
+  // Atualiza foto da doação se o dono mudar a foto de perfil
+  useEffect(() => {
+    if (
+      doacao &&
+      usuarioLogado?.id &&
+      String(doacao.idUsuario) === String(usuarioLogado.id)
+    ) {
+      const novaFoto = usuarioLogado.fotoPerfil || NoPicture;
+      if (novaFoto !== doacao.fotoPerfil) {
+        setDoacao((prev) =>
+          prev
+            ? {
+                ...prev,
+                fotoPerfil: novaFoto,
+              }
+            : prev
+        );
+      }
+    }
+  }, [doacao, usuarioLogado?.id, usuarioLogado?.fotoPerfil]);
+
+  // Atualiza avatar dos comentários do usuário logado quando ele troca de foto
+  useEffect(() => {
+    if (!usuarioLogado?.id || comentarios.length === 0) return;
+
+    setComentarios((prev) =>
+      prev.map((coment) => {
+        const isUserComment =
+          String(coment.idUsuario) === String(usuarioLogado.id) ||
+          coment.emailUsuario === usuarioLogado.email;
+
+        if (isUserComment) {
+          return {
+            ...coment,
+            avatar: usuarioLogado.fotoPerfil || NoPicture,
+          };
+        }
+        return coment;
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuarioLogado?.fotoPerfil]);
 
   // Publicar comentário
   const handlePublicarComentario = async () => {
-    if (!user?.id) {
-      setShowLoginAlert(true);
+    // Se não está logado, abre modal de visitantes
+    if (!usuarioLogado?.id) {
+      setShowAuthModal(true);
       return;
     }
-    
-    if (!novoComentario.trim()) return;
 
-    // Aguardar o carregamento do ID do usuário
-    if (!usuarioLogado.id) {
-      alert("Aguarde o carregamento do perfil ou faça login novamente.");
-      return;
-    }
+    if (!novoComentario.trim()) return;
 
     setComentLoading(true);
 
@@ -275,18 +197,21 @@ export default function DoacaoInfo() {
         texto: novoComentario,
         idDoacao: Number(id),
         idUsuario: usuarioLogado.id,
-        tipo: "DOACAO",  
+        tipo: "DOACAO",
       };
 
-      const comentarioCriado = await ComentariosService.criarComentarioDoacao(dto);
+      const comentarioCriado =
+        await ComentariosService.criarComentarioDoacao(dto);
 
-      if (!comentarioCriado.nomeUsuario) {
-        comentarioCriado.nomeUsuario = user.nome || "Você";
-        comentarioCriado.dataHoraCriacao = new Date().toISOString();
-        comentarioCriado.avatar = user.fotoPerfil || NoPicture;
-      }
+      const comentarioFormatado = {
+        ...comentarioCriado,
+        nomeUsuario: comentarioCriado.nomeUsuario || user?.nome || "Você",
+        dataHoraCriacao:
+          comentarioCriado.dataHoraCriacao || new Date().toISOString(),
+        avatar: user?.fotoPerfil || NoPicture,
+      };
 
-      setComentarios((prev) => [...prev, comentarioCriado]);
+      setComentarios((prev) => [...prev, comentarioFormatado]);
       setNovoComentario("");
     } catch (err) {
       console.error("❌ Erro ao publicar comentário:", err);
@@ -309,25 +234,28 @@ export default function DoacaoInfo() {
     }
   };
 
-  // Verificação de propriedade da doação
-  // Verifica role, roles ou papel, em qualquer caso
-  const userRole = usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
-  const roleNormalizado = String(userRole).toUpperCase();
-  
-  // Verificação de permissões
-  const isAdmin = roleNormalizado.includes("ADMIN") || roleNormalizado.includes("ADMINISTRADOR");
-  const isDoador = doacao && (
-    doacao.idUsuario === usuarioLogado?.id ||
-    doacao.emailUsuario === usuarioLogado?.email ||
-    doacao.autor === usuarioLogado?.nome
-  );
-  
-  const podeExcluirDoacao = Boolean(doacao && usuarioLogado && (isAdmin || isDoador));
+  // Permissões
+  const userRole =
+    usuarioLogado?.role ||
+    usuarioLogado?.roles ||
+    usuarioLogado?.papel ||
+    "";
+  const roleNormalizado = String(userRole || "").toUpperCase();
 
-  // Verificação de permissões
-  useEffect(() => {
-    // Efeito vazio para monitorar alterações nas permissões
-  }, [doacao, usuarioLogado, isAdmin, isDoador, podeExcluirDoacao, userRole, roleNormalizado]);
+  const isAdminPorRole =
+    roleNormalizado.includes("ADMIN") ||
+    roleNormalizado.includes("ADMINISTRADOR");
+
+  const isAdmin = isAdminPorRole || usuarioLogado?.admin === true;
+
+  const isDoador =
+    doacao &&
+    usuarioLogado &&
+    (String(doacao.idUsuario) === String(usuarioLogado.id) ||
+      doacao.emailUsuario === usuarioLogado.email ||
+      doacao.autor === usuarioLogado.nome);
+
+  const podeExcluirDoacao = Boolean(doacao && usuarioLogado && (isAdmin || isDoador));
 
   // Deletar doação
   const handleDeletarDoacao = async () => {
@@ -362,7 +290,6 @@ export default function DoacaoInfo() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 mt-[80px]">
-          {/* Botão Voltar */}
           <button
             onClick={() => navigate("/doacoes")}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
@@ -383,18 +310,28 @@ export default function DoacaoInfo() {
             <span className="font-medium">Voltar para doações</span>
           </button>
 
-          {/* Loading Elaborado */}
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6" style={{ borderColor: corPrincipal }}></div>
+            <div
+              className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6"
+              style={{ borderColor: corPrincipal }}
+            ></div>
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Carregando doação...</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                Carregando doação...
+              </h2>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
                 Aguarde enquanto buscamos todos os detalhes desta doação
               </p>
               <div className="mt-6 flex items-center justify-center gap-2">
                 <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                <div
+                  className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"
+                  style={{ animationDelay: "0.4s" }}
+                ></div>
               </div>
             </div>
           </div>
@@ -417,7 +354,6 @@ export default function DoacaoInfo() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 mt-[80px]">
-        {/* Botão Voltar */}
         <button
           onClick={() => navigate("/doacoes")}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
@@ -446,6 +382,11 @@ export default function DoacaoInfo() {
               src={doacao.imagem}
               alt={doacao.titulo}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src =
+                  "https://via.placeholder.com/1200x600?text=Imagem+da+doa%C3%A7%C3%A3o";
+              }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
 
@@ -454,25 +395,37 @@ export default function DoacaoInfo() {
               className="absolute top-6 right-6 px-4 py-2 rounded-full text-white font-bold text-sm shadow-lg backdrop-blur-sm"
               style={{ backgroundColor: corPrincipal }}
             >
-              {doacao.zona}
+              {doacao.zona || doacao.regiao || "Zona não informada"}
             </div>
 
-            {/* Doador - MOVIDO PARA CANTO SUPERIOR ESQUERDO */}
+            {/* Doador - canto superior esquerdo */}
             <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
                 src={doacao.fotoPerfil || NoPicture}
-                alt={doacao.autor}
+                alt={doacao.autor || nomeAutor || "Doador"}
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = NoPicture;
+                }}
               />
               <div>
-                <p className="text-sm font-medium text-black" style={{ color: corPrincipal }}>Doado por</p>
-                <p className="text-lg font-bold text-black" style={{ color: corPrincipal }}>
-                  {nomeAutor || "Carregando..."}
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: corPrincipal }}
+                >
+                  Doado por
+                </p>
+                <p
+                  className="text-lg font-bold"
+                  style={{ color: corPrincipal }}
+                >
+                  {nomeAutor || doacao.autor || "Carregando..."}
                 </p>
               </div>
             </div>
 
-            {/* Botão Excluir - CANTO INFERIOR DIREITO */}
+            {/* Botão Excluir - canto inferior direito */}
             {podeExcluirDoacao && (
               <div className="absolute bottom-6 right-6">
                 <button
@@ -488,19 +441,17 @@ export default function DoacaoInfo() {
 
           {/* Conteúdo */}
           <div className="p-6 lg:p-10">
-            {/* Título */}
             <h1 className="text-3xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
               {doacao.titulo}
             </h1>
 
-            {/* Texto/Resumo da Doação - ACIMA DOS METADADOS */}
             {(doacao.resumo || doacao.descricao) && (
               <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed">
                 {doacao.resumo || doacao.descricao}
               </p>
             )}
 
-            {/* Metadados - COM HORÁRIO */}
+            {/* Metadados */}
             <div className="flex flex-wrap items-center gap-4 pb-6 mb-6 border-b border-gray-200">
               <div className="flex items-center gap-2 text-gray-600">
                 <svg
@@ -540,7 +491,10 @@ export default function DoacaoInfo() {
                         doacao.dataHoraCriacao
                       ).toLocaleDateString("pt-BR")} às ${new Date(
                         doacao.dataHoraCriacao
-                      ).toLocaleTimeString("pt-BR")}`
+                      ).toLocaleTimeString("pt-BR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}`
                     : "Hoje"}
                 </span>
               </div>
@@ -579,31 +533,60 @@ export default function DoacaoInfo() {
             </h2>
           </div>
 
-          {/* Formulário de Comentário */}
-          {!user?.id && (
+          {/* Aviso para não logado */}
+          {!usuarioLogado?.id && (
             <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-yellow-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-yellow-700">
-                    Você precisa estar logado para comentar. <a href="/login" className="font-medium text-yellow-700 underline hover:text-yellow-600">Faça login</a> ou <a href="/cadastro" className="font-medium text-yellow-700 underline hover:text-yellow-600">cadastre-se</a> para participar da conversa.
+                    Você precisa estar logado para comentar.{" "}
+                    <button
+                      type="button"
+                      className="font-medium text-yellow-700 underline hover:text-yellow-600"
+                      onClick={() => setShowAuthModal(true)}
+                    >
+                      Faça login
+                    </button>{" "}
+                    ou{" "}
+                    <a
+                      href="/cadastro"
+                      className="font-medium text-yellow-700 underline hover:text-yellow-600"
+                    >
+                      cadastre-se
+                    </a>{" "}
+                    para participar da conversa.
                   </p>
                 </div>
               </div>
             </div>
           )}
-          
+
+          {/* Formulário de Comentário */}
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img
-                src={user?.fotoPerfil || NoPicture}
+                src={usuarioLogado?.fotoPerfil || NoPicture}
                 alt="Seu avatar"
                 className="w-10 h-10 rounded-full border-2 hidden sm:block"
                 style={{ borderColor: corPrincipal }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = NoPicture;
+                }}
               />
               <div className="flex-1 w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <input
@@ -618,21 +601,19 @@ export default function DoacaoInfo() {
                     handlePublicarComentario()
                   }
                   className="flex-1 px-4 py-3 bg-gray-50 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 transition-all duration-200"
-                  style={{
-                    focusRingColor: corPrincipal,
-                  }}
                 />
                 <button
                   onClick={handlePublicarComentario}
                   disabled={comentLoading || !novoComentario.trim()}
                   className="w-full sm:w-auto px-6 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-md"
-                  style={{
-                    backgroundColor: corPrincipal,
-                  }}
+                  style={{ backgroundColor: corPrincipal }}
                 >
                   {comentLoading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <svg
+                        className="animate-spin h-4 w-4"
+                        viewBox="0 0 24 24"
+                      >
                         <circle
                           className="opacity-25"
                           cx="12"
@@ -696,6 +677,7 @@ export default function DoacaoInfo() {
                       alt={coment.nomeUsuario || "Usuário"}
                       className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
                       onError={(e) => {
+                        e.target.onerror = null;
                         e.target.src = NoPicture;
                       }}
                     />
@@ -707,22 +689,21 @@ export default function DoacaoInfo() {
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {coment.dataHoraCriacao
-                              ? new Date(coment.dataHoraCriacao).toLocaleString(
-                                  "pt-BR",
-                                  {
-                                    day: "2-digit",
-                                    month: "short",
-                                    year: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  }
-                                )
+                              ? new Date(
+                                  coment.dataHoraCriacao
+                                ).toLocaleString("pt-BR", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
                               : "agora"}
                           </p>
                         </div>
-                        {((coment.idUsuario === usuarioLogado.id ||
-                          coment.emailUsuario === usuarioLogado.email) ||
-                          // ✅ ADMIN pode deletar qualquer comentário
+
+                        {((coment.idUsuario === usuarioLogado?.id ||
+                          coment.emailUsuario === usuarioLogado?.email) ||
                           isAdmin) && (
                           <button
                             onClick={() =>
@@ -764,7 +745,9 @@ export default function DoacaoInfo() {
         {/* Modal de Confirmação de Exclusão de Comentário */}
         <ModalConfirmacao
           isOpen={modalDeletar.isOpen}
-          onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}
+          onClose={() =>
+            setModalDeletar({ isOpen: false, comentarioId: null })
+          }
           onConfirm={handleDeletarComentario}
           titulo="Excluir Comentário"
           mensagem="Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
@@ -783,6 +766,16 @@ export default function DoacaoInfo() {
           textoBotaoConfirmar="Excluir"
           textoBotaoCancelar="Cancelar"
           corBotaoConfirmar="#ef4444"
+        />
+
+        {/* Modal Visitantes (login para comentar) */}
+        <ModalVisitantes
+          abrir={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onLogin={() => {
+            setShowAuthModal(false);
+            navigate("/login");
+          }}
         />
       </div>
     </div>

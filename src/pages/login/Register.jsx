@@ -25,7 +25,6 @@ export default function Register() {
 
     try {
       await AuthService.register(form);
-
       alert("Usuário registrado com sucesso!");
       navigate("/");
     } catch (err) {
@@ -37,7 +36,6 @@ export default function Register() {
     }
   };
 
-  // Estilo para a animação de pulo e esconder o ícone de olho nativo
   const styles = `
     @keyframes bounce {
       0%, 100% {
@@ -52,38 +50,38 @@ export default function Register() {
     }
   `;
 
-  // Efeito para verificar se há conteúdo para rolar
   useEffect(() => {
+    const styleElement = document.createElement("style");
+    styleElement.textContent = styles;
+    document.head.appendChild(styleElement);
+
     const checkScroll = () => {
-      // Verifica se há conteúdo suficiente para rolar
-      const hasScrollableContent = document.body.scrollHeight > window.innerHeight;
-      // Verifica se o usuário já rolou até o final
-      const isAtBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 20;
-      
-      // Mostra o botão apenas se houver conteúdo para rolar E o usuário não estiver no final
+      const hasScrollableContent =
+        document.body.scrollHeight > window.innerHeight;
+      const isAtBottom =
+        window.innerHeight + window.scrollY >=
+        document.body.scrollHeight - 20;
+
       setShowScrollButton(hasScrollableContent && !isAtBottom);
     };
 
     const checkScrollWithDelay = () => {
-      // Adiciona um pequeno atraso para garantir que o DOM foi atualizado
       setTimeout(checkScroll, 100);
     };
 
-    // Verifica na montagem do componente e após atualizações
     checkScrollWithDelay();
-    
-    // Adiciona listeners para verificar quando o conteúdo for carregado
-    window.addEventListener('load', checkScrollWithDelay);
-    window.addEventListener('resize', checkScrollWithDelay);
-    window.addEventListener('scroll', checkScroll);
 
-    // Verifica periodicamente para capturar mudanças dinâmicas no conteúdo
+    window.addEventListener("load", checkScrollWithDelay);
+    window.addEventListener("resize", checkScrollWithDelay);
+    window.addEventListener("scroll", checkScroll);
+
     const scrollCheckInterval = setInterval(checkScroll, 1000);
 
     return () => {
-      window.removeEventListener('load', checkScrollWithDelay);
-      window.removeEventListener('resize', checkScrollWithDelay);
-      window.removeEventListener('scroll', checkScroll);
+      document.head.removeChild(styleElement);
+      window.removeEventListener("load", checkScrollWithDelay);
+      window.removeEventListener("resize", checkScrollWithDelay);
+      window.removeEventListener("scroll", checkScroll);
       clearInterval(scrollCheckInterval);
     };
   }, []);
@@ -91,7 +89,7 @@ export default function Register() {
   const scrollDown = () => {
     window.scrollTo({
       top: document.body.scrollHeight,
-      behavior: 'smooth'
+      behavior: "smooth",
     });
   };
 
@@ -123,7 +121,6 @@ export default function Register() {
           </p>
 
           <form onSubmit={handleSubmit}>
-            {/* Input Nome */}
             <input
               type="text"
               name="nome"
@@ -137,7 +134,6 @@ export default function Register() {
                         hover:scale-[1.01] focus:scale-[1.02]"
             />
 
-            {/* Input Email */}
             <input
               type="email"
               name="email"
@@ -151,7 +147,6 @@ export default function Register() {
                         hover:scale-[1.01] focus:scale-[1.02]"
             />
 
-            {/* Campo Senha com olho */}
             <div className="relative mb-6">
               <input
                 type={mostrarSenha ? "text" : "password"}
@@ -183,14 +178,12 @@ export default function Register() {
             </button>
           </form>
 
-          {/* Separador */}
           <div className="flex items-center my-4">
             <div className="flex-grow border-t border-gray-400"></div>
             <span className="px-3 text-gray-500 text-sm">ou</span>
             <div className="flex-grow border-t border-gray-400"></div>
           </div>
 
-          {/* Botão visitante */}
           <button
             className="w-full bg-white/40 py-3 rounded-md mb-6 transition-all duration-300 hover:scale-105 cursor-pointer"
             onClick={entrarComoVisitante}
@@ -209,7 +202,7 @@ export default function Register() {
           </p>
         </div>
 
-        {/* Direita - Texto (esconde em mobile) */}
+        {/* Direita - Texto */}
         <div className="hidden md:flex w-full md:w-[55%] flex-col justify-center items-center p-4 lg:p-8 text-white">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-center px-4">
             BlogPeriférico
@@ -219,11 +212,11 @@ export default function Register() {
           </h3>
         </div>
       </div>
-      
+
       {/* Botão de rolagem para baixo */}
       {showScrollButton && (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-          <button 
+          <button
             onClick={scrollDown}
             className="bg-white/80 hover:bg-white text-gray-800 rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center animate-bounce-slow"
             aria-label="Rolar para baixo"

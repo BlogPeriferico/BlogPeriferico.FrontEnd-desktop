@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import React, { useState, useContext, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaChevronDown } from "react-icons/fa";
 
 import FundoSaoPaulo from "/src/assets/images/BackGroundImg.png";
@@ -9,7 +9,6 @@ import EyeClose from "../../assets/images/hide.png";
 import AuthService from "../../services/AuthService";
 import { UserContext } from "../../contexts/UserContext";
 
-// Estilo para a animação de pulo e esconder o ícone de olho nativo
 const styles = `
   @keyframes bounce {
     0%, 100% {
@@ -38,18 +37,18 @@ const styles = `
 
 export default function Login({ onLoginSuccess }) {
   const navigate = useNavigate();
-  
-  // Adiciona o estilo ao documento
-  React.useEffect(() => {
+
+  // injeta o CSS da animação
+  useEffect(() => {
     const styleElement = document.createElement("style");
     styleElement.textContent = styles;
     document.head.appendChild(styleElement);
-    
+
     return () => {
-      // Limpa o estilo quando o componente for desmontado
       document.head.removeChild(styleElement);
     };
   }, []);
+
   const { login } = useContext(UserContext);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -58,7 +57,6 @@ export default function Login({ onLoginSuccess }) {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Login normal
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !senha) {
@@ -70,17 +68,14 @@ export default function Login({ onLoginSuccess }) {
     setMensagem("");
 
     try {
-      // 1. Faz o login no servidor para obter o token
       const data = await AuthService.login({ email, senha });
 
       if (!data || !data.token) {
         throw new Error("Token não recebido do servidor");
       }
 
-      // Salva o token no localStorage
       localStorage.setItem("token", data.token);
 
-      // 3. Atualiza o contexto do usuário
       const userData = await login({ token: data.token });
 
       if (!userData) {
@@ -89,7 +84,6 @@ export default function Login({ onLoginSuccess }) {
 
       setMensagem("Login realizado com sucesso!");
 
-      // 4. Redireciona ou chama o callback de sucesso
       if (onLoginSuccess) {
         onLoginSuccess();
       } else {
@@ -108,38 +102,34 @@ export default function Login({ onLoginSuccess }) {
     }
   };
 
-  // Efeito para verificar se há conteúdo para rolar
+  // Efeito para mostrar/esconder o botão de scroll
   useEffect(() => {
     const checkScroll = () => {
-      // Verifica se há conteúdo suficiente para rolar
-      const hasScrollableContent = document.body.scrollHeight > window.innerHeight;
-      // Verifica se o usuário já rolou até o final
-      const isAtBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 20;
-      
-      // Mostra o botão apenas se houver conteúdo para rolar E o usuário não estiver no final
+      const hasScrollableContent =
+        document.body.scrollHeight > window.innerHeight;
+      const isAtBottom =
+        window.innerHeight + window.scrollY >=
+        document.body.scrollHeight - 20;
+
       setShowScrollButton(hasScrollableContent && !isAtBottom);
     };
 
     const checkScrollWithDelay = () => {
-      // Adiciona um pequeno atraso para garantir que o DOM foi atualizado
       setTimeout(checkScroll, 100);
     };
 
-    // Verifica na montagem do componente e após atualizações
     checkScrollWithDelay();
-    
-    // Adiciona listeners para verificar quando o conteúdo for carregado
-    window.addEventListener('load', checkScrollWithDelay);
-    window.addEventListener('resize', checkScrollWithDelay);
-    window.addEventListener('scroll', checkScroll);
 
-    // Verifica periodicamente para capturar mudanças dinâmicas no conteúdo
+    window.addEventListener("load", checkScrollWithDelay);
+    window.addEventListener("resize", checkScrollWithDelay);
+    window.addEventListener("scroll", checkScroll);
+
     const scrollCheckInterval = setInterval(checkScroll, 1000);
 
     return () => {
-      window.removeEventListener('load', checkScrollWithDelay);
-      window.removeEventListener('resize', checkScrollWithDelay);
-      window.removeEventListener('scroll', checkScroll);
+      window.removeEventListener("load", checkScrollWithDelay);
+      window.removeEventListener("resize", checkScrollWithDelay);
+      window.removeEventListener("scroll", checkScroll);
       clearInterval(scrollCheckInterval);
     };
   }, []);
@@ -147,22 +137,18 @@ export default function Login({ onLoginSuccess }) {
   const scrollDown = () => {
     window.scrollTo({
       top: document.body.scrollHeight,
-      behavior: 'smooth'
+      behavior: "smooth",
     });
   };
 
   // Entrar como visitante
   const entrarComoVisitante = (e) => {
     e.preventDefault();
-    // Remove qualquer token antigo
     localStorage.removeItem("token");
     localStorage.removeItem("email");
     localStorage.removeItem("role");
-
-    // Define role visitante
     localStorage.setItem("userRole", "ROLE_VISITANTE");
 
-    // Usa o callback de sucesso se fornecido, senão redireciona para a página inicial
     if (onLoginSuccess) {
       onLoginSuccess();
     } else {
@@ -183,7 +169,7 @@ export default function Login({ onLoginSuccess }) {
           {mensagem && (
             <div
               className={`p-3 mb-4 rounded-md text-center ${
-                mensagem.includes("sucesso")
+                mensagem.toLowerCase().includes("sucesso")
                   ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
               }`}
@@ -223,15 +209,6 @@ export default function Login({ onLoginSuccess }) {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               className="w-full px-5 py-3 rounded-md text-black placeholder-gray-400 pr-10 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 outline-none transition-all duration-400 ease-in-out transform hover:scale-[1.01] focus:scale-[1.02]"
-              style={{
-                // Esconde o ícone de olho nativo do Chrome/Edge
-                "::-ms-reveal": {
-                  display: "none",
-                },
-                "::-ms-clear": {
-                  display: "none",
-                },
-              }}
               required
               minLength={6}
               disabled={isLoading}
@@ -281,8 +258,6 @@ export default function Login({ onLoginSuccess }) {
             )}
           </button>
 
-          <p className="text-red-500 text-center mb-4">{mensagem}</p>
-
           <div className="flex items-center my-4">
             <div className="flex-grow border-t border-gray-400"></div>
             <span className="px-3 text-gray-500 text-sm">ou</span>
@@ -328,11 +303,11 @@ export default function Login({ onLoginSuccess }) {
           </div>
         </div>
       </div>
-      
+
       {/* Botão de rolagem para baixo */}
       {showScrollButton && (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-          <button 
+          <button
             onClick={scrollDown}
             className="bg-white/80 hover:bg-white text-gray-800 rounded-full p-3 shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center animate-bounce-slow"
             aria-label="Rolar para baixo"

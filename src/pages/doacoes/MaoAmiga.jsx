@@ -1,3 +1,4 @@
+// src/pages/Doacoes/Doacoes.jsx
 import CarrosselDoacao from "../../components/carrossels/CarrosselDoacao";
 import SelecaoDoacoes from "../../components/selecoes/SelecaoDoacoes";
 import { FiPlus, FiRefreshCw } from "react-icons/fi";
@@ -7,7 +8,6 @@ import ModalDoacao from "../../components/modals/ModalDoacao";
 import { useRegiao } from "../../contexts/RegionContext";
 import { useUser } from "../../contexts/UserContext";
 import { regionColors } from "../../utils/regionColors";
-import DoacaoService from "../../services/DoacaoService";
 import api from "../../services/Api";
 import { ModalVisitantes } from "../../components/modals/ModalVisitantes";
 
@@ -20,70 +20,76 @@ export default function Doacoes() {
   const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const navigate = useNavigate();
-  
-  // Verifica se o usuário é um visitante
+
   const isVisitor = !user || user.isVisitor === true;
 
   useEffect(() => {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
   }, [modalAberto]);
 
-  // Função para normalizar os dados da doação
+  // Normaliza DTO vindo do back
   const mapDoacaoFromDTO = (d) => ({
     id: String(d.id),
     titulo: d.titulo || "",
-    descricao: d.descricao || "",
-    imagem: d.imagem || "",
+    descricao: d.descricao || d.resumo || "",
+    imagem: d.imagem || d.imagemCapa || "",
     regiao: d.regiao || d.zona || d.local || "Centro",
-    dataHoraCriacao: d.dataHoraCriacao || new Date().toISOString(),
-    status: d.status || "Ativa"
+    zona: d.zona || d.regiao || d.local || "Centro",
+    telefone:
+      d.telefone || d.contato || d.celular || d.whatsapp || "",
+    categoria: d.categoria || "",
+    dataHoraCriacao:
+      d.dataHoraCriacao || d.createdAt || new Date().toISOString(),
+    status: d.status || "Ativa",
+    idUsuario: d.idUsuario || d.usuarioId || d.usuario?.id || null,
+    autor: d.autor || d.nomeDoador || d.usuario?.nome || "",
+    fotoPerfil: d.fotoPerfil || d.usuario?.fotoPerfil || null,
   });
 
-  // Função para recarregar as doações mantendo o filtro de região
+  // Recarregar doações
   const recarregarDoacoes = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Busca todas as doações
+
       const response = await api.get("/doacoes");
       const dados = Array.isArray(response.data) ? response.data : [];
-      
-      // Normaliza os dados das doações
+
       const doacoesNormalizadas = dados.map(mapDoacaoFromDTO);
-      
-      // Ordena por data de criação (mais recentes primeiro)
-      const doacoesOrdenadas = [...doacoesNormalizadas].sort((a, b) => 
-        new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
+
+      const doacoesOrdenadas = [...doacoesNormalizadas].sort(
+        (a, b) =>
+          new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
-      
-      // Filtra por região se necessário (trata Central vs Centro)
+
       let doacoesFiltradas = doacoesOrdenadas;
+
       if (regiao) {
-        const regiaoFiltro = regiao.toLowerCase() === 'central' ? 'Centro' : regiao;
-        doacoesFiltradas = doacoesOrdenadas.filter(doacao => 
-          doacao.regiao && doacao.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
+        const regiaoFiltro =
+          regiao.toLowerCase() === "central" ? "Centro" : regiao;
+        doacoesFiltradas = doacoesOrdenadas.filter((doacao) =>
+          doacao.regiao
+            ? doacao.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
+            : false
         );
       }
-      
+
       setDoacoes(doacoesFiltradas);
     } catch (err) {
-      // Erro ao carregar doações
+      console.error("Erro ao carregar doações:", err);
+      setDoacoes([]);
     } finally {
       setLoading(false);
     }
   }, [regiao]);
 
-  // Função para carregar as doações (mantida para compatibilidade)
   const carregarDoacoes = useCallback(async () => {
     await recarregarDoacoes();
   }, [recarregarDoacoes]);
 
-  // Carrega as doações quando o componente for montado ou a região mudar
   useEffect(() => {
     recarregarDoacoes();
   }, [recarregarDoacoes]);
 
-  // Abre modal somente se estiver logado
   const abrirModal = () => {
     if (!isVisitor) {
       setModalAberto(true);
@@ -111,16 +117,14 @@ export default function Doacoes() {
         abrir={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onLogin={() => {
-          // Fecha o modal primeiro
           setShowAuthModal(false);
-          // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
           setTimeout(() => {
-            navigate('/login');
+            navigate("/login");
           }, 100);
         }}
       />
 
-      {/* Modal de adicionar doação - Só mostra se não for visitante */}
+      {/* Modal de adicionar doação */}
       {!isVisitor && modalAberto && (
         <ModalDoacao
           modalAberto={modalAberto}
@@ -154,21 +158,23 @@ export default function Doacoes() {
               onClick={recarregarDoacoes}
               disabled={loading}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                loading 
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                loading
+                  ? "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
               } transition-colors`}
               title="Atualizar doações"
               aria-label="Atualizar doações"
             >
-              <FiRefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              <FiRefreshCw
+                className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
+              />
               <span className="text-sm font-medium">Atualizar</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Seleção */}
+      {/* Lista / seleção */}
       <SelecaoDoacoes doacoes={doacoes} loading={loading} />
     </div>
   );

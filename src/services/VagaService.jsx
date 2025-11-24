@@ -2,18 +2,21 @@ import api from "./Api";
 
 const VagaService = {
   criarVaga: async (vagaData) => {
+    // Remove id quando vier em objeto normal
     if (!(vagaData instanceof FormData) && vagaData?.id !== undefined) {
       delete vagaData.id;
     }
 
     const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("Usuário não está logado.");
+      const error = new Error("Usuário não está logado.");
+      error.status = 401;
+      throw error;
     }
 
     const config = {
       headers: {
-        Authorization: `Bearer ${token}`,
+        // Authorization vem do interceptor
         ...(vagaData instanceof FormData
           ? {}
           : { "Content-Type": "application/json" }),
@@ -52,12 +55,14 @@ const VagaService = {
   atualizarVaga: async (id, vagaData) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("Usuário não está logado.");
+      const error = new Error("Usuário não está logado.");
+      error.status = 401;
+      throw error;
     }
 
     const config = {
       headers: {
-        Authorization: `Bearer ${token}`,
+        // Authorization vem do interceptor
         ...(vagaData instanceof FormData
           ? {}
           : { "Content-Type": "application/json" }),
@@ -76,16 +81,32 @@ const VagaService = {
   excluirVaga: async (id) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("Usuário não está logado.");
+      const error = new Error("Usuário não está logado.");
+      error.status = 401;
+      throw error;
     }
 
     try {
-      const response = await api.delete(`/vagas/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.delete(`/vagas/${id}`);
       return response.data;
     } catch (err) {
+      const status = err.response?.status;
       console.error(`❌ Erro ao excluir vaga ${id}:`, err.response?.data || err);
+
+      if (status === 403) {
+        const error = new Error("Você não tem permissão para excluir esta vaga.");
+        error.status = 403;
+        error.response = err.response;
+        throw error;
+      }
+
+      if (status === 404) {
+        const error = new Error("Vaga não encontrada ou já foi excluída.");
+        error.status = 404;
+        error.response = err.response;
+        throw error;
+      }
+
       throw err;
     }
   },

@@ -1,3 +1,4 @@
+// src/pages/Vendas/Vendas.jsx (ajuste o caminho conforme seu projeto)
 import CarrosselVendas from "../../components/carrossels/CarrosselVendas";
 import SelecaoAnuncios from "../../components/selecoes/SelecaoAnuncios";
 import { FiPlus, FiRefreshCw } from "react-icons/fi";
@@ -15,11 +16,12 @@ export default function Vendas() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [produtos, setProdutos] = useState([]);
   const [loadingProdutos, setLoadingProdutos] = useState(true);
+
   const { regiao } = useRegiao();
   const { user } = useUser();
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
   const navigate = useNavigate();
-  
+
   // Verifica se o usuário é um visitante
   const isVisitor = !user || user.isVisitor === true;
 
@@ -42,49 +44,54 @@ export default function Vendas() {
     telefone: p.telefone || p.contato || p.celular || p.whatsapp || "",
     contato: p.contato || p.telefone || "",
     imagem: p.imagem || "",
-    categoria: p.categoria || "Outros"
+    categoria: p.categoria || "Outros",
   });
 
   // Função para recarregar os produtos mantendo o filtro de região
   const recarregarProdutos = useCallback(async () => {
     try {
       setLoadingProdutos(true);
-      
-      // Busca todos os produtos
+
+      // Busca todos os produtos (aceita service retornando array direto ou { data: [] })
       const response = await VendasService.getAnuncios();
-      const dados = Array.isArray(response) ? response : [];
-      
+      const dadosRaw = Array.isArray(response) ? response : response?.data;
+      const dados = Array.isArray(dadosRaw) ? dadosRaw : [];
+
       // Normaliza os dados dos produtos
       const produtosNormalizados = dados.map(mapProdutoFromDTO);
-      
+
       // Ordena por data de criação (mais recentes primeiro)
-      const produtosOrdenados = [...produtosNormalizados].sort((a, b) => 
-        new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
+      const produtosOrdenados = [...produtosNormalizados].sort(
+        (a, b) => new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
-      
+
       // Filtra por região se necessário (trata Central vs Centro)
       let produtosFiltrados = produtosOrdenados;
       if (regiao) {
-        const regiaoFiltro = regiao.toLowerCase() === 'central' ? 'Centro' : regiao;
-        produtosFiltrados = produtosOrdenados.filter(produto => 
-          produto.regiao && produto.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
+        const regiaoFiltro =
+          regiao.toLowerCase() === "central" ? "Centro" : regiao;
+        produtosFiltrados = produtosOrdenados.filter(
+          (produto) =>
+            produto.regiao &&
+            produto.regiao.toLowerCase() === regiaoFiltro.toLowerCase()
         );
       }
-      
+
       setProdutos(produtosFiltrados);
     } catch (err) {
-      // Erro silencioso
+      // Erro silencioso pra não quebrar tela
+      setProdutos([]);
     } finally {
       setLoadingProdutos(false);
     }
   }, [regiao]);
-  
+
   // Busca os produtos quando a região mudar
   useEffect(() => {
     recarregarProdutos();
   }, [recarregarProdutos]);
 
-  // Função para buscar os produtos (mantida para compatibilidade)
+  // Função para buscar os produtos (mantida para compatibilidade, usada no modal)
   const fetchProdutos = useCallback(async () => {
     await recarregarProdutos();
   }, [recarregarProdutos]);
@@ -114,11 +121,9 @@ export default function Vendas() {
         abrir={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onLogin={() => {
-          // Fecha o modal primeiro
           setShowAuthModal(false);
-          // Adiciona um pequeno atraso para garantir que a animação de fechamento ocorra
           setTimeout(() => {
-            navigate('/login');
+            navigate("/login");
           }, 100);
         }}
       />
@@ -156,14 +161,18 @@ export default function Vendas() {
               onClick={recarregarProdutos}
               disabled={loadingProdutos}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                loadingProdutos 
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                loadingProdutos
+                  ? "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
               } transition-colors`}
               title="Atualizar anúncios"
               aria-label="Atualizar anúncios"
             >
-              <FiRefreshCw className={`w-5 h-5 ${loadingProdutos ? 'animate-spin' : ''}`} />
+              <FiRefreshCw
+                className={`w-5 h-5 ${
+                  loadingProdutos ? "animate-spin" : ""
+                }`}
+              />
               <span className="text-sm font-medium">Atualizar</span>
             </button>
           </div>

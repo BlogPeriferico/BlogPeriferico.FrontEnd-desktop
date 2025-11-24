@@ -2,7 +2,7 @@ import api from "./Api";
 
 const DoacaoService = {
   criarDoacao: async (doacaoData) => {
-    // Se for um objeto normal, removemos o campo id antes de enviar
+    // Remove id se vier em objeto normal
     if (!(doacaoData instanceof FormData) && doacaoData.id !== undefined) {
       delete doacaoData.id;
     }
@@ -10,16 +10,17 @@ const DoacaoService = {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("⚠️ Usuário não está logado.");
-      throw new Error("Usuário não está logado.");
+      const error = new Error("Usuário não está logado. Faça login novamente.");
+      error.status = 401;
+      throw error;
     }
 
     const config = {
       headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type":
-          doacaoData instanceof FormData
-            ? "multipart/form-data"
-            : "application/json",
+        // Authorization vem do interceptor
+        "Content-Type": doacaoData instanceof FormData
+          ? "multipart/form-data"
+          : "application/json",
       },
     };
 
@@ -47,10 +48,7 @@ const DoacaoService = {
       const response = await api.get(`/doacoes/${id}`);
       return response.data;
     } catch (err) {
-      console.error(
-        `❌ Erro ao buscar doação ${id}:`,
-        err.response?.data || err
-      );
+      console.error(`❌ Erro ao buscar doação ${id}:`, err.response?.data || err);
       throw err;
     }
   },
@@ -59,16 +57,17 @@ const DoacaoService = {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("⚠️ Usuário não está logado.");
-      throw new Error("Usuário não está logado.");
+      const error = new Error("Usuário não está logado. Faça login novamente.");
+      error.status = 401;
+      throw error;
     }
 
     const config = {
       headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type":
-          doacaoData instanceof FormData
-            ? "multipart/form-data"
-            : "application/json",
+        // Authorization vem do interceptor
+        "Content-Type": doacaoData instanceof FormData
+          ? "multipart/form-data"
+          : "application/json",
       },
     };
 
@@ -76,10 +75,7 @@ const DoacaoService = {
       const response = await api.put(`/doacoes/${id}`, doacaoData, config);
       return response.data;
     } catch (err) {
-      console.error(
-        `❌ Erro ao atualizar doação ${id}:`,
-        err.response?.data || err
-      );
+      console.error(`❌ Erro ao atualizar doação ${id}:`, err.response?.data || err);
       throw err;
     }
   },
@@ -88,23 +84,32 @@ const DoacaoService = {
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("❌ Nenhum token encontrado no localStorage");
-      throw new Error("Usuário não está logado. Faça login novamente.");
+      const error = new Error("Usuário não está logado. Faça login novamente.");
+      error.status = 401;
+      throw error;
     }
 
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-
     try {
-      const response = await api.delete(`/doacoes/${id}`, config);
+      const response = await api.delete(`/doacoes/${id}`);
       return response.data;
     } catch (err) {
-      console.error(
-        `❌ Erro ao excluir doação ${id}:`,
-        err.response?.data || err
-      );
+      const status = err.response?.status;
+      console.error(`❌ Erro ao excluir doação ${id}:`, err.response?.data || err);
+
+      if (status === 403) {
+        const error = new Error("Você não tem permissão para excluir esta doação.");
+        error.status = 403;
+        error.response = err.response;
+        throw error;
+      }
+
+      if (status === 404) {
+        const error = new Error("Doação não encontrada ou já foi excluída.");
+        error.status = 404;
+        error.response = err.response;
+        throw error;
+      }
+
       throw err;
     }
   },

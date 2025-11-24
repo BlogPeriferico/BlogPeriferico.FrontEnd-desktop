@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
+// src/pages/News/NoticiasInfo.jsx
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import NoticiaService from "../../services/NoticiasService";
 import ComentariosService from "../../services/ComentariosService";
-import AuthService from "../../services/AuthService";
 import api from "../../services/Api";
 import { useRegiao } from "../../contexts/RegionContext";
 import { useUser } from "../../contexts/UserContext.jsx";
 import { regionColors } from "../../utils/regionColors";
-import { FaTimes, FaTrash } from "react-icons/fa";
+import { FaTrash } from "react-icons/fa";
 import ModalConfirmacao from "../../components/modals/ModalConfirmacao";
 import NoPicture from "../../assets/images/NoPicture.webp";
 
@@ -17,27 +17,49 @@ export default function NoticiasInfo() {
   const navigate = useNavigate();
   const { regiao } = useRegiao();
   const { user } = useUser();
+
   const corPrincipal = regionColors[regiao]?.[0] || "#1D4ED8";
 
   const [noticia, setNoticia] = useState(location.state || null);
   const [loading, setLoading] = useState(!location.state);
+
   const [comentarios, setComentarios] = useState([]);
   const [novoComentario, setNovoComentario] = useState("");
   const [comentLoading, setComentLoading] = useState(false);
+
   const [usuarioLogado, setUsuarioLogado] = useState({
     id: null,
     email: null,
     nome: "Visitante",
     papel: null,
+    role: null,
+    roles: null,
+    fotoPerfil: null,
   });
+
   const [modalDeletar, setModalDeletar] = useState({
     isOpen: false,
     comentarioId: null,
   });
   const [modalDeletarNoticia, setModalDeletarNoticia] = useState(false);
-  const [nomeAutor, setNomeAutor] = useState(null);
 
-  // Carregar perfil do usuário usando UserContext
+  // cache de usuários p/ evitar várias chamadas em /usuarios/listar
+  const [usuariosCache, setUsuariosCache] = useState(null);
+
+  const getUsuarios = useCallback(async () => {
+    if (usuariosCache) return usuariosCache;
+    try {
+      const response = await api.get("/usuarios/listar");
+      const lista = Array.isArray(response.data) ? response.data : [];
+      setUsuariosCache(lista);
+      return lista;
+    } catch (err) {
+      console.error("❌ Erro ao buscar lista de usuários:", err);
+      return [];
+    }
+  }, [usuariosCache]);
+
+  // Carregar perfil do usuário usando UserContext (normaliza roles/papel)
   useEffect(() => {
     if (user && user.id) {
       const userData = {
@@ -49,12 +71,26 @@ export default function NoticiasInfo() {
         papel: user.papel || user.role || user.roles,
         fotoPerfil: user.fotoPerfil,
       };
-
       setUsuarioLogado(userData);
     }
   }, [user]);
 
-  // Carregar notícia e comentários
+  // Role normalizado
+  const papelStr = useMemo(() => {
+    const base =
+      usuarioLogado?.role ||
+      usuarioLogado?.roles ||
+      usuarioLogado?.papel ||
+      "";
+    return String(base).toUpperCase();
+  }, [usuarioLogado]);
+
+  const isAdmin = useMemo(
+    () => papelStr.includes("ADMIN") || papelStr.includes("ADMINISTRADOR"),
+    [papelStr]
+  );
+
+  // Carregar notícia (se não veio da rota anterior)
   useEffect(() => {
     window.scrollTo(0, 0);
 
@@ -62,23 +98,16 @@ export default function NoticiasInfo() {
       setLoading(true);
       NoticiaService.buscarNoticiaPorId(id)
         .then(async (data) => {
-          // Buscar dados do usuário junto com a notícia
+          // Buscar autor da notícia usando cache de usuários
           if (data.idUsuario) {
-            try {
-              const response = await api.get("/usuarios/listar");
-              const usuarios = response.data;
-              const autor = usuarios.find((u) => u.id === data.idUsuario);
-
-              if (autor) {
-                // Inclui fotoPerfil diretamente na notícia
-                data.fotoPerfil = autor.fotoPerfil;
-                data.nomeAutor = autor.nome;
-              }
-            } catch (err) {
-              console.error("❌ Erro ao buscar autor:", err);
+            const usuarios = await getUsuarios();
+            const autor = usuarios.find((u) => u.id === data.idUsuario);
+            if (autor) {
+              data.fotoPerfil = autor.fotoPerfil;
+              data.nomeAutor = autor.nome;
+              data.autor = autor.nome || data.autor;
             }
           }
-
           setNoticia(data);
         })
         .catch((err) => {
@@ -87,30 +116,27 @@ export default function NoticiasInfo() {
         })
         .finally(() => setLoading(false));
     }
-  }, [id, noticia]);
+  }, [id, noticia, getUsuarios]);
 
-  const carregarComentarios = async () => {
+  // Carregar comentários + avatars
+  const carregarComentarios = useCallback(async () => {
     try {
-      // Buscar comentários
-      const comentarios = await ComentariosService.listarComentariosNoticia(id);
+      const comentariosApi = await ComentariosService.listarComentariosNoticia(
+        id
+      );
 
-      // Buscar todos os usuários para obter as fotos de perfil
-      const response = await api.get("/usuarios/listar");
-      const usuarios = response.data;
+      const usuarios = await getUsuarios();
 
-      // Mapear comentários e adicionar avatar
-      const comentariosComAvatar = comentarios.map((coment) => {
-        // Encontrar o usuário que fez o comentário
+      const comentariosComAvatar = comentariosApi.map((coment) => {
         const usuarioComentario = usuarios.find(
           (u) => u.id === coment.idUsuario || u.email === coment.emailUsuario
         );
 
-        // Se encontrou o usuário e ele tem foto de perfil, usa a foto
         if (usuarioComentario?.fotoPerfil) {
           return { ...coment, avatar: usuarioComentario.fotoPerfil };
         }
 
-        // Se for o próprio usuário logado, usa a foto do perfil atual
+        // Se for o próprio usuário logado, usa foto do contexto
         if (
           (coment.idUsuario === user?.id ||
             coment.emailUsuario === user?.email) &&
@@ -119,7 +145,6 @@ export default function NoticiasInfo() {
           return { ...coment, avatar: user.fotoPerfil };
         }
 
-        // Se não encontrou foto, mantém o que já tem ou usa a imagem padrão
         return { ...coment, avatar: coment.avatar || NoPicture };
       });
 
@@ -128,55 +153,31 @@ export default function NoticiasInfo() {
       console.error("❌ Erro ao buscar comentários:", err);
       setComentarios([]);
     }
-  };
+  }, [id, getUsuarios, user?.id, user?.email, user?.fotoPerfil]);
 
-  // Carrega comentários apenas se não foram atualizados recentemente
   useEffect(() => {
     carregarComentarios();
-  }, [id]);
+  }, [carregarComentarios]);
 
   // Atualiza avatar dos comentários existentes quando foto do usuário muda
   useEffect(() => {
     if (user?.id && comentarios.length > 0) {
-      setComentarios((prevComentarios) => {
-        const updated = prevComentarios.map((coment) => {
+      setComentarios((prevComentarios) =>
+        prevComentarios.map((coment) => {
           const isUserComment =
             coment.idUsuario === user.id || coment.emailUsuario === user.email;
-
           if (isUserComment) {
             return { ...coment, avatar: user.fotoPerfil || NoPicture };
           }
           return coment;
-        });
-
-        return updated;
-      });
+        })
+      );
     }
-  }, [user?.fotoPerfil, user?.id, comentarios.length]);
-
-  // Buscar nome do autor da notícia (se não veio com a notícia)
-  useEffect(() => {
-    const buscarAutor = async () => {
-      if (noticia && noticia.idUsuario && !nomeAutor) {
-        try {
-          const response = await api.get("/usuarios/listar");
-          const usuarios = response.data;
-          const autor = usuarios.find((u) => u.id === noticia.idUsuario);
-          if (autor) {
-            setNomeAutor(autor.nome);
-          }
-        } catch (err) {
-          console.error("❌ Erro ao buscar autor:", err);
-        }
-      }
-    };
-    buscarAutor();
-  }, [noticia?.idUsuario, nomeAutor]);
+  }, [user?.fotoPerfil, user?.id, user?.email, comentarios.length]);
 
   const handlePublicarComentario = async () => {
     if (!novoComentario.trim()) return;
 
-    // Aguardar o carregamento do ID do usuário
     if (!usuarioLogado.id) {
       alert("Aguarde o carregamento do perfil ou faça login novamente.");
       return;
@@ -194,10 +195,12 @@ export default function NoticiasInfo() {
       const comentarioCriado = await ComentariosService.criarComentario(dto);
 
       if (!comentarioCriado.nomeUsuario) {
-        comentarioCriado.nomeUsuario = user.nome || "Você";
-        comentarioCriado.dataHoraCriacao = new Date().toISOString();
-        comentarioCriado.avatar = user.fotoPerfil || NoPicture;
+        comentarioCriado.nomeUsuario = user?.nome || "Você";
       }
+      if (!comentarioCriado.dataHoraCriacao) {
+        comentarioCriado.dataHoraCriacao = new Date().toISOString();
+      }
+      comentarioCriado.avatar = user?.fotoPerfil || NoPicture;
 
       setComentarios((prev) => [...prev, comentarioCriado]);
       setNovoComentario("");
@@ -209,7 +212,6 @@ export default function NoticiasInfo() {
     }
   };
 
-  // Deletar comentário
   const handleDeletarComentario = async () => {
     try {
       await ComentariosService.excluirComentario(modalDeletar.comentarioId);
@@ -222,30 +224,18 @@ export default function NoticiasInfo() {
     }
   };
 
-  // Verificação de propriedade da notícia
-  // Verifica role, roles ou papel, em qualquer caso
-  const userRole =
-    usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
-  const roleNormalizado = String(userRole).toUpperCase();
-  const papelStr = roleNormalizado; // Adicionando papelStr para compatibilidade
+  // Checa se usuário é autor da notícia
+  const isAutor = useMemo(() => {
+    if (!noticia || !usuarioLogado) return false;
+    return (
+      noticia.idUsuario === usuarioLogado.id ||
+      noticia.emailUsuario === usuarioLogado.email ||
+      noticia.autor === usuarioLogado.nome
+    );
+  }, [noticia, usuarioLogado]);
 
-  // Verificação de permissões
-  const isAdmin =
-    roleNormalizado.includes("ADMIN") ||
-    roleNormalizado.includes("ADMINISTRADOR");
-  const isAutor =
-    noticia &&
-    (noticia.idUsuario === usuarioLogado?.id ||
-      noticia.emailUsuario === usuarioLogado?.email ||
-      noticia.autor === usuarioLogado?.nome);
+  const podeExcluirNoticia = Boolean(noticia && (isAdmin || isAutor));
 
-  const podeExcluirNoticia = Boolean(
-    noticia && usuarioLogado && (isAdmin || isAutor)
-  );
-
-  // Verificação de permissões
-
-  // Deletar notícia
   const handleDeletarNoticia = async () => {
     try {
       await NoticiaService.excluirNoticia(id);
@@ -274,20 +264,45 @@ export default function NoticiasInfo() {
     }
   };
 
+  // Formatações derivadas da notícia (memoizadas)
+  const dataPublicacao = useMemo(() => {
+    if (!noticia?.dataHoraCriacao) return null;
+    const dt = new Date(noticia.dataHoraCriacao);
+    return {
+      data: dt.toLocaleDateString("pt-BR"),
+      hora: dt.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      textoCompleto: `Publicado em ${dt.toLocaleDateString(
+        "pt-BR"
+      )} às ${dt.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`,
+    };
+  }, [noticia?.dataHoraCriacao]);
+
+  const nomeAutor =
+    noticia?.nomeAutor || noticia?.autor || "Autor não identificado";
+
+  // ========== ESTADOS INICIAIS (loading / not found) ==========
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 mt-[80px]">
-          {/* Botão Voltar */}
           <button
             onClick={() => navigate("/quebrada-informa")}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
+            type="button"
           >
             <svg
               className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -299,7 +314,6 @@ export default function NoticiasInfo() {
             <span className="font-medium">Voltar para notícias</span>
           </button>
 
-          {/* Loading Elaborado */}
           <div className="flex flex-col items-center justify-center py-20">
             <div
               className="animate-spin rounded-full h-16 w-16 border-b-4 mb-6"
@@ -310,7 +324,7 @@ export default function NoticiasInfo() {
                 Carregando notícia...
               </h2>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
-                Aguarde enquanto buscamos todos os detalhes desta notícia
+                Aguarde enquanto buscamos todos os detalhes desta notícia.
               </p>
               <div className="mt-6 flex items-center justify-center gap-2">
                 <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
@@ -333,13 +347,19 @@ export default function NoticiasInfo() {
   if (!noticia) {
     return (
       <div className="max-w-6xl mx-auto p-6 mt-[80px]">
-        <button onClick={() => navigate(-1)} className="text-blue-600">
+        <button
+          onClick={() => navigate(-1)}
+          className="text-blue-600 hover:underline"
+          type="button"
+        >
           Voltar
         </button>
-        <p className="text-gray-600">Notícia não encontrada.</p>
+        <p className="mt-4 text-gray-600">Notícia não encontrada.</p>
       </div>
     );
   }
+
+  // ========== JSX PRINCIPAL ==========
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -348,12 +368,15 @@ export default function NoticiasInfo() {
         <button
           onClick={() => navigate("/quebrada-informa")}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors duration-200 group"
+          type="button"
+          aria-label="Voltar para a lista de notícias"
         >
           <svg
             className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -366,59 +389,68 @@ export default function NoticiasInfo() {
         </button>
 
         {/* Card Principal da Notícia */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+        <article className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
           {/* Imagem de Capa */}
           <div className="relative h-[300px] lg:h-[500px] overflow-hidden">
             <img
-              src={noticia.imagem}
-              alt={noticia.titulo}
+              src={noticia.imagem || NoPicture}
+              alt={noticia.titulo || "Imagem da notícia"}
               className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.src = NoPicture;
+              }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
 
             {/* Badge da Zona */}
-            <div
-              className="absolute top-6 right-6 px-4 py-2 rounded-full text-white font-bold text-sm shadow-lg backdrop-blur-sm"
-              style={{ backgroundColor: corPrincipal }}
-            >
-              {noticia.zona}
-            </div>
+            {noticia.zona && (
+              <div
+                className="absolute top-6 right-6 px-4 py-2 rounded-full text-white font-bold text-sm shadow-lg backdrop-blur-sm"
+                style={{ backgroundColor: corPrincipal }}
+              >
+                {noticia.zona}
+              </div>
+            )}
 
-            {/* Autor - MOVIDO PARA CANTO SUPERIOR ESQUERDO */}
+            {/* Autor - canto superior esquerdo */}
             <div className="absolute top-6 left-6 flex items-center gap-4">
               <img
                 src={noticia.fotoPerfil || NoPicture}
-                alt={nomeAutor || noticia.autor}
+                alt={`Foto de perfil de ${nomeAutor}`}
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                loading="lazy"
                 onError={(e) => {
-                  e.target.src = NoPicture;
+                  e.currentTarget.src = NoPicture;
                 }}
               />
               <div>
                 <p
-                  className="text-sm font-medium"
-                  style={{ color: corPrincipal }}
+                  className="text-sm font-medium text-white/90"
+                  style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
                 >
                   Publicado por
                 </p>
                 <p
-                  className="text-lg font-bold"
-                  style={{ color: corPrincipal }}
+                  className="text-lg font-bold text-white"
+                  style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}
                 >
-                  {nomeAutor || noticia.autor || "Carregando..."}
+                  {nomeAutor}
                 </p>
               </div>
             </div>
 
-            {/* Botão Excluir - MOVIDO PARA CANTO INFERIOR DIREITO */}
+            {/* Botão Excluir */}
             {podeExcluirNoticia && (
               <div className="absolute bottom-6 right-6">
                 <button
                   onClick={() => setModalDeletarNoticia(true)}
-                  className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-all duration-200 transform hover:scale-110"
+                  className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg transition-all duration-200 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   title="Excluir notícia"
+                  aria-label="Excluir notícia"
+                  type="button"
                 >
-                  <FaTrash size={16} />
+                  <FaTrash size={16} aria-hidden="true" />
                 </button>
               </div>
             )}
@@ -426,19 +458,17 @@ export default function NoticiasInfo() {
 
           {/* Conteúdo */}
           <div className="p-6 lg:p-10">
-            {/* Título */}
             <h1 className="text-3xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
               {noticia.titulo}
             </h1>
 
-            {/* Texto/Resumo da Notícia */}
             {noticia.texto && (
               <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed">
                 {noticia.texto}
               </p>
             )}
 
-            {/* Metadados - COM LOCAL E HORÁRIO */}
+            {/* Metadados */}
             <div className="flex flex-wrap items-center gap-4 pb-6 mb-6 border-b border-gray-200">
               <div className="flex items-center gap-2 text-gray-600">
                 <svg
@@ -446,6 +476,7 @@ export default function NoticiasInfo() {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -470,6 +501,7 @@ export default function NoticiasInfo() {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -479,18 +511,12 @@ export default function NoticiasInfo() {
                   ></path>
                 </svg>
                 <span className="text-sm font-medium">
-                  {noticia.dataHoraCriacao
-                    ? `Publicado em ${new Date(
-                        noticia.dataHoraCriacao
-                      ).toLocaleDateString("pt-BR")} às ${new Date(
-                        noticia.dataHoraCriacao
-                      ).toLocaleTimeString("pt-BR")}`
-                    : "Hoje"}
+                  {dataPublicacao?.textoCompleto || "Hoje"}
                 </span>
               </div>
             </div>
 
-            {/* Conteúdo Completo da Notícia */}
+            {/* Conteúdo Completo */}
             {noticia.conteudo && (
               <div className="prose prose-lg max-w-none">
                 <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-line">
@@ -499,10 +525,13 @@ export default function NoticiasInfo() {
               </div>
             )}
           </div>
-        </div>
+        </article>
 
         {/* Comentários */}
-        <div className="mt-12 bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-200">
+        <section
+          className="mt-12 bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-200"
+          aria-label="Seção de comentários da notícia"
+        >
           <div className="flex items-center gap-3 mb-6">
             <div
               className="w-1 h-8 rounded-full"
@@ -512,42 +541,59 @@ export default function NoticiasInfo() {
               Comentários ({comentarios.length})
             </h2>
           </div>
+
+          {/* Área de novo comentário */}
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img
                 src={user?.fotoPerfil || NoPicture}
                 alt="Seu avatar"
-                className="w-10 h-10 rounded-full border-2 hidden sm:block"
+                className="w-10 h-10 rounded-full border-2 hidden sm:block object-cover"
                 style={{ borderColor: corPrincipal }}
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.src = NoPicture;
+                }}
               />
               <div className="flex-1 w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <input
                   type="text"
                   placeholder="Escreva um comentário..."
+                  aria-label="Escreva um comentário"
                   value={novoComentario}
                   onChange={(e) => setNovoComentario(e.target.value)}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" &&
-                    !comentLoading &&
-                    !e.shiftKey &&
-                    handlePublicarComentario()
-                  }
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "Enter" &&
+                      !comentLoading &&
+                      !e.shiftKey
+                    ) {
+                      e.preventDefault();
+                      handlePublicarComentario();
+                    }
+                  }}
                   className="flex-1 px-4 py-3 bg-gray-50 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 transition-all duration-200"
                   style={{
-                    focusRingColor: corPrincipal,
+                    boxShadow: "0 0 0 0 transparent",
                   }}
                 />
                 <button
                   onClick={handlePublicarComentario}
                   disabled={comentLoading || !novoComentario.trim()}
-                  className="w-full sm:w-auto px-6 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-md"
+                  className="w-full sm:w-auto px-6 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2"
                   style={{
                     backgroundColor: corPrincipal,
+                    borderColor: corPrincipal,
                   }}
+                  type="button"
                 >
                   {comentLoading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <svg
+                        className="animate-spin h-4 w-4"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
                         <circle
                           className="opacity-25"
                           cx="12"
@@ -582,6 +628,7 @@ export default function NoticiasInfo() {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -601,7 +648,7 @@ export default function NoticiasInfo() {
           ) : (
             <div className="space-y-4">
               {comentarios.map((coment) => (
-                <div
+                <article
                   key={coment.id}
                   className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300 relative group"
                 >
@@ -610,6 +657,10 @@ export default function NoticiasInfo() {
                       src={coment.avatar || NoPicture}
                       alt={coment.nomeUsuario || "Usuário"}
                       className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.src = NoPicture;
+                      }}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
@@ -619,22 +670,20 @@ export default function NoticiasInfo() {
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {coment.dataHoraCriacao
-                              ? new Date(coment.dataHoraCriacao).toLocaleString(
-                                  "pt-BR",
-                                  {
-                                    day: "2-digit",
-                                    month: "short",
-                                    year: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  }
-                                )
+                              ? new Date(
+                                  coment.dataHoraCriacao
+                                ).toLocaleString("pt-BR", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
                               : "agora"}
                           </p>
                         </div>
                         {(coment.idUsuario === usuarioLogado.id ||
                           coment.emailUsuario === usuarioLogado.email ||
-                          // ✅ ADMIN pode deletar qualquer comentário
                           papelStr.includes("ADMINISTRADOR") ||
                           papelStr.includes("ADMIN")) && (
                           <button
@@ -646,12 +695,15 @@ export default function NoticiasInfo() {
                             }
                             className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition-all duration-200"
                             title="Excluir comentário"
+                            aria-label="Excluir comentário"
+                            type="button"
                           >
                             <svg
                               className="w-5 h-5"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
+                              aria-hidden="true"
                             >
                               <path
                                 strokeLinecap="round"
@@ -668,16 +720,18 @@ export default function NoticiasInfo() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Modal de Confirmação de Exclusão */}
+        {/* Modal de Confirmação de Exclusão de Comentário */}
         <ModalConfirmacao
           isOpen={modalDeletar.isOpen}
-          onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}
+          onClose={() =>
+            setModalDeletar({ isOpen: false, comentarioId: null })
+          }
           onConfirm={handleDeletarComentario}
           titulo="Excluir Comentário"
           mensagem="Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."

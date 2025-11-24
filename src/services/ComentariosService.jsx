@@ -1,19 +1,17 @@
 import api from "./Api";
 
 const ComentariosService = {
+  // Criar comentário genérico (VENDA / NOTÍCIA / DOAÇÃO / VAGA via DTO)
   criarComentario: async (comentarioData) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("Usuário não está logado. Faça login novamente.");
+      const error = new Error("Usuário não está logado. Faça login novamente.");
+      error.status = 401;
+      throw error;
     }
 
     try {
-      const response = await api.post("/comentarios", comentarioData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await api.post("/comentarios", comentarioData);
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao criar comentário:", err.response?.data || err);
@@ -27,7 +25,7 @@ const ComentariosService = {
       const response = await api.get(`/comentarios/noticia/${idNoticia}`);
       return response.data;
     } catch (err) {
-      console.error("❌ Erro ao listar comentários:", err.response?.data || err);
+      console.error("❌ Erro ao listar comentários da notícia:", err.response?.data || err);
       throw err;
     }
   },
@@ -62,9 +60,14 @@ const ComentariosService = {
     }
   },
 
+  // Versão específica pra doação (você já usa em algumas telas)
   criarComentarioDoacao: async (comentarioData) => {
     const token = localStorage.getItem("token");
-    if (!token) throw new Error("Usuário não está logado. Faça login novamente.");
+    if (!token) {
+      const error = new Error("Usuário não está logado. Faça login novamente.");
+      error.status = 401;
+      throw error;
+    }
 
     try {
       const response = await api.post("/comentarios", comentarioData);
@@ -75,19 +78,17 @@ const ComentariosService = {
     }
   },
 
+  // Versão específica pra vaga (usada em VagaInfo)
   criarComentarioVaga: async (comentarioData) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("Usuário não está logado. Faça login novamente.");
+      const error = new Error("Usuário não está logado. Faça login novamente.");
+      error.status = 401;
+      throw error;
     }
 
     try {
-      const response = await api.post("/comentarios", comentarioData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await api.post("/comentarios", comentarioData);
       return response.data;
     } catch (err) {
       console.error("❌ Erro ao criar comentário na vaga:", err.response?.data || err);
@@ -99,20 +100,33 @@ const ComentariosService = {
   excluirComentario: async (idComentario) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("Usuário não está logado. Faça login novamente.");
+      const error = new Error("Usuário não está logado. Faça login novamente.");
+      error.status = 401;
+      throw error;
     }
 
     try {
-      const response = await api.delete(`/comentarios/${idComentario}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await api.delete(`/comentarios/${idComentario}`);
       return response.data;
     } catch (err) {
+      const status = err.response?.status;
       console.error(`❌ Erro ao excluir comentário ${idComentario}:`, err.response?.data || err);
-      console.error(`❌ Status HTTP:`, err.response?.status);
+      console.error("❌ Status HTTP:", status);
+
+      if (status === 403) {
+        const error = new Error("Você não tem permissão para excluir este comentário.");
+        error.status = 403;
+        error.response = err.response;
+        throw error;
+      }
+
+      if (status === 404) {
+        const error = new Error("Comentário não encontrado ou já foi excluído.");
+        error.status = 404;
+        error.response = err.response;
+        throw error;
+      }
+
       throw err;
     }
   },

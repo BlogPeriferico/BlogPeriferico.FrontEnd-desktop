@@ -1,87 +1,105 @@
 // src/contexts/UserContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
-import api from "../services/Api"; // sua instância Axios
+import api from "../services/Api";
 import { jwtDecode } from "jwt-decode";
 import NoPicture from "../assets/images/NoPicture.webp";
 
 export const UserContext = createContext();
 
-export function UserProvider({ children }) {
-  const [user, setUser] = useState({ isVisitor: true }); // Inicia como visitante
+// Helper seguro pra ler user salvo
+function getInitialUser() {
+  if (typeof window === "undefined") return { isVisitor: true };
 
-  // Carrega usuário do token/localStorage ao iniciar
+  try {
+    const saved = localStorage.getItem("user");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return parsed || { isVisitor: true };
+    }
+  } catch {
+    // se der erro, mantém visitante
+  }
+
+  return { isVisitor: true };
+}
+
+function normalizeUser(raw) {
+  if (!raw) return { isVisitor: true };
+
+  const roles = raw.roles || raw.role || raw.papel || null;
+
+  const isAdmin =
+    raw.admin === true ||
+    (typeof roles === "string" &&
+      roles.toUpperCase().includes("ADMINISTRADOR"));
+
+  return {
+    ...raw,
+    fotoPerfil: raw.fotoPerfil || NoPicture,
+    admin: isAdmin,
+    isVisitor: !raw.id ? true : false,
+  };
+}
+
+export function UserProvider({ children }) {
+  const [user, setUser] = useState(() => normalizeUser(getInitialUser()));
+
+  // Carrega/atualiza usuário com base no token gravado
   useEffect(() => {
     const loadUser = async () => {
       try {
-        console.log('=== INICIANDO CARREGAMENTO DO USUÁRIO ===');
         const token = localStorage.getItem("token");
-        console.log('Token encontrado:', !!token);
-        
+
         if (!token) {
-          console.log('Nenhum token encontrado, definindo como visitante');
           setUser({ isVisitor: true });
           return;
         }
 
-        // Verifica se já temos os dados do usuário no localStorage
-        const savedUser = localStorage.getItem("user");
-        console.log('Usuário salvo no localStorage:', savedUser);
-        
-        if (savedUser) {
-          const parsedUser = JSON.parse(savedUser);
-          console.log('Usuário do localStorage (parseado):', parsedUser);
-          console.log('Admin status no localStorage:', parsedUser.admin);
-          console.log('Roles no localStorage:', parsedUser.roles);
-          setUser(parsedUser);
+        // tenta pegar user salvo pra dar "first paint" rápido
+        let savedUser = null;
+        try {
+          const saved = localStorage.getItem("user");
+          if (saved) savedUser = JSON.parse(saved);
+        } catch {
+          savedUser = null;
         }
 
-        // Busca os dados mais recentes do servidor
+        if (savedUser) {
+          setUser(normalizeUser(savedUser));
+        }
+
+        // decodificar token pra pegar email
         const decoded = jwtDecode(token);
         const email = decoded.sub;
 
-        // Buscar usuário no backend
+        // busca lista de usuários (modelo atual do back)
         const response = await api.get("/usuarios/listar");
-        const usuarios = response.data;
+        const usuarios = Array.isArray(response.data) ? response.data : [];
+
         const usuarioEncontrado = usuarios.find((u) => u.email === email);
 
         if (usuarioEncontrado) {
-          // Garante que o usuário tenha uma foto de perfil
-          if (!usuarioEncontrado.fotoPerfil) {
-            usuarioEncontrado.fotoPerfil = NoPicture;
-          }
-          
-          const isAdmin = usuarioEncontrado.roles === 'ROLE_ADMINISTRADOR';
-          const userData = {
-            ...usuarioEncontrado,
-            admin: isAdmin,
-            isVisitor: false
-          };
-          
-          console.log('=== DADOS DO USUÁRIO ===');
-          console.log('Usuário encontrado:', usuarioEncontrado);
-          console.log('Roles:', usuarioEncontrado.roles);
-          console.log('É admin?', isAdmin);
-          
-          setUser(userData);
-          localStorage.setItem("user", JSON.stringify(userData));
-        } else if (savedUser) {
-          // Se não encontrou no servidor mas tem no localStorage, mantém o do localStorage
-          const parsedUser = JSON.parse(savedUser);
-          setUser({
-            ...parsedUser,
-            isVisitor: false
-          });
-        } else {
-          // Se não encontrou em lugar nenhum, mantém como visitante
+          const normalized = normalizeUser(usuarioEncontrado);
+
+          setUser(normalized);
+          localStorage.setItem("user", JSON.stringify(normalized));
+        } else if (!savedUser) {
+          // se não achou no back nem tem salvo -> visitante
           setUser({ isVisitor: true });
         }
       } catch (error) {
         console.error("❌ Erro ao carregar usuário:", error);
-        // Em caso de erro, tenta carregar do localStorage
-        const savedUser = localStorage.getItem("user");
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
-        } else {
+
+        // fallback: tenta usar user salvo
+        try {
+          const saved = localStorage.getItem("user");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            setUser(normalizeUser(parsed));
+          } else {
+            setUser({ isVisitor: true });
+          }
+        } catch {
           setUser({ isVisitor: true });
         }
       }
@@ -90,62 +108,44 @@ export function UserProvider({ children }) {
     loadUser();
   }, []);
 
-  // Atualiza localStorage sempre que o user mudar
+  // Mantém localStorage sempre em sync quando user mudar
   useEffect(() => {
-    if (user && user.id) {
-      // Garante que a propriedade admin esteja sempre atualizada
-      const updatedUser = {
-        ...user,
-        admin: user.roles === 'ROLE_ADMINISTRADOR' || user.admin === true
-      };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+    try {
+      if (user && user.id) {
+        const normalized = normalizeUser(user);
+        localStorage.setItem("user", JSON.stringify(normalized));
+      }
+    } catch {
+      // ignore erro de localStorage
     }
   }, [user]);
 
-  // login
-  const login = async (userData) => {
+  // login com token
+  const login = async (loginData) => {
     try {
-      // Se for um login com token, decodifica para obter o email
-      if (userData.token) {
-        const decoded = jwtDecode(userData.token);
-        const email = decoded.sub;
-        
-        // Busca os dados completos do usuário
-        const response = await api.get("/usuarios/listar");
-        const usuarios = response.data;
-        const usuarioEncontrado = usuarios.find((u) => u.email === email);
-        
-        if (usuarioEncontrado) {
-          // Garante que o usuário tenha uma foto de perfil
-          if (!usuarioEncontrado.fotoPerfil) {
-            usuarioEncontrado.fotoPerfil = NoPicture;
-          }
-          
-          // Verifica se é admin
-          const isAdmin = usuarioEncontrado.roles === 'ROLE_ADMINISTRADOR';
-          const userData = {
-            ...usuarioEncontrado,
-            admin: isAdmin,
-            isVisitor: false
-          };
-          
-          console.log('=== LOGIN - DADOS DO USUÁRIO ===');
-          console.log('Usuário encontrado:', usuarioEncontrado);
-          console.log('Roles:', usuarioEncontrado.roles);
-          console.log('É admin?', isAdmin);
-          
-          // Atualiza o estado do usuário
-          setUser(userData);
-          
-          // Salva no localStorage
-          localStorage.setItem("user", JSON.stringify(userData));
-          
-          return usuarioEncontrado;
-        }
+      if (!loginData?.token) {
+        console.warn("⚠️ Nenhum token recebido no login");
+        return null;
       }
-      
-      // Se não encontrou o usuário ou não tem token, mantém como visitante
-      console.warn("⚠️ Usuário não encontrado ou token inválido");
+
+      const decoded = jwtDecode(loginData.token);
+      const email = decoded.sub;
+
+      const response = await api.get("/usuarios/listar");
+      const usuarios = Array.isArray(response.data) ? response.data : [];
+      const usuarioEncontrado = usuarios.find((u) => u.email === email);
+
+      if (usuarioEncontrado) {
+        const normalized = normalizeUser(usuarioEncontrado);
+
+        setUser(normalized);
+        localStorage.setItem("user", JSON.stringify(normalized));
+        localStorage.setItem("token", loginData.token);
+
+        return usuarioEncontrado;
+      }
+
+      console.warn("⚠️ Usuário não encontrado no backend");
       return null;
     } catch (error) {
       console.error("❌ Erro ao fazer login:", error);
@@ -153,53 +153,49 @@ export function UserProvider({ children }) {
     }
   };
 
-  // logout
+  // logout total
   const logout = () => {
-    setUser(null);
-    // Remove todos os dados de autenticação
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("email");
+    setUser({ isVisitor: true });
+    try {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("email");
+    } catch {
+      // ignore
+    }
   };
 
   // updateProfile (usado no EditaPerfil)
   const updateProfile = async (updates) => {
+    if (!user || !user.id) {
+      throw new Error("Usuário não está logado");
+    }
+
     try {
-      if (!user || !user.id) {
-        throw new Error("Usuário não está logado");
-      }
-
-      // envia atualização para backend
       const response = await api.put(`/usuarios/${user.id}`, updates);
-      const updatedUser = response.data;
+      const updatedUser = normalizeUser(response.data);
 
-      // garante que fotoPerfil nunca fique vazio
-      if (!updatedUser.fotoPerfil) updatedUser.fotoPerfil = NoPicture;
-
-      // atualiza contexto e localStorage
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
-      throw error; // Re-throw para que o componente possa lidar com o erro
+      throw error;
     }
   };
 
+  const value = {
+    user: user || { isVisitor: true },
+    login,
+    logout,
+    updateProfile,
+    isLoggedIn: !!user?.id && !user?.isVisitor,
+    isVisitor: !user?.id || user?.isVisitor,
+    setUser, // se precisar mexer direto em algum fluxo específico
+  };
+
   return (
-    <UserContext.Provider
-      value={{
-        user: user || { isVisitor: true },
-        login,
-        logout,
-        updateProfile,
-        isLoggedIn: !!user?.id,
-        isVisitor: !user?.id || user.isVisitor,
-        setUser, // exposto para atualizações diretas (opcional)
-      }}
-    >
-      {children}
-    </UserContext.Provider>
+    <UserContext.Provider value={value}>{children}</UserContext.Provider>
   );
 }
 

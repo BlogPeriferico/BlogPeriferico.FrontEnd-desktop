@@ -1,11 +1,55 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import { FaTimes } from "react-icons/fa";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 import AnuncioService from "../../services/AnuncioService";
 import { useNavigate } from "react-router-dom";
 
-export default function ModalProduto({ modalAberto, setModalAberto, corPrincipal, atualizarAnuncios }) {
+const MAX_DESCRICAO = 120;
+const MAX_TITULO = 60;
+
+const ZONAS = [
+  "CENTRO",
+  "LESTE",
+  "NORTE",
+  "SUL",
+  "OESTE",
+  "SUDESTE",
+  "SUDOESTE",
+  "NOROESTE",
+];
+
+const formatarTelefone = (valor) => {
+  const numeros = valor.replace(/\D/g, "").slice(0, 11);
+  const parte1 = numeros.slice(0, 2);
+  const parte2 = numeros.slice(2, 7);
+  const parte3 = numeros.slice(7, 11);
+  if (numeros.length <= 2) return `(${parte1}`;
+  if (numeros.length <= 7) return `(${parte1}) ${parte2}`;
+  return `(${parte1}) ${parte2}-${parte3}`;
+};
+
+const formatarValor = (valor) => {
+  const numeros = valor.replace(/\D/g, "");
+  const numeroFloat = parseFloat(numeros) / 100;
+  if (isNaN(numeroFloat)) return "";
+  return numeroFloat.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+};
+
+function ModalProdutoBase({
+  modalAberto,
+  setModalAberto,
+  corPrincipal,
+  atualizarAnuncios,
+}) {
   const [titulo, setTitulo] = useState("");
   const [telefone, setTelefone] = useState("");
   const [local, setLocal] = useState("");
@@ -14,8 +58,6 @@ export default function ModalProduto({ modalAberto, setModalAberto, corPrincipal
   const [imagem, setImagem] = useState(null);
   const [erroToast, setErroToast] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const maxDescricao = 120;
-  const maxLength = 60;
 
   const { regiao } = useRegiao();
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
@@ -23,9 +65,12 @@ export default function ModalProduto({ modalAberto, setModalAberto, corPrincipal
 
   useEffect(() => {
     document.body.style.overflow = modalAberto ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [modalAberto]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModalAberto(false);
     setTitulo("");
     setTelefone("");
@@ -34,49 +79,53 @@ export default function ModalProduto({ modalAberto, setModalAberto, corPrincipal
     setValor("");
     setImagem(null);
     setErroToast("");
-  };
+  }, [setModalAberto]);
 
-  const formatarTelefone = (valor) => {
-    const numeros = valor.replace(/\D/g, "").slice(0, 11);
-    const parte1 = numeros.slice(0, 2);
-    const parte2 = numeros.slice(2, 7);
-    const parte3 = numeros.slice(7, 11);
-    if (numeros.length <= 2) return `(${parte1}`;
-    if (numeros.length <= 7) return `(${parte1}) ${parte2}`;
-    return `(${parte1}) ${parte2}-${parte3}`;
-  };
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    },
+    [closeModal]
+  );
 
-  const formatarValor = (valor) => {
-    const numeros = valor.replace(/\D/g, "");
-    const numeroFloat = parseFloat(numeros) / 100;
-    if (isNaN(numeroFloat)) return "";
-    return numeroFloat.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  };
+  const previewUrl = useMemo(
+    () => (imagem ? URL.createObjectURL(imagem) : null),
+    [imagem]
+  );
 
-  const handleSubmit = async () => {
-    // Se já estiver enviando, não faz nada
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;
-    
+
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Você precisa estar logado para criar um anúncio.");
+      setErroToast("Você precisa estar logado para criar um anúncio.");
       navigate("/login");
+      setTimeout(() => setErroToast(""), 3000);
       return;
     }
 
     if (!titulo || !valor || !telefone || !local || !descricao) {
-      alert("Preencha todos os campos.");
+      setErroToast("Preencha todos os campos obrigatórios.");
+      setTimeout(() => setErroToast(""), 3000);
       return;
     }
 
-    setIsSubmitting(true); // Inicia o carregamento
+    setIsSubmitting(true);
 
     const dto = {
       titulo,
-      valor: parseFloat(valor.replace(/\D/g, "")) / 100, // ✅ CORRIGIDO: valor (não preco)
+      valor: parseFloat(valor.replace(/\D/g, "")) / 100,
       telefone,
-      zona: local, // ✅ CORRIGIDO: zona (não regiao)
-      descricao: descricao, // ✅ CORRIGIDO: descricao (não descricaoCompleta)
+      zona: local,
+      descricao,
     };
 
     const formData = new FormData();
@@ -84,115 +133,266 @@ export default function ModalProduto({ modalAberto, setModalAberto, corPrincipal
     if (imagem) formData.append("file", imagem);
 
     try {
-      const novoAnuncio = await AnuncioService.criarAnuncio(formData);
+      await AnuncioService.criarAnuncio(formData);
       closeModal();
-
-      // Atualiza a lista automaticamente
       if (atualizarAnuncios) {
-        await atualizarAnuncios(); // chama a função da page
+        await atualizarAnuncios();
       }
     } catch (err) {
       console.error(err);
-      setErroToast("Erro ao criar anúncio. Verifique os dados e tente novamente.");
+      setErroToast(
+        "Erro ao criar anúncio. Verifique os dados e tente novamente."
+      );
       setTimeout(() => setErroToast(""), 3000);
     } finally {
-      setIsSubmitting(false); // Finaliza o carregamento em caso de sucesso ou erro
+      setIsSubmitting(false);
     }
-  };
+  }, [
+    isSubmitting,
+    titulo,
+    valor,
+    telefone,
+    local,
+    descricao,
+    imagem,
+    navigate,
+    atualizarAnuncios,
+    closeModal,
+  ]);
 
-  const zonas = ["CENTRO", "LESTE", "NORTE", "SUL", "OESTE", "SUDESTE", "SUDOESTE", "NOROESTE"];
+  if (!modalAberto) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2" onClick={closeModal}>
-      {modalAberto && (
-        <div
-          className="bg-white rounded-2xl w-full shadow-xl relative p-6"
-          style={{ border: `2px solid ${corPrincipal}`, maxWidth: "842px", maxHeight: "500px", overflowY: "auto" }}
-          onClick={(e) => e.stopPropagation()}
+    <div
+      className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2"
+      onClick={closeModal}
+      onKeyDown={handleKeyDown}
+    >
+      <div
+        className="bg-white rounded-2xl w-full shadow-xl relative p-6"
+        style={{
+          border: `2px solid ${corPrincipal}`,
+          maxWidth: "842px",
+          maxHeight: "500px",
+          overflowY: "auto",
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-produto-titulo"
+        aria-describedby="modal-produto-descricao"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="absolute top-4 right-4">
+          <button
+            type="button"
+            onClick={closeModal}
+            className="text-2xl text-gray-600 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-full"
+            aria-label="Fechar modal de anúncio de produto"
+          >
+          <FaTimes />
+          </button>
+        </div>
+
+        <h2
+          id="modal-produto-titulo"
+          className="text-3xl font-bold text-black mb-2 font-poppins"
         >
-          <div className="absolute top-4 right-4">
-            <button onClick={closeModal} className="text-2xl text-gray-600 hover:text-black">
-              <FaTimes />
-            </button>
+          Anuncie seu produto
+        </h2>
+        <p
+          id="modal-produto-descricao"
+          className="text-sm text-gray-600 mb-4 font-poppins"
+        >
+          Preencha os campos abaixo para divulgar seu produto para a comunidade.
+        </p>
+
+        {erroToast && (
+          <div
+            className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg text-sm"
+            role="alert"
+            aria-live="assertive"
+          >
+            {erroToast}
+          </div>
+        )}
+
+        <div className="flex gap-4 items-center">
+          {/* Imagem */}
+          <div className="flex-shrink-0 border border-dashed border-gray-400 rounded-lg w-[200px] h-[200px] flex flex-col items-center justify-center text-center text-gray-700 text-xs px-2 overflow-hidden">
+            <label
+              htmlFor="imagem-produto"
+              className="cursor-pointer flex flex-col items-center justify-center h-full w-full"
+            >
+              {previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt="Pré-visualização da imagem do produto selecionado"
+                  className="w-full h-full object-cover rounded-lg"
+                  loading="lazy"
+                />
+              ) : (
+                <>
+                  <img
+                    src="/src/assets/gifs/upload.gif"
+                    alt="Ícone de upload de imagem"
+                    className="w-16 h-16 object-contain"
+                    loading="lazy"
+                  />
+                  <p className="mt-2">
+                    Coloque sua imagem
+                    <br />
+                    <strong style={{ color: corSecundaria }}>navegar</strong>
+                  </p>
+                </>
+              )}
+            </label>
+            <input
+              type="file"
+              id="imagem-produto"
+              accept="image/*"
+              onChange={(e) => setImagem(e.target.files[0])}
+              className="hidden"
+            />
           </div>
 
-          <h2 className="text-3xl font-bold text-black mb-4 font-poppins">Anuncie seu produto</h2>
-
-          {erroToast && (
-            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
-              {erroToast}
-            </div>
-          )}
-
-          <div className="flex gap-4 items-center">
-            {/* Imagem */}
-            <div className="flex-shrink-0 border border-dashed border-gray-400 rounded-lg w-[200px] h-[200px] flex flex-col items-center justify-center text-center text-gray-700 text-xs px-2 overflow-hidden">
-              <label htmlFor="imagem" className="cursor-pointer flex flex-col items-center justify-center h-full w-full">
-                {imagem ? (
-                  <img src={URL.createObjectURL(imagem)} alt="pré-visualização" className="w-full h-full object-cover rounded-lg" />
-                ) : (
-                  <>
-                    <img src="/src/assets/gifs/upload.gif" alt="upload" className="w-16 h-16 object-contain" />
-                    <p className="mt-2">
-                      Coloque sua imagem
-                      <br />
-                      <strong style={{ color: corSecundaria }}>navegar</strong>
-                    </p>
-                  </>
-                )}
+          {/* Formulário */}
+          <div className="flex-1 space-y-3 text-xs font-poppins">
+            <div className="relative">
+              <label
+                htmlFor="produto-titulo"
+                className="text-gray-700 font-semibold block"
+              >
+                Título <span className="text-red-500">*</span>
               </label>
-              <input type="file" id="imagem" accept="image/*" onChange={(e) => setImagem(e.target.files[0])} className="hidden" />
+              <input
+                id="produto-titulo"
+                type="text"
+                value={titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                placeholder="Nome do produto"
+                className="w-full border border-gray-400 rounded px-2 py-2"
+                maxLength={MAX_TITULO}
+                required
+              />
+              <div className="flex justify-end mt-1 text-[10px] text-gray-500">
+                {titulo.length}/{MAX_TITULO} caracteres
+              </div>
             </div>
 
-            {/* Formulário */}
-            <div className="flex-1 space-y-3 text-xs font-poppins">
-              <div className="relative">
-                <label className="text-gray-700 font-semibold block">Título</label>
-                <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="nome do produto" className="w-full border border-gray-400 rounded px-2 py-2" maxLength={maxLength} />
+            <div className="relative">
+              <label
+                htmlFor="produto-descricao"
+                className="text-gray-700 font-semibold block"
+              >
+                Descrição <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="produto-descricao"
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                placeholder="Descreva o produto..."
+                className="w-full border border-gray-400 rounded px-2 py-2 resize-none"
+                rows={2}
+                maxLength={MAX_DESCRICAO}
+                required
+                aria-describedby="produto-descricao-help"
+              ></textarea>
+              <div className="flex justify-between mt-1 text-[10px] text-gray-500">
+                <span id="produto-descricao-help">
+                  Máximo de {MAX_DESCRICAO} caracteres.
+                </span>
+                <span>
+                  {descricao.length}/{MAX_DESCRICAO}
+                </span>
               </div>
+            </div>
 
-              <div className="relative">
-                <label className="text-gray-700 font-semibold block">Descrição</label>
-                <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="descreva o produto..." className="w-full border border-gray-400 rounded px-2 py-2 resize-none" rows={2} maxLength={maxDescricao}></textarea>
-              </div>
+            <div className="relative">
+              <label
+                htmlFor="produto-zona"
+                className="text-gray-700 font-semibold block"
+              >
+                Zona <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="produto-zona"
+                value={local}
+                onChange={(e) => setLocal(e.target.value)}
+                className="w-full border border-gray-400 rounded px-2 py-2"
+                required
+              >
+                <option value="" disabled>
+                  Selecione uma zona
+                </option>
+                {ZONAS.map((zona) => (
+                  <option key={zona} value={zona}>
+                    {zona}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              <div className="relative">
-                <label className="text-gray-700 font-semibold block">Zona</label>
-                <select value={local} onChange={(e) => setLocal(e.target.value)} className="w-full border border-gray-400 rounded px-2 py-2">
-                  <option value="" disabled>Selecione uma zona</option>
-                  {zonas.map((zona, idx) => (
-                    <option key={`${zona}-${idx}`} value={zona}>{zona}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="relative">
+              <label
+                htmlFor="produto-telefone"
+                className="text-gray-700 font-semibold block"
+              >
+                Telefone <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="produto-telefone"
+                type="text"
+                value={telefone}
+                onChange={(e) =>
+                  setTelefone(formatarTelefone(e.target.value))
+                }
+                placeholder="(11) 98765-4321"
+                className="w-full border border-gray-400 rounded px-2 py-2"
+                required
+              />
+            </div>
 
-              <div className="relative">
-                <label className="text-gray-700 font-semibold block">Telefone</label>
-                <input type="text" value={telefone} onChange={(e) => setTelefone(formatarTelefone(e.target.value))} placeholder="(11) 98765-4321" className="w-full border border-gray-400 rounded px-2 py-2" />
-              </div>
+            <div className="relative">
+              <label
+                htmlFor="produto-preco"
+                className="text-gray-700 font-semibold block"
+              >
+                Preço <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="produto-preco"
+                type="text"
+                value={valor}
+                onChange={(e) => setValor(formatarValor(e.target.value))}
+                placeholder="R$ 199,99"
+                className="w-full border border-gray-400 rounded px-2 py-2"
+                required
+              />
+            </div>
 
-              <div className="relative">
-                <label className="text-gray-700 font-semibold block">Preço</label>
-                <input type="text" value={valor} onChange={(e) => setValor(formatarValor(e.target.value))} placeholder="R$ 199,99" className="w-full border border-gray-400 rounded px-2 py-2" />
-              </div>
-
-              <div className="flex justify-end">
-                <button 
-                  type="button" 
-                  onClick={handleSubmit} 
-                  disabled={isSubmitting}
-                  className={`hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow duration-300 ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: isSubmitting ? '#9CA3AF' : corSecundaria }}
-                >
-                  {isSubmitting ? 'Publicando...' : 'Publicar'}
-                </button>
-              </div>
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className={`hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow duration-300 ${
+                  isSubmitting
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:scale-105"
+                }`}
+                style={{
+                  backgroundColor: isSubmitting ? "#9CA3AF" : corSecundaria,
+                }}
+              >
+                {isSubmitting ? "Publicando..." : "Publicar"}
+              </button>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
+
+const ModalProduto = React.memo(ModalProdutoBase);
+export default ModalProduto;
