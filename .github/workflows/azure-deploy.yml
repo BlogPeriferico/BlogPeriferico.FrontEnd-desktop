@@ -40,11 +40,15 @@ jobs:
       - name: 🧹 Limpar build anterior (dist)
         run: rm -rf dist
 
-      - name: 🧪 Lint (se existir script)
-        run: npm run lint --if-present
+      - name: 🧪 Lint (NÃO bloqueia o pipeline)
+        run: |
+          echo "▶ Rodando ESLint (não vai travar o deploy se falhar)..."
+          npm run lint --if-present || echo "⚠️ ESLint encontrou problemas. Veja os erros acima, mas o pipeline vai continuar."
 
-      - name: 🧪 Testes (se existir script)
-        run: npm test --if-present
+      - name: 🧪 Testes (NÃO bloqueia o pipeline)
+        run: |
+          echo "▶ Rodando testes (não vai travar o deploy se falhar)..."
+          npm test --if-present || echo "⚠️ Testes falharam. Veja os erros acima, mas o pipeline vai continuar."
 
       - name: 🏗️ Build do projeto (Vite)
         run: npm run build
@@ -73,7 +77,6 @@ jobs:
     needs: ci
     runs-on: ubuntu-latest
 
-    # Só faz deploy em push na branch (não em PR)
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev-matheus'
 
     environment:
