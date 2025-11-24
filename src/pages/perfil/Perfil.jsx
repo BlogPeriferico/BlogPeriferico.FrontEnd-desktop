@@ -219,13 +219,6 @@ export default function Perfil() {
     usuarioAutenticado?.roles === "ROLE_ADMINISTRADOR" ||
     usuarioAutenticado?.admin === true;
 
-  // Debug
-  console.log("=== PERFIL - DADOS DO USUÁRIO ===");
-  console.log("Usuário autenticado:", usuarioAutenticado);
-  console.log("É admin?", isAdmin);
-  console.log("Roles:", usuarioAutenticado?.roles);
-  console.log("Propriedade admin:", usuarioAutenticado?.admin);
-
   const renderizarPosts = () => {
     const posts = postsUsuario[abaAtiva] || [];
 
