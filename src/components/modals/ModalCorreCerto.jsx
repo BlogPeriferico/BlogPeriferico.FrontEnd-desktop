@@ -5,7 +5,7 @@ import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 import CorreCertoService from "../../services/CorreCertoService";
 
-const MAX_DESCRICAO = 120;
+const MAX_DESCRICAO = 800; // Aumentado para 800 conforme solicitado
 const MAX_TITULO = 60;
 
 const ZONAS = [
@@ -253,8 +253,8 @@ function ModalCorreCertoBase({
                 maxLength={MAX_TITULO}
                 required
               />
-              <div className="flex justify-end mt-1 text-[10px] text-gray-500">
-                {titulo.length}/{MAX_TITULO} caracteres
+              <div className="flex justify-end mt-1 text-xs text-gray-500">
+                {titulo.length}/{MAX_TITULO}
               </div>
             </div>
 
@@ -276,13 +276,8 @@ function ModalCorreCertoBase({
                 required
                 aria-describedby="corre-descricao-help"
               ></textarea>
-              <div className="flex justify-between mt-1 text-[10px] text-gray-500">
-                <span id="corre-descricao-help">
-                  Máximo de {MAX_DESCRICAO} caracteres.
-                </span>
-                <span>
-                  {descricao.length}/{MAX_DESCRICAO}
-                </span>
+              <div className="flex justify-end mt-1 text-xs text-gray-500">
+                {descricao.length}/{MAX_DESCRICAO}
               </div>
             </div>
 

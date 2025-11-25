@@ -194,9 +194,7 @@ export function UserProvider({ children }) {
     setUser, // se precisar mexer direto em algum fluxo específico
   };
 
-  return (
-    <UserContext.Provider value={value}>{children}</UserContext.Provider>
-  );
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
 export function useUser() {

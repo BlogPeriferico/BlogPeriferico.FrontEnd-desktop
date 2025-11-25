@@ -1,16 +1,11 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { FaTimes } from "react-icons/fa";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
 import AnuncioService from "../../services/AnuncioService";
 import { useNavigate } from "react-router-dom";
 
-const MAX_DESCRICAO = 120;
+const MAX_DESCRICAO = 800; // Aumentado para 800 conforme solicitado
 const MAX_TITULO = 60;
 
 const ZONAS = [
@@ -190,7 +185,7 @@ function ModalProdutoBase({
             className="text-2xl text-gray-600 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-full"
             aria-label="Fechar modal de anúncio de produto"
           >
-          <FaTimes />
+            <FaTimes />
           </button>
         </div>
 
@@ -275,8 +270,8 @@ function ModalProdutoBase({
                 maxLength={MAX_TITULO}
                 required
               />
-              <div className="flex justify-end mt-1 text-[10px] text-gray-500">
-                {titulo.length}/{MAX_TITULO} caracteres
+              <div className="flex justify-end mt-1 text-xs text-gray-500">
+                {titulo.length}/{MAX_TITULO}
               </div>
             </div>
 
@@ -298,13 +293,8 @@ function ModalProdutoBase({
                 required
                 aria-describedby="produto-descricao-help"
               ></textarea>
-              <div className="flex justify-between mt-1 text-[10px] text-gray-500">
-                <span id="produto-descricao-help">
-                  Máximo de {MAX_DESCRICAO} caracteres.
-                </span>
-                <span>
-                  {descricao.length}/{MAX_DESCRICAO}
-                </span>
+              <div className="flex justify-end mt-1 text-xs text-gray-500">
+                {descricao.length}/{MAX_DESCRICAO}
               </div>
             </div>
 
@@ -344,9 +334,7 @@ function ModalProdutoBase({
                 id="produto-telefone"
                 type="text"
                 value={telefone}
-                onChange={(e) =>
-                  setTelefone(formatarTelefone(e.target.value))
-                }
+                onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
                 placeholder="(11) 98765-4321"
                 className="w-full border border-gray-400 rounded px-2 py-2"
                 required

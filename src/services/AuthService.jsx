@@ -15,8 +15,9 @@ const AuthService = {
         // Salva o token no localStorage
         localStorage.setItem("token", response.data.token);
         // Opcional: já configura o header padrão também
-        api.defaults.headers.common["Authorization"] =
-          `Bearer ${response.data.token}`;
+        api.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${response.data.token}`;
       }
 
       return response.data;
@@ -61,16 +62,12 @@ const AuthService = {
       novaSenha: perfilData.novaSenha ?? undefined,
     };
 
-    const response = await api.patch(
-      `/usuarios/atualizar/${userId}`,
-      payload,
-      {
-        headers: {
-          // Authorization vem do interceptor
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await api.patch(`/usuarios/atualizar/${userId}`, payload, {
+      headers: {
+        // Authorization vem do interceptor
+        "Content-Type": "application/json",
+      },
+    });
 
     return response.data; // Pode conter { usuario, token }
   },
@@ -86,16 +83,12 @@ const AuthService = {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await api.patch(
-      `/usuarios/${userId}/foto`,
-      formData,
-      {
-        headers: {
-          // Authorization vem do interceptor
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
+    const response = await api.patch(`/usuarios/${userId}/foto`, formData, {
+      headers: {
+        // Authorization vem do interceptor
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
     return response.data; // Retorna o usuário atualizado
   },

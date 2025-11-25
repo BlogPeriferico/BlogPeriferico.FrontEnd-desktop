@@ -14,12 +14,12 @@ export default function ModalNoticia({
   const [titulo, setTitulo] = useState("");
   const [texto, setTexto] = useState("");
   const [local, setLocal] = useState(""); // texto livre
-  const [zona, setZona] = useState("");   // select enum
+  const [zona, setZona] = useState(""); // select enum
   const [imagem, setImagem] = useState(null);
   const [erroToast, setErroToast] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const maxLength = 60;
-  const maxTexto = 120;
+  const maxTexto = 2000; // Aumentado para 2000 conforme solicitado
 
   const { regiao } = useRegiao();
   const corSecundaria = regionColors[regiao]?.[1] || "#3B82F6";
@@ -60,7 +60,7 @@ export default function ModalNoticia({
   const handleSubmit = async () => {
     // Se já estiver enviando, não faz nada
     if (isSubmitting) return;
-    
+
     const token = localStorage.getItem("token");
     if (!token) {
       alert("Você precisa estar logado para criar uma notícia.");
@@ -173,28 +173,38 @@ export default function ModalNoticia({
                 <label className="text-gray-700 font-semibold block">
                   Título
                 </label>
-                <input
-                  type="text"
-                  value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
-                  placeholder="título da notícia"
-                  className="w-full border border-gray-400 rounded px-2 py-2"
-                  maxLength={maxLength}
-                />
+                <div>
+                  <input
+                    type="text"
+                    value={titulo}
+                    onChange={(e) => setTitulo(e.target.value)}
+                    placeholder="título da notícia"
+                    className="w-full border border-gray-400 rounded px-2 py-2"
+                    maxLength={maxLength}
+                  />
+                  <div className="flex justify-end text-xs text-gray-500 mt-1">
+                    {titulo.length}/{maxLength}
+                  </div>
+                </div>
               </div>
 
               <div className="relative">
                 <label className="text-gray-700 font-semibold block">
                   Texto
                 </label>
-                <textarea
-                  value={texto}
-                  onChange={(e) => setTexto(e.target.value)}
-                  placeholder="escreva a notícia..."
-                  className="w-full border border-gray-400 rounded px-2 py-2 resize-none"
-                  rows={2}
-                  maxLength={maxTexto}
-                ></textarea>
+                <div>
+                  <textarea
+                    value={texto}
+                    onChange={(e) => setTexto(e.target.value)}
+                    placeholder="escreva a notícia..."
+                    className="w-full border border-gray-400 rounded px-2 py-2 resize-none"
+                    rows={2}
+                    maxLength={maxTexto}
+                  ></textarea>
+                  <div className="flex justify-end text-xs text-gray-500 mt-1">
+                    {texto.length}/{maxTexto}
+                  </div>
+                </div>
               </div>
 
               {/* Local */}
@@ -238,11 +248,15 @@ export default function ModalNoticia({
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                   className={`hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow duration-300 ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                    isSubmitting
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:scale-105"
                   }`}
-                  style={{ backgroundColor: isSubmitting ? '#9CA3AF' : corSecundaria }}
+                  style={{
+                    backgroundColor: isSubmitting ? "#9CA3AF" : corSecundaria,
+                  }}
                 >
-                  {isSubmitting ? 'Publicando...' : 'Publicar'}
+                  {isSubmitting ? "Publicando..." : "Publicar"}
                 </button>
               </div>
             </div>
