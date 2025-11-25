@@ -68,21 +68,29 @@ const PostSearchResults = ({ results, onClose, isLoading = false }) => {
 
   const formatPostDate = (dateString) => {
     if (!dateString) return "Data não informada";
-
+    
+    // Verifica se a string já está no formato "DD/MM/YYYY HH:mm"
+    const brDateRegex = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/;
+    if (brDateRegex.test(dateString)) {
+      return `Publicado em ${dateString}`;
+    }
+    
+    // Se não for o formato esperado, tenta converter
     try {
       const date = new Date(dateString);
-      if (Number.isNaN(date.getTime())) return "Data inválida";
-
-      const dateStr = date.toLocaleDateString("pt-BR");
-      const timeStr = date.toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      return `Publicado em ${dateStr} às ${timeStr}`;
-    } catch {
-      return "Data inválida";
+      if (!isNaN(date.getTime())) {
+        const dateStr = date.toLocaleDateString("pt-BR");
+        const timeStr = date.toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        return `Publicado em ${dateStr} às ${timeStr}`;
+      }
+    } catch (error) {
+      console.error('Erro ao formatar data:', error);
     }
+    
+    return "Data inválida";
   };
 
   const getPostUrl = (post) => {

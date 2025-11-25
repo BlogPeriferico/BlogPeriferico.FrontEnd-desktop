@@ -332,76 +332,79 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Lado direito: usuário + região + menu mobile */}
+      {/* Lado direito: menu mobile toggle */}
       <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0 ml-2 lg:ml-4">
         {/* Menu mobile toggle */}
         <button
           type="button"
           onClick={() => setMenuOpen((prev) => !prev)}
-          className="text-xl lg:hidden"
-          aria-label="Abrir menu de navegação"
+          className="text-xl lg:hidden p-2 rounded-full hover:bg-gray-100"
+          aria-label={menuOpen ? "Fechar menu" : "Abrir menu de navegação"}
+          aria-expanded={menuOpen}
         >
-          <FaBars aria-hidden="true" />
+          {menuOpen ? <FaTimes aria-hidden="true" /> : <FaBars aria-hidden="true" />}
         </button>
 
-        {/* Login / Perfil */}
-        {isLoggedIn ? (
-          <div className="relative group">
-            <button
-              type="button"
-              onClick={() => navigate("/perfil")}
-              className="focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-full"
-              aria-label="Ir para o seu perfil"
-            >
-              <img
-                src={fotoAtual}
-                alt={user?.nome || "Usuário"}
-                className="w-9 h-9 rounded-full border-2 cursor-pointer hover:opacity-90 transition-all duration-300 hover:ring-2 hover:ring-offset-2 object-cover"
+        {/* Login / Perfil - Apenas visível em telas médias e grandes */}
+        <div className="hidden md:block">
+          {isLoggedIn ? (
+            <div className="relative group">
+              <button
+                type="button"
+                onClick={() => navigate("/perfil")}
+                className="focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-full"
+                aria-label="Ir para o seu perfil"
+              >
+                <img
+                  src={fotoAtual}
+                  alt={user?.nome || "Usuário"}
+                  className="w-9 h-9 rounded-full border-2 cursor-pointer hover:opacity-90 transition-all duration-300 hover:ring-2 hover:ring-offset-2 object-cover"
+                  style={{
+                    borderColor: corPrincipal,
+                    boxShadow: `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`,
+                  }}
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = NoPicture;
+                  }}
+                />
+              </button>
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white transition-all duration-300
+                  hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2`}
                 style={{
-                  borderColor: corPrincipal,
-                  boxShadow: `0 0 0 2px ${hexToRGBA(corPrincipal, 0.2)}`,
+                  background: `linear-gradient(135deg, ${corPrincipal}, ${hexToRGBA(
+                    corPrincipal,
+                    0.8
+                  )})`,
+                  boxShadow: `0 4px 6px -1px ${hexToRGBA(
+                    corPrincipal,
+                    0.2
+                  )}, 0 2px 4px -1px ${hexToRGBA(corPrincipal, 0.1)}`,
                 }}
-                loading="lazy"
-                onError={(e) => {
-                  e.currentTarget.src = NoPicture;
-                }}
-              />
-            </button>
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => navigate("/login")}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white transition-all duration-300
-                hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2`}
-              style={{
-                background: `linear-gradient(135deg, ${corPrincipal}, ${hexToRGBA(
-                  corPrincipal,
-                  0.8
-                )})`,
-                boxShadow: `0 4px 6px -1px ${hexToRGBA(
-                  corPrincipal,
-                  0.2
-                )}, 0 2px 4px -1px ${hexToRGBA(corPrincipal, 0.1)}`,
-              }}
-            >
-              <FaUser className="text-sm" aria-hidden="true" />
-              <span>Entrar</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/register")}
-              className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-            >
-              Cadastrar
-            </button>
-          </div>
-        )}
+              >
+                <FaUser className="text-sm" aria-hidden="true" />
+                <span>Entrar</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/register")}
+                className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                Cadastrar
+              </button>
+            </div>
+          )}
+        </div>
 
-        {/* Seletor de Região */}
-        <div className="relative flex items-center gap-2">
+        {/* Seletor de Região - Visível em todas as telas */}
+        <div className="flex items-center gap-2">
           <button
             type="button"
             className="w-8 h-8 flex items-center justify-center rounded-full border text-white duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
@@ -442,9 +445,42 @@ export default function Header() {
       {/* Menu Mobile */}
       {menuOpen && (
         <div
-          className="absolute top-14 left-0 w-full bg-white p-4 lg:hidden border-b-[2px]"
+          className="absolute top-14 left-0 w-full bg-white p-4 lg:hidden border-b-[2px] shadow-lg"
           style={{ borderColor: corPrincipal }}
         >
+          {/* Botões de Login/Cadastro - Visíveis apenas em mobile */}
+          {!isLoggedIn && (
+            <div className="mb-4 pb-4 border-b border-gray-200">
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate("/login");
+                    setMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white transition-all duration-300
+                    hover:shadow-lg hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2`}
+                  style={{
+                    background: `linear-gradient(135deg, ${corPrincipal}, ${hexToRGBA(corPrincipal, 0.8)})`,
+                    boxShadow: `0 4px 6px -1px ${hexToRGBA(corPrincipal, 0.2)}, 0 2px 4px -1px ${hexToRGBA(corPrincipal, 0.1)}`,
+                  }}
+                >
+                  <FaUser className="text-sm" aria-hidden="true" />
+                  <span>Entrar na Conta</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate("/register");
+                    setMenuOpen(false);
+                  }}
+                  className="w-full text-center py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Criar Conta
+                </button>
+              </div>
+            </div>
+          )}
           {/* Busca mobile */}
           <div className="relative w-full mb-4">
             <div className="relative" ref={searchContainerRef}>

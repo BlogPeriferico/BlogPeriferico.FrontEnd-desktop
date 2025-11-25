@@ -3,6 +3,7 @@ import { ProdutoData } from "../../data/ProdutoData";
 import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
+import "../../styles/carrossel-responsive.css";
 
 export default function CarrosselVendas() {
   const produtos = useMemo(() => ProdutoData.slice(0, 3), []);
@@ -37,7 +38,7 @@ export default function CarrosselVendas() {
 
   return (
     <section
-      className="relative w-full bg-[#F5F5F5] shadow-lg overflow-hidden py-8 px-6"
+      className="carrossel-container relative w-full bg-[#F5F5F5] shadow-lg overflow-hidden py-8 px-6"
       aria-roledescription="carrossel"
       aria-label="Destaques de vendas"
       onMouseEnter={() => setIsPaused(true)}
@@ -50,18 +51,18 @@ export default function CarrosselVendas() {
       <button
         type="button"
         onClick={anterior}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
+        className="carrossel-nav-button absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
         aria-label="Ver produto anterior"
       >
-        <FiChevronLeft size={24} aria-hidden="true" />
+        <FiChevronLeft className="w-6 h-6 md:w-6 md:h-6" aria-hidden="true" />
       </button>
       <button
         type="button"
         onClick={proximo}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
+        className="carrossel-nav-button absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
         aria-label="Ver próximo produto"
       >
-        <FiChevronRight size={24} aria-hidden="true" />
+        <FiChevronRight className="w-6 h-6 md:w-6 md:h-6" aria-hidden="true" />
       </button>
 
       {/* Slides */}
@@ -93,8 +94,12 @@ export default function CarrosselVendas() {
                   aria-live={isActive ? "polite" : "off"}
                 >
                   <span
-                    className="text-white text-sm font-semibold px-4 py-1 rounded"
-                    style={{ backgroundColor: corSecundaria }}
+                    className="badge-preco text-white text-sm font-semibold px-3 py-0.5 md:px-4 md:py-1 rounded"
+                    style={{ 
+                      backgroundColor: corSecundaria,
+                      display: 'inline-block',
+                      lineHeight: '1.25'
+                    }}
                   >
                     Por R${produto.preco}
                   </span>
@@ -121,7 +126,7 @@ export default function CarrosselVendas() {
 
                 {/* Imagem do produto com selo de desconto */}
                 <div className="flex-1 mt-8 md:mt-34 flex justify-center items-center relative">
-                  <div className="relative w-[280px] h-[280px] flex items-center justify-center">
+                  <div className="carrossel-image-container relative w-[200px] h-[200px] md:w-[280px] md:h-[280px] flex items-center justify-center">
                     <img
                       src={produto.imagem}
                       alt={`${produto.titulo} - imagem ilustrativa do produto`}
@@ -130,8 +135,8 @@ export default function CarrosselVendas() {
                     />
                     {produto.desconto && (
                       <div
-                        className="absolute top-[-2rem] right-[1rem] w-16 h-16 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg"
-                        style={{ backgroundColor: corPrincipal }}
+                        className="desconto-badge absolute top-[-1rem] right-[0.5rem] w-10 h-10 md:top-[-2rem] md:right-[1rem] md:w-16 md:h-16 rounded-full flex items-center justify-center text-white text-xs md:text-sm font-bold shadow-lg"
+                        style={{ backgroundColor: corPrimary }}
                         aria-label={`Desconto de ${produto.desconto} neste produto`}
                       >
                         {produto.desconto}
@@ -147,7 +152,7 @@ export default function CarrosselVendas() {
 
       {/* Indicadores */}
       <div
-        className="flex justify-center mt-8 gap-2"
+        className="carrossel-indicators flex justify-center mt-8 gap-2"
         role="tablist"
         aria-label="Seleção de slide de vendas"
       >
@@ -158,8 +163,8 @@ export default function CarrosselVendas() {
               key={i}
               type="button"
               onClick={() => setIndex(i)}
-              className={`transition-all h-2 rounded-full ${
-                isActive ? "w-8" : "w-4"
+              className={`carrossel-indicator transition-all h-2 rounded-full ${
+                isActive ? "w-8 active" : "w-4"
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800`}
               style={{ backgroundColor: isActive ? corSecundaria : "#ccc" }}
               aria-label={`Ir para o slide ${i + 1}`}

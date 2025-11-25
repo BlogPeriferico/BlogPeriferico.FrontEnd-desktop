@@ -37,7 +37,7 @@ function AppContent() {
         <div className="flex flex-col min-h-screen">
           {!isAuthPage && <Header />}
 
-          <main className="flex-1">
+          <main className="flex-1 mb-16">
             <Routes>
               <Route path="/" element={<QuebradaInforma />} />
               <Route path="/login" element={
@@ -83,7 +83,7 @@ function AppContent() {
             </Routes>
           </main>
 
-          {!isAuthPage && <Footer />}
+          {!isAuthPage && <div className="pt-8"><Footer /></div>}
         </div>
   );
 }

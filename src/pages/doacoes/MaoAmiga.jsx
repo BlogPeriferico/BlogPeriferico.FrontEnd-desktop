@@ -140,8 +140,8 @@ export default function Doacoes() {
       </div>
 
       <div className="relative mb-16">
-        <div className="flex justify-between items-center">
-          <div className="text-center w-full">
+        <div className="relative">
+          <div className="text-center mb-8">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
               Doações Disponíveis
               <div
@@ -153,17 +153,41 @@ export default function Doacoes() {
               Encontre itens que podem fazer a diferença na vida de alguém
             </p>
           </div>
-          <div className="absolute right-0 top-0">
+          
+          {/* Botão de atualizar - visível apenas em telas grandes */}
+          <div className="absolute right-0 top-0 hidden md:block">
             <button
               onClick={recarregarDoacoes}
               disabled={loading}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
                 loading
                   ? "bg-gray-200 dark:bg-gray-700 text-gray-500"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              } transition-colors`}
+                  : "text-white hover:opacity-90"
+              } transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
               title="Atualizar doações"
               aria-label="Atualizar doações"
+              style={{ backgroundColor: loading ? "" : corPrincipal }}
+            >
+              <FiRefreshCw
+                className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
+              />
+              <span className="text-sm font-medium">Atualizar</span>
+            </button>
+          </div>
+
+          {/* Botão de atualizar - visível apenas em telas pequenas */}
+          <div className="flex justify-center mt-6 mb-8 md:hidden">
+            <button
+              onClick={recarregarDoacoes}
+              disabled={loading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                loading
+                  ? "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                  : "text-white hover:opacity-90"
+              } transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+              title="Atualizar doações"
+              aria-label="Atualizar doações"
+              style={{ backgroundColor: loading ? "" : corPrincipal }}
             >
               <FiRefreshCw
                 className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}

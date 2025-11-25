@@ -153,24 +153,23 @@ function SelecaoDoacoesBase({ doacoes = [], loading = false }) {
                 </div>
 
                 {/* Conteúdo */}
-                <div
-                  className="p-6 flex flex-col"
-                  style={{ height: "172px", flex: 1 }}
-                >
-                  <div className="flex-grow">
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 transition-colors duration-200">
+                <div className="flex flex-col h-full">
+                  <div className="px-5 pt-5 pb-2 flex-1 flex flex-col">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
                       {doacao.titulo}
                     </h3>
 
                     {doacao.descricao && (
-                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
-                        {doacao.descricao}
-                      </p>
+                      <div className="flex-1 overflow-hidden">
+                        <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                          {doacao.descricao}
+                        </p>
+                      </div>
                     )}
                   </div>
 
                   {/* Metadados */}
-                  <div className="space-y-2">
+                  <div className="px-5 py-2.5 border-t border-gray-100 mt-auto">
                     {doacao.categoria && (
                       <div className="flex items-center gap-2 text-gray-600">
                         <svg
@@ -193,7 +192,7 @@ function SelecaoDoacoesBase({ doacoes = [], loading = false }) {
                       </div>
                     )}
 
-                    <div className="flex items-end justify-between pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between mt-1">
                       <div className="flex items-center gap-2">
                         <svg
                           className="w-4 h-4 text-gray-400"
@@ -209,7 +208,7 @@ function SelecaoDoacoesBase({ doacoes = [], loading = false }) {
                             d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                           />
                         </svg>
-                        <span className="text-sm text-gray-600 font-medium">
+                        <span className="text-sm text-gray-700 font-medium truncate max-w-[140px]" title={doacao.telefone}>
                           {doacao.telefone}
                         </span>
                       </div>
@@ -229,7 +228,7 @@ function SelecaoDoacoesBase({ doacoes = [], loading = false }) {
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        <span>{dataCriacao}</span>
+                        <span className="text-xs text-gray-500 whitespace-nowrap ml-2">{dataCriacao}</span>
                       </div>
                     </div>
                   </div>

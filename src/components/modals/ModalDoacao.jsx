@@ -38,7 +38,7 @@ export default function ModalDoacao({ modalAberto, setModalAberto, corPrincipal,
 
   const categorias = ["Alimentos", "Roupas", "Brinquedos", "Livros", "Eletrônicos", "Outros"];
 
-  const zonas = ["CENTRO", "LESTE", "NORTE", "SUL", "OESTE", "SUDESTE", "SUDOESTE", "NOROESTE"];
+  const zonas = ["CENTRO", "LESTE", "NORTE", "NORDESTE", "SUL", "OESTE", "SUDESTE", "SUDOESTE", "NOROESTE"];
 
   const formatarTelefone = (valor) => {
     const numeros = valor.replace(/\D/g, "").slice(0, 11);

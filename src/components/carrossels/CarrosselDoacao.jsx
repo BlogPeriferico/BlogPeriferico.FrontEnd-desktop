@@ -3,6 +3,7 @@ import { DoacaoData } from "../../data/DoacaoData";
 import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
+import "../../styles/carrossel-responsive.css";
 
 export default function CarrosselDoacao() {
   const doacoes = useMemo(() => DoacaoData.slice(0, 3), []);
@@ -37,7 +38,7 @@ export default function CarrosselDoacao() {
 
   return (
     <section
-      className="relative w-full bg-[#F5F5F5] shadow-lg overflow-hidden py-8 px-6"
+      className="carrossel-container relative w-full bg-[#F5F5F5] shadow-lg overflow-hidden py-8 px-6"
       aria-roledescription="carrossel"
       aria-label="Destaques de doações"
       onMouseEnter={() => setIsPaused(true)}
@@ -50,18 +51,18 @@ export default function CarrosselDoacao() {
       <button
         type="button"
         onClick={anterior}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
+        className="carrossel-nav-button absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
         aria-label="Ver doação anterior"
       >
-        <FiChevronLeft size={24} aria-hidden="true" />
+        <FiChevronLeft className="w-6 h-6 md:w-6 md:h-6" aria-hidden="true" />
       </button>
       <button
         type="button"
         onClick={proximo}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
+        className="carrossel-nav-button absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
         aria-label="Ver próxima doação"
       >
-        <FiChevronRight size={24} aria-hidden="true" />
+        <FiChevronRight className="w-6 h-6 md:w-6 md:h-6" aria-hidden="true" />
       </button>
 
       {/* Slides */}
@@ -115,7 +116,7 @@ export default function CarrosselDoacao() {
 
                 {/* Imagem */}
                 <div className="flex-1 mt-8 md:mt-34 flex justify-center items-center">
-                  <div className="relative w-[280px] h-[280px] flex items-center justify-center">
+                  <div className="carrossel-image-container relative w-[200px] h-[200px] md:w-[280px] md:h-[280px] flex items-center justify-center">
                     <img
                       src={doacao.imagem}
                       alt={`${doacao.titulo} - imagem ilustrativa`}
@@ -127,11 +128,13 @@ export default function CarrosselDoacao() {
                     {doacao.regiao && (
                       <div className="absolute top-0 right-0">
                         <span
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200"
+                          className="inline-flex items-center px-2 py-0.5 md:px-3 md:py-1 rounded-full text-xs font-medium bg-white/90 backdrop-blur-sm shadow-lg border border-gray-200"
                           style={{
                             backgroundColor: `${corPrincipal}20`,
                             color: corPrincipal,
                             borderColor: corPrincipal,
+                            fontSize: '0.7rem',
+                            lineHeight: '1'
                           }}
                         >
                           {doacao.regiao}
@@ -148,7 +151,7 @@ export default function CarrosselDoacao() {
 
       {/* Indicadores */}
       <div
-        className="flex justify-center mt-8 gap-2"
+        className="carrossel-indicators flex justify-center mt-8 gap-2"
         role="tablist"
         aria-label="Seleção de slide de doações"
       >
@@ -159,8 +162,8 @@ export default function CarrosselDoacao() {
               key={i}
               type="button"
               onClick={() => setIndex(i)}
-              className={`transition-all h-2 rounded-full ${
-                isActive ? "w-8" : "w-4"
+              className={`carrossel-indicator transition-all h-2 rounded-full ${
+                isActive ? "w-8 active" : "w-4"
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800`}
               style={{
                 backgroundColor: isActive ? corSecundaria : "#ccc",

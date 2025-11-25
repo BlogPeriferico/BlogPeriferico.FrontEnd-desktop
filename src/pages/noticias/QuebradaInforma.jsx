@@ -364,45 +364,77 @@ export default function QuebradaInforma() {
           </p>
         </div>
 
-        <div className="relative mb-16">
-          <div className="text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
-              Últimas Notícias
-              <div
-                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
-                style={{ backgroundColor: corPrincipal }}
-              />
-            </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-6">
-              Fique por dentro das principais notícias e
-              acontecimentos da sua região
-            </p>
+        <div className="mb-16">
+          {/* Cabeçalho com título e botão de atualizar */}
+          <div className="relative">
+            <div className="text-center mb-8">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 relative inline-block">
+                Últimas Notícias
+                <div
+                  className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 rounded-full"
+                  style={{ backgroundColor: corPrincipal }}
+                />
+              </h2>
+              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                Fique por dentro das principais notícias e
+                acontecimentos da sua região
+              </p>
+            </div>
+            
+            {/* Botão de atualizar - posicionado à direita em telas grandes */}
+            <div className="absolute right-0 top-0 hidden md:block">
+              <button
+                onClick={buscarNoticias}
+                disabled={loadingNoticias}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                  loadingNoticias
+                    ? "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                    : "text-white hover:opacity-90"
+                } transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                title="Atualizar notícias"
+                aria-label="Atualizar notícias"
+                type="button"
+                style={{ backgroundColor: loadingNoticias ? "" : corPrincipal }}
+              >
+                <FiRefreshCw
+                  className={`w-5 h-5 ${
+                    loadingNoticias ? "animate-spin" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className="text-sm font-medium">
+                  Atualizar
+                </span>
+              </button>
+            </div>
+
+            {/* Botão de atualizar - visível apenas em telas pequenas */}
+            <div className="flex justify-center mt-6 mb-8 md:hidden">
+              <button
+                onClick={buscarNoticias}
+                disabled={loadingNoticias}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                  loadingNoticias
+                    ? "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                    : "text-white hover:opacity-90"
+                } transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                title="Atualizar notícias"
+                aria-label="Atualizar notícias"
+                type="button"
+                style={{ backgroundColor: loadingNoticias ? "" : corPrincipal }}
+              >
+                <FiRefreshCw
+                  className={`w-5 h-5 ${
+                    loadingNoticias ? "animate-spin" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+                <span className="text-sm font-medium">
+                  Atualizar
+                </span>
+              </button>
+            </div>
           </div>
-          <div className="absolute right-0 top-0">
-            <button
-              onClick={buscarNoticias}
-              disabled={loadingNoticias}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                loadingNoticias
-                  ? "bg-gray-200 dark:bg-gray-700 text-gray-500"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              } transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-              title="Atualizar notícias"
-              aria-label="Atualizar notícias"
-              type="button"
-            >
-              <FiRefreshCw
-                className={`w-5 h-5 ${
-                  loadingNoticias ? "animate-spin" : ""
-                }`}
-                aria-hidden="true"
-              />
-              <span className="text-sm font-medium">
-                Atualizar
-              </span>
-            </button>
-          </div>
-        </div>
 
         {loadingNoticias ? (
           <div className="flex justify-center items-center py-20">
@@ -593,6 +625,7 @@ export default function QuebradaInforma() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </main>
   );

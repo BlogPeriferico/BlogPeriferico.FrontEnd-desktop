@@ -12,6 +12,7 @@ const ZONAS = [
   "CENTRO",
   "LESTE",
   "NORTE",
+  "NORDESTE",
   "SUL",
   "OESTE",
   "SUDESTE",

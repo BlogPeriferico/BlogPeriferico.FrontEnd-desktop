@@ -3,6 +3,7 @@ import { CorreData } from "../../data/CorreCertoData";
 import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
 import { useRegiao } from "../../contexts/RegionContext";
 import { regionColors } from "../../utils/regionColors";
+import "../../styles/carrossel-responsive.css";
 
 export default function CarrosselCorreCerto() {
   const Corres = useMemo(() => CorreData.slice(0, 3), []);
@@ -37,7 +38,7 @@ export default function CarrosselCorreCerto() {
 
   return (
     <section
-      className="relative w-full bg-[#F5F5F5] shadow-lg overflow-hidden py-8 px-6"
+      className="carrossel-container relative w-full bg-[#F5F5F5] shadow-lg overflow-hidden py-8 px-6"
       aria-roledescription="carrossel"
       aria-label="Destaques Corre Certo"
       onMouseEnter={() => setIsPaused(true)}
@@ -50,18 +51,18 @@ export default function CarrosselCorreCerto() {
       <button
         type="button"
         onClick={anterior}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
+        className="carrossel-nav-button absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
         aria-label="Ver corre anterior"
       >
-        <FiChevronLeft size={24} aria-hidden="true" />
+        <FiChevronLeft className="w-6 h-6 md:w-6 md:h-6" aria-hidden="true" />
       </button>
       <button
         type="button"
         onClick={proximo}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
+        className="carrossel-nav-button absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white p-2 rounded-full shadow-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
         aria-label="Ver próximo corre"
       >
-        <FiChevronRight size={24} aria-hidden="true" />
+        <FiChevronRight className="w-6 h-6 md:w-6 md:h-6" aria-hidden="true" />
       </button>
 
       {/* Slides */}
@@ -115,7 +116,7 @@ export default function CarrosselCorreCerto() {
 
                 {/* Imagem */}
                 <div className="flex-1 mt-8 md:mt-34 flex justify-center items-center relative">
-                  <div className="relative w-[280px] h-[280px] flex items-center justify-center">
+                  <div className="carrossel-image-container relative w-[200px] h-[200px] md:w-[280px] md:h-[280px] flex items-center justify-center">
                     <img
                       src={CorreCerto.imagem}
                       alt={`${CorreCerto.titulo} - imagem ilustrativa`}
@@ -131,7 +132,7 @@ export default function CarrosselCorreCerto() {
       </div>
 
       {/* Indicadores */}
-      <div className="flex justify-center mt-8 gap-2" role="tablist" aria-label="Seleção de slide Corre Certo">
+      <div className="carrossel-indicators flex justify-center mt-8 gap-2" role="tablist" aria-label="Seleção de slide Corre Certo">
         {Corres.map((_, i) => {
           const isActive = i === index;
           return (
@@ -139,8 +140,8 @@ export default function CarrosselCorreCerto() {
               key={i}
               type="button"
               onClick={() => setIndex(i)}
-              className={`transition-all h-2 rounded-full ${
-                isActive ? "w-8" : "w-4"
+              className={`carrossel-indicator transition-all h-2 rounded-full ${
+                isActive ? "w-8 active" : "w-4"
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800`}
               style={{ backgroundColor: isActive ? corSecundaria : "#ccc" }}
               aria-label={`Ir para o slide ${i + 1}`}

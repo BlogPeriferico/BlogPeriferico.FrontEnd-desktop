@@ -1,0 +1,76 @@
+/* Estilos responsivos para os carrosséis */
+
+/* Ajustes gerais para telas menores que 768px */
+@media (max-width: 767px) {
+  /* Ajusta o padding e o espaçamento */
+  .carrossel-container {
+    padding: 1rem 0.5rem !important;
+  }
+
+  /* Ajusta o tamanho da fonte dos títulos */
+  .carrossel-container h2 {
+    font-size: 1.5rem !important;
+    line-height: 1.2;
+  }
+
+  /* Ajusta o tamanho da fonte das descrições */
+  .carrossel-container p {
+    font-size: 1rem !important;
+    line-height: 1.4;
+  }
+
+  /* Ajusta o tamanho dos botões */
+  .carrossel-container .carrossel-button {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* Ajusta o tamanho das imagens */
+  .carrossel-container .carrossel-image-container {
+    width: 200px !important;
+    height: 200px !important;
+    margin: 1rem auto !important;
+  }
+
+  /* Ajusta o posicionamento dos botões de navegação */
+  .carrossel-container .carrossel-nav-button {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0.25rem !important;
+  }
+
+  .carrossel-container .carrossel-nav-button svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* Ajusta o tamanho dos indicadores */
+  .carrossel-container .carrossel-indicators {
+    margin-top: 1rem !important;
+  }
+
+  .carrossel-container .carrossel-indicator {
+    width: 6px !important;
+    height: 6px !important;
+    margin: 0 3px !important;
+  }
+
+  .carrossel-container .carrossel-indicator.active {
+    width: 20px !important;
+  }
+
+  /* Ajustes específicos para o carrossel de vendas */
+  .carrossel-container .badge-preco {
+    font-size: 0.875rem !important;
+    padding: 0.25rem 0.75rem !important;
+  }
+
+  /* Ajustes para o selo de desconto */
+  .carrossel-container .desconto-badge {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 0.75rem !important;
+    top: -0.5rem !important;
+    right: 0.5rem !important;
+  }
+}
