@@ -1,4 +1,3 @@
-// src/pages/sobre/SobreNos.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useRegiao } from "../../contexts/RegionContext";
@@ -73,7 +72,7 @@ export default function SobreNos() {
         </video>
 
         <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-30 flex items-center justify-center">
-          <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-fraunces font-semibold opacity-75">
+          <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold opacity-75">
             Quem somos?
           </h1>
         </div>
@@ -100,14 +99,14 @@ export default function SobreNos() {
         </div>
 
         <div className="p-6">
-          <p className="text-gray-500 font-fraunces text-base">Saber mais</p>
+          <p className="text-gray-500 text-base">Saber mais</p>
           <h2
             id="qual-a-finalidade"
-            className="text-2xl font-semibold font-fraunces mt-2"
+            className="text-2xl font-semibold mt-2"
           >
             Qual a finalidade do nosso site?
           </h2>
-          <p className="text-gray-600 mt-2 font-fraunces">
+          <p className="text-gray-600 mt-2">
             O Blog Periférico nasceu da vontade de trazer visibilidade às
             questões sociais e culturais das periferias. Nosso objetivo é
             conectar pessoas e informações sobre as comunidades e suas histórias,
@@ -117,7 +116,7 @@ export default function SobreNos() {
           <a
             href="#funcionalidades"
             className="font-semibold underline mt-4 inline-block"
-            style={{ color: corSecundaria }}
+            style={{ color: corPrincipal }}
           >
             Funcionalidades &gt;
           </a>
@@ -135,7 +134,7 @@ export default function SobreNos() {
           ></div>
 
           <div className="bg-white shadow-lg p-6 md:p-10 md:absolute md:top-[65%] md:left-[55%] transform md:-translate-y-1/2 mt-6 md:mt-0 w-full md:w-[45%] max-w-[560px]">
-            <h3 className="font-fraunces font-semibold text-2xl md:text-3xl mb-4">
+            <h3 className="font-semibold text-2xl md:text-3xl mb-4">
               São Paulo, estado do movimento constante
             </h3>
             <p className="text-gray-700 text-base md:text-lg leading-relaxed">
@@ -149,49 +148,152 @@ export default function SobreNos() {
         </div>
       </section>
 
-      {/* Funcionalidades */}
+      {/* FUNCIONALIDADES */}
       <section
         id="funcionalidades"
-        className="bg-white py-16 px-4 sm:px-6 md:px-12 xl:px-28"
+        className="py-20 bg-white px-4 sm:px-6 md:px-12 xl:px-28"
       >
-        <h2 className="text-center text-3xl font-fraunces font-semibold mb-12">
+        <h2 className="text-center text-4xl font-semibold mb-14">
           Funcionalidades
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-screen-xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-screen-xl mx-auto">
           {funcionalidades.map((item, i) => (
             <div
               key={i}
               onClick={() => navigate(item.link)}
-              className="border shadow-md p-6 bg-white relative rounded-lg transition duration-200 hover:scale-105 cursor-pointer"
+              className="group border shadow-lg p-6 bg-white rounded-xl cursor-pointer transition duration-200 hover:-translate-y-2 hover:shadow-xl"
             >
               <div
-                className="h-1 w-full absolute top-0 left-0 rounded-t"
+                className="h-1 w-full rounded-t mb-4"
                 style={{ backgroundColor: corPrincipal }}
-              ></div>
+              />
 
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-3 mb-4">
                 <div
-                  className="p-2 rounded-md flex items-center justify-center"
+                  className="p-3 rounded-md shadow-sm"
                   style={{ backgroundColor: corSecundaria }}
                 >
                   <img
                     src={item.icon}
                     alt={item.title}
-                    className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
+                    className="w-7 h-7 object-contain"
                   />
                 </div>
-                <span className="font-semibold text-sm px-2 py-1 bg-white rounded">
+
+                <span className="font-semibold text-base">
                   {item.title}
                 </span>
               </div>
 
-              <p className="text-sm text-gray-600 font-poppins leading-relaxed">
+              <p className="text-gray-600 text-sm leading-relaxed">
                 {item.desc}
               </p>
             </div>
           ))}
         </div>
+        
+        {/* Faixa de download do app */}
+        <div className="w-full max-w-5xl mx-auto mt-20 mb-10 relative">
+          {/* Gradiente ornamental atrás */}
+          <div
+            className="absolute inset-0 blur-2xl opacity-30"
+            style={{
+              background: `linear-gradient(90deg, ${corPrincipal}, ${corSecundaria})`,
+            }}
+          ></div>
+
+          <div className="relative bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100">
+            {/* Faixa estilizada no topo */}
+            <div className="flex h-3">
+              <div className="w-1/6" />
+              <div
+                className="w-4/6"
+                style={{ backgroundColor: corPrincipal }}
+              />
+              <div
+                className="w-2/6"
+                style={{ backgroundColor: corSecundaria }}
+              />
+            </div>
+
+            {/* Conteúdo */}
+            <div className="p-8 flex flex-col md:flex-row justify-between items-center gap-8">
+              {/* Ícone + Texto */}
+              <div className="flex items-start gap-4 md:max-w-lg">
+                
+
+                <div>
+                  <h2 className="text-3xl font-semibold leading-tight">
+                    Baixe o app do Blog Periférico
+                  </h2>
+
+                  <p className="text-gray-600 mt-3 text-sm md:text-base">
+                    Tenha notícias da quebrada, vagas, doações, vendas e muito mais no
+                    seu celular. Atualizações rápidas, conteúdo direto das regiões, e
+                    tudo com confiança e segurança.
+                  </p>
+                  <br/>
+                  <p className="text-gray-700 mt-2 text-sm">
+                    Disponível no MediaFire para Android — e em breve no iOS!
+                  </p>
+                </div>
+              </div>
+
+              {/* QR + Botões */}
+              <div className="flex flex-col items-center justify-center gap-3">
+                {/* QR Code (opcional – remova se quiser) */}
+                <div className="p-3 rounded-lg shadow-md bg-white border border-gray-200">
+                  <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://play.google.com/store/apps/details?id=SEU_PACOTE_AQUI"
+                    alt="QR Code Download"
+                    className="w-32 h-32"
+                  />
+                </div>
+
+                {/* Botões */}
+                <div className="flex flex-col sm:flex-row gap-3 mt-2">
+                  {/* Android */}
+                  <a
+                    href="https://play.google.com/store/apps/details?id=SEU_PACOTE_AQUI"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-5 py-3 rounded-lg text-sm font-semibold shadow-md text-white text-center transition hover:scale-105"
+                    style={{ backgroundColor: corPrincipal }}
+                  >
+                    Baixar para Android
+                  </a>
+
+                  {/* iOS */}
+                  <a
+                    href="#"
+                    className="px-5 py-3 rounded-lg text-sm font-semibold border text-center transition hover:scale-105"
+                    style={{
+                      borderColor: corSecundaria,
+                      color: corSecundaria,
+                    }}
+                  >
+                    Em breve no iOS
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Onda decorativa inferior */}
+            <svg
+              className="w-full text-white"
+              viewBox="0 0 1440 100"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fill={corPrincipal}
+                d="M0,64L48,58.7C96,53,192,43,288,48C384,53,480,75,576,80C672,85,768,75,864,74.7C960,75,1056,85,1152,80C1248,75,1344,53,1392,42.7L1440,32L1440,100L1392,100C1344,100,1248,100,1152,100C1056,100,960,100,864,100C768,100,672,100,576,100C480,100,384,100,288,100C192,100,96,100,48,100L0,100Z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+
       </section>
     </div>
   );
