@@ -38,7 +38,7 @@ export default function CarrosselDoacao() {
 
   return (
     <section
-      className="carrossel-container relative w-full bg-[#F5F5F5] shadow-lg overflow-hidden py-8 px-6"
+      className="carrossel-container relative w-full bg-[#FFFFFF] shadow-lg overflow-hidden py-8 px-6"
       aria-roledescription="carrossel"
       aria-label="Destaques de doações"
       onMouseEnter={() => setIsPaused(true)}
