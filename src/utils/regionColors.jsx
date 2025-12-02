@@ -1,12 +1,11 @@
 export const regionColors = {
-    norte:      ["#015E98", "#73C9FF"],
-    sul:        ["#01A5D9", "#72DDFF"],
-    leste:      ["#ED1D25", "#FF7177"],
-    oeste:      ["#FF6A00", "#FFAE74"],
-    centro:     ["#8F8F8F", "#C4C0C0"],
-    sudoeste:   ["#9C0B10", "#FF767A"],
-    sudeste:    ["#046465", "#009D05"],
-    nordeste:   ["#E8CC00", "#FEDF04"],
-    noroeste:  ["#4BB759", "#75D581"],
+    norte:      ["#003682", "#5F8AC5"],
+    sul:        ["#0090EA", "#9ACCEA"],
+    leste:      ["#E10009", "#FA787D"],
+    oeste:      ["#FF6A00", "#FFA464"],
+    centro:     ["#706D6D", "#B5B5B5"],
+    sudoeste:   ["#9C0B10", "#E08286"],
+    sudeste:    ["#04654E", "#57BA92"],
+    nordeste:   ["#E6CF00", "#F3E974"],
+    noroeste:  ["#38AE48", "#75D581"],
   };
-  
