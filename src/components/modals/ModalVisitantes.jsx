@@ -1,6 +1,6 @@
 // src/components/modals/ModalVisitantes.jsx
 import React, { useEffect, useCallback } from "react";
-import { FiAlertCircle, FiLogIn, FiX } from "react-icons/fi";
+import { FiAlertCircle, FiLogIn, FiX, FiLock, FiUserPlus } from "react-icons/fi";
 
 function ModalVisitantesBase({ abrir, onClose, onLogin }) {
   useEffect(() => {
@@ -15,9 +15,7 @@ function ModalVisitantesBase({ abrir, onClose, onLogin }) {
 
   const handleKeyDown = useCallback(
     (event) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
+      if (event.key === "Escape") onClose();
     },
     [onClose]
   );
@@ -30,95 +28,76 @@ function ModalVisitantesBase({ abrir, onClose, onLogin }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       onClick={handleOverlayClick}
       onKeyDown={handleKeyDown}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-[95%] sm:w-[90%] md:w-[85%] lg:w-[80%] xl:w-[70%] 2xl:w-[60%] max-w-6xl h-auto max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 hover:scale-100 flex flex-col"
+        className="relative w-full max-w-[95vw] sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden border border-blue-100"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-visitantes-titulo"
-        aria-describedby="modal-visitantes-descricao"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho */}
-        <div className="relative p-6 pb-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-                <FiAlertCircle size={24} aria-hidden="true" />
-              </div>
-              <h2
-                id="modal-visitantes-titulo"
-                className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white"
-              >
-                Acesso Restrito
-              </h2>
+        <div className="relative p-6 pb-4">
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Fechar"
+          >
+            <FiX size={24} />
+          </button>
+          
+          <div className="text-center">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100 mb-4">
+              <FiLock className="h-8 w-8 text-blue-600" />
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 rounded-full"
-              aria-label="Fechar aviso de acesso restrito"
-            >
-              <FiX size={24} aria-hidden="true" />
-            </button>
+            <h2 className="text-2xl font-bold text-gray-800">Acesso Restrito</h2>
+            <p className="mt-2 text-gray-500">Faça login para continuar</p>
           </div>
         </div>
 
         {/* Corpo */}
-        <div className="p-8 pt-6 flex-1 flex flex-col justify-center">
-          <div
-            className="text-center mb-10"
-            id="modal-visitantes-descricao"
-          >
-            <p className="text-gray-600 dark:text-gray-300 text-xl sm:text-2xl lg:text-3xl leading-relaxed mb-6 sm:mb-8">
-              Você precisa estar logado para criar uma publicação.
-            </p>
-            <p className="text-gray-600 dark:text-gray-300 text-xl sm:text-2xl lg:text-3xl leading-relaxed">
-              Faça login para compartilhar seus posts com a comunidade!
-            </p>
-          </div>
+        <div className="px-6 pb-6">
+          <div className="space-y-5">
+            <div className="rounded-xl bg-blue-50 p-4 md:p-5 border border-blue-100">
+              <p className="text-center text-blue-700 font-medium text-base sm:text-lg">
+                Você precisa estar logado para acessar este conteúdo
+              </p>
+            </div>
 
-          <div className="mt-12 flex flex-col sm:flex-row justify-center gap-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-8 py-4 text-lg sm:text-xl lg:text-2xl rounded-xl font-medium text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 flex-1 max-w-xs sm:max-w-sm md:max-w-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-            >
-              Continuar como visitante
-            </button>
-            <button
-              type="button"
-              onClick={onLogin}
-              className="px-8 py-4 text-lg sm:text-xl lg:text-2xl rounded-xl font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center justify-center space-x-3 flex-1 max-w-xs sm:max-w-sm md:max-w-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              aria-label="Ir para tela de login"
-            >
-              <FiLogIn size={18} aria-hidden="true" />
-              <span>Fazer Login</span>
-            </button>
+            <div className="space-y-3 sm:flex sm:space-y-0 sm:space-x-3">
+              <button
+                onClick={onLogin}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-medium py-3 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 text-sm sm:text-base"
+              >
+                <FiLogIn className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Fazer Login</span>
+              </button>
+
+              <button
+                onClick={onLogin}
+                className="w-full flex items-center justify-center gap-2 bg-white text-blue-600 font-medium py-3 px-4 rounded-lg border-2 border-blue-100 hover:border-blue-200 hover:bg-blue-50 transition-all duration-200 text-sm sm:text-base"
+              >
+                <FiUserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Criar Conta</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Rodapé */}
-        <div className="bg-gray-50 dark:bg-gray-700/30 px-8 py-5 border-t border-gray-100 dark:border-gray-700">
-          <p className="text-sm sm:text-base text-center text-gray-500 dark:text-gray-400">
-            Ao fazer login, você concorda com nossos{" "}
-            <a
-              href="/termos"
-              className="text-blue-500 hover:underline"
-            >
-              Termos de Uso
-            </a>{" "}
-            e{" "}
-            <a
-              href="/privacidade"
-              className="text-blue-500 hover:underline"
-            >
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+          <p className="text-center text-xs text-gray-500">
+            Ao continuar, você concorda com nossos{' '}
+            <a href="/termos" className="text-blue-600 hover:underline font-medium">
+              Termos
+            </a>{' '}
+            e{' '}
+            <a href="/privacidade" className="text-blue-600 hover:underline font-medium">
               Política de Privacidade
             </a>
-            .
           </p>
         </div>
       </div>
