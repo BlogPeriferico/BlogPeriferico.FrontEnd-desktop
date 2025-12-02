@@ -1,4 +1,3 @@
-// src/components/Footer.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 import { FaInstagram } from "react-icons/fa";
@@ -17,8 +16,8 @@ export default function Footer() {
   const { regiao } = useRegiao();
   const corPrincipal = regionColors[regiao]?.[0] || "#015E98";
   const corSecundaria = regionColors[regiao]?.[1] || "#5EC5FF";
-  const baseEscura = "#050B2C";
-  const baseClara = "#111C46";
+  const baseEscura = corSecundaria;
+  const baseClara = corPrincipal;
 
   const linkCards = [
     {
