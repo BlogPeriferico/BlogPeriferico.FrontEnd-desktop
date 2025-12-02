@@ -349,22 +349,7 @@ export default function QuebradaInforma() {
 
       {/* Notícias */}
       <div className="max-w-7xl mx-auto px-4">
-        <div className="mb-8 text-center">
-          <h1
-            id="titulo-quebrada-informa"
-            className="text-2xl font-bold text-gray-900"
-          >
-            Quebrada Informa
-          </h1>
-          <p className="text-gray-600 dark:text-gray-600">
-            Notícias{" "}
-            {regiao
-              ? `da região ${regiao}`
-              : "de todas as regiões"}
-          </p>
-        </div>
-
-        <div className="mb-16">
+          <div className="mb-16">
           {/* Cabeçalho com título e botão de atualizar */}
           <div className="relative">
             <div className="text-center mb-8">
