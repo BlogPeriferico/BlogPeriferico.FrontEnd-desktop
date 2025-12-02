@@ -38,7 +38,7 @@ export default function CarrosselVendas() {
 
   return (
     <section
-      className="carrossel-container relative w-full bg-[#F5F5F5] shadow-lg overflow-hidden py-8 px-6"
+      className="carrossel-container relative w-full bg-[#FFFFFF] shadow-lg overflow-hidden py-8 px-6"
       aria-roledescription="carrossel"
       aria-label="Destaques de vendas"
       onMouseEnter={() => setIsPaused(true)}
