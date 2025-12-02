@@ -144,7 +144,7 @@ export default function Footer() {
               </a>
               <div className="flex items-center gap-4">
                 <a
-                  href="https://www.instagram.com"
+                  href="https://www.instagram.com/blog.periferico/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 shadow-lg"
