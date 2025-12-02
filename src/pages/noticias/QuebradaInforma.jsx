@@ -352,11 +352,11 @@ export default function QuebradaInforma() {
         <div className="mb-8 text-center">
           <h1
             id="titulo-quebrada-informa"
-            className="text-2xl font-bold text-gray-900 dark:text-white"
+            className="text-2xl font-bold text-gray-900"
           >
             Quebrada Informa
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-gray-600 dark:text-gray-600">
             Notícias{" "}
             {regiao
               ? `da região ${regiao}`
