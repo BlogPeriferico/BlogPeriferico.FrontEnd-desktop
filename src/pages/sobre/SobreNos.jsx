@@ -1,3 +1,4 @@
+// src/pages/sobre/SobreNos.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useRegiao } from "../../contexts/RegionContext";
@@ -245,7 +246,7 @@ export default function SobreNos() {
                 {/* QR Code (opcional – remova se quiser) */}
                 <div className="p-3 rounded-lg shadow-md bg-white border border-gray-200">
                   <img
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://play.google.com/store/apps/details?id=SEU_PACOTE_AQUI"
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://www.mediafire.com/file/2y9n0edum10q0ae/application-007c1e0e-cba5-4a50-a435-ebc465d7e25d.apk/file"
                     alt="QR Code Download"
                     className="w-32 h-32"
                   />
@@ -255,7 +256,7 @@ export default function SobreNos() {
                 <div className="flex flex-col sm:flex-row gap-3 mt-2">
                   {/* Android */}
                   <a
-                    href="https://play.google.com/store/apps/details?id=SEU_PACOTE_AQUI"
+                    href="https://www.mediafire.com/file/2y9n0edum10q0ae/application-007c1e0e-cba5-4a50-a435-ebc465d7e25d.apk/file"
                     target="_blank"
                     rel="noreferrer"
                     className="px-5 py-3 rounded-lg text-sm font-semibold shadow-md text-white text-center transition hover:scale-105"
