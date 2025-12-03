@@ -246,7 +246,7 @@ export default function SobreNos() {
                 {/* QR Code (opcional – remova se quiser) */}
                 <div className="p-3 rounded-lg shadow-md bg-white border border-gray-200">
                   <img
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://www.mediafire.com/file/agshrfn857ph7vx/blogperiferico.apk/file
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://www.mediafire.com/file/agshrfn857ph7vx/blogperiferico.apk/file"
                     alt="QR Code Download"
                     className="w-32 h-32"
                   />

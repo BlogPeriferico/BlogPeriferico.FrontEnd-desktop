@@ -331,6 +331,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const alternarRoleUsuario = async (usuario) => {
+    if (!window.confirm(`Tem certeza que deseja alterar o papel deste usuário para ${usuario.roles === 'ROLE_ADMINISTRADOR' ? 'Usuário' : 'Administrador'}?`)) {
+      return;
+    }
+
+    try {
+      const novoRole = usuario.roles === 'ROLE_ADMINISTRADOR' ? 'ROLE_USUARIO' : 'ROLE_ADMINISTRADOR';
+      await api.patch(`/usuarios/${usuario.id}/role?novoRole=${novoRole}`);
+      await carregarDados();
+      alert('Papel do usuário atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atualizar papel do usuário:', error);
+      alert('Erro ao atualizar papel do usuário. Verifique o console para mais detalhes.');
+    }
+  };
+
   // Funções para posts
   const editarPost = (post) => {
     setEditingPost(post);
@@ -590,52 +606,51 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Cabeçalho */}
-      <div
-        className="shadow-lg py-4"
+      {/* Cabeçalho fixo */}
+      <header 
+        className="fixed top-0 left-0 right-0 z-20 shadow-lg py-3"
         style={{
           background: `linear-gradient(90deg, ${corPrincipal} 0%, ${corSecundaria} 100%)`
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center">
-            <div className="w-full flex justify-between items-center mb-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 h-10 w-10 bg-white/30 rounded-lg flex items-center justify-center mr-3">
-                  <FaUserCog className="text-white text-xl" />
-                </div>
-                <h1 className="text-2xl font-bold text-white">
-                  Painel de Administração
-                </h1>
-              </div>
-              <button
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300 text-white backdrop-blur-sm hover:shadow-lg"
-              >
-                <FaArrowLeft />
-                Voltar
-              </button>
-            </div>
+        <div className="h-full flex items-center">
+          <div className="max-w-7xl w-full mx-auto px-3 sm:px-4 lg:px-6">
+            {/* Espaço reservado para conteúdo do header se necessário */}
+          </div>
+        </div>
+      </header>
 
-            {/* Abas */}
-            <div className="w-full max-w-4xl">
-              <div
-                className="flex rounded-lg overflow-hidden"
-                style={{ backgroundColor: `${corPrincipal}33` }}
-              >
+      {/* Espaçamento para o conteúdo não ficar atrás do header fixo */}
+      <div className="pt-16">
+        {/* Abas de navegação */}
+        <div className="sticky top-16 z-10">
+          <div className="w-full py-3" style={{ 
+            background: `linear-gradient(90deg, ${corPrincipal} 0%, ${corSecundaria} 100%)`,
+            backdropFilter: 'blur(8px)'
+          }}>
+            <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+              <div className="flex justify-center">
+                <div className="w-full max-w-4xl">
+                  <div 
+                    className="flex rounded-xl overflow-hidden text-sm sm:text-base shadow-lg border border-white/20"
+                    style={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  >
                 <button
                   onClick={() => {
                     setActiveTab('usuarios');
                     setSearchTerm('');
                     setPostsBuscados([]);
                   }}
-                  className={`flex-1 py-4 font-medium text-lg flex items-center justify-center gap-2 transition-all duration-300 ${
+                  className={`flex-1 py-2 sm:py-3 font-medium flex items-center justify-center gap-1 sm:gap-2 transition-all duration-300 ${
                     activeTab === 'usuarios'
-                      ? 'bg-white shadow-md'
-                      : 'text-white hover:bg-white/20'
+                      ? 'bg-white shadow-md text-gray-800'
+                      : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
                   }`}
                 >
-                  <FaUser className="text-xl" />
+                  <FaUser className="text-base sm:text-lg" />
                   <span>Usuários</span>
                 </button>
                 <button
@@ -644,64 +659,67 @@ export default function AdminDashboard() {
                     setSearchTerm('');
                     setPostsBuscados([]);
                   }}
-                  className={`flex-1 py-4 font-medium text-lg flex items-center justify-center gap-2 transition-all duration-300 ${
+                  className={`flex-1 py-2 sm:py-3 font-medium flex items-center justify-center gap-1 sm:gap-2 transition-all duration-300 ${
                     activeTab === 'posts'
-                      ? 'bg-white shadow-md'
-                      : 'text-white hover:bg-white/20'
+                      ? 'bg-white shadow-md text-gray-800'
+                      : 'text-gray-600 hover:bg-white/50 hover:text-gray-800'
                   }`}
                 >
-                  <FaNewspaper className="text-xl" />
+                  <FaNewspaper className="text-base sm:text-lg" />
                   <span>Posts</span>
                 </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Conteúdo */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-1">
+        {/* Conteúdo */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Estatísticas e pesquisa */}
-        <div className="mb-8 bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="mb-4 sm:mb-6 bg-white rounded-xl shadow-sm p-4 sm:p-5 md:p-6 border border-gray-100">
           {activeTab === 'usuarios' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <div
-                  className="flex items-center gap-3 px-5 py-3 rounded-xl"
-                  style={{
-                    backgroundColor: `${corPrincipal}15`,
-                    border: `1px solid ${corPrincipal}30`
-                  }}
-                >
-                  <FaUserCog
-                    className="text-2xl"
-                    style={{ color: corPrincipal }}
-                  />
-                  <h2
-                    className="text-3xl font-bold"
-                    style={{ color: corPrincipal }}
-                  >
-                    Painel de Admin
-                  </h2>
-                </div>
-                <div
-                  className="p-4 rounded-lg text-center min-w-[150px]"
-                  style={{
-                    backgroundColor: `${corSecundaria}15`,
-                    border: `1px solid ${corSecundaria}30`
-                  }}
-                >
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div
-                    className="text-sm font-medium"
-                    style={{ color: corSecundaria }}
+                    className="flex items-center gap-3 p-3 sm:px-5 sm:py-3 rounded-xl w-full"
+                    style={{
+                      backgroundColor: `${corPrincipal}15`,
+                      border: `1px solid ${corPrincipal}30`
+                    }}
                   >
-                    Total de Usuários
+                    <FaUserCog
+                      className="text-xl sm:text-2xl flex-shrink-0"
+                      style={{ color: corPrincipal }}
+                    />
+                    <h2
+                      className="text-xl sm:text-2xl font-bold truncate"
+                      style={{ color: corPrincipal }}
+                    >
+                      Painel de Admin
+                    </h2>
                   </div>
                   <div
-                    className="text-2xl font-bold"
-                    style={{ color: corSecundaria }}
+                    className="p-3 sm:p-4 rounded-lg text-center w-full"
+                    style={{
+                      backgroundColor: `${corSecundaria}15`,
+                      border: `1px solid ${corSecundaria}30`
+                    }}
                   >
-                    {usuarios.length}
+                    <div
+                      className="text-xs sm:text-sm font-medium"
+                      style={{ color: corSecundaria }}
+                    >
+                      Total de Usuários
+                    </div>
+                    <div
+                      className="text-xl sm:text-2xl font-bold"
+                      style={{ color: corSecundaria }}
+                    >
+                      {usuarios.length}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -724,42 +742,44 @@ export default function AdminDashboard() {
           {activeTab === 'posts' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <div
-                  className="flex items-center gap-3 px-5 py-3 rounded-xl"
-                  style={{
-                    backgroundColor: `${corPrincipal}15`,
-                    border: `1px solid ${corPrincipal}30`
-                  }}
-                >
-                  <FaUserCog
-                    className="text-2xl"
-                    style={{ color: corPrincipal }}
-                  />
-                  <h2
-                    className="text-3xl font-bold"
-                    style={{ color: corPrincipal }}
-                  >
-                    Painel de Admin
-                  </h2>
-                </div>
-                <div
-                  className="p-4 rounded-lg text-center min-w-[150px]"
-                  style={{
-                    backgroundColor: `${corSecundaria}15`,
-                    border: `1px solid ${corSecundaria}30`
-                  }}
-                >
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div
-                    className="text-sm font-medium"
-                    style={{ color: corSecundaria }}
+                    className="flex items-center gap-3 p-3 sm:px-5 sm:py-3 rounded-xl w-full"
+                    style={{
+                      backgroundColor: `${corPrincipal}15`,
+                      border: `1px solid ${corPrincipal}30`
+                    }}
                   >
-                    Total de Posts
+                    <FaUserCog
+                      className="text-xl sm:text-2xl flex-shrink-0"
+                      style={{ color: corPrincipal }}
+                    />
+                    <h2
+                      className="text-xl sm:text-2xl font-bold truncate"
+                      style={{ color: corPrincipal }}
+                    >
+                      Painel de Admin
+                    </h2>
                   </div>
                   <div
-                    className="text-2xl font-bold"
-                    style={{ color: corSecundaria }}
+                    className="p-3 sm:p-4 rounded-lg text-center w-full"
+                    style={{
+                      backgroundColor: `${corSecundaria}15`,
+                      border: `1px solid ${corSecundaria}30`
+                    }}
                   >
-                    {totais.totalGeral}
+                    <div
+                      className="text-xs sm:text-sm font-medium"
+                      style={{ color: corSecundaria }}
+                    >
+                      Total de Posts
+                    </div>
+                    <div
+                      className="text-xl sm:text-2xl font-bold"
+                      style={{ color: corSecundaria }}
+                    >
+                      {totais.totalGeral}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -779,23 +799,23 @@ export default function AdminDashboard() {
             {/* Tabela de Usuários */}
             {activeTab === 'usuarios' && (
               <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-md">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto -mx-1 sm:mx-0">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50/80 backdrop-blur-sm">
+                    <thead className="bg-gray-50/80 backdrop-blur-sm hidden sm:table-header-group">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Nome
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                           Email
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Tipo
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 sm:px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Ações
                         </th>
                       </tr>
@@ -803,25 +823,35 @@ export default function AdminDashboard() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {usuariosFiltrados.map((usuario) => (
                         <tr key={usuario.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap">
                             <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10">
+                              <div className="flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9 relative">
                                 <img
-                                  className="h-10 w-10 rounded-full object-cover"
+                                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity border border-gray-200"
                                   src={usuario.fotoPerfil || NoPicture}
                                   alt={usuario.nome || 'Usuário'}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/perfil/${usuario.id}`);
+                                  }}
                                   onError={(e) => {
                                     e.target.onerror = null;
                                     e.target.src = NoPicture;
                                   }}
                                 />
+                                <span 
+                                  className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-white sm:hidden ${
+                                    usuario.ativo !== false ? 'bg-green-500' : 'bg-red-500'
+                                  }`}
+                                  title={usuario.ativo !== false ? 'Ativo' : 'Inativo'}
+                                />
                               </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
+                              <div className="ml-2 sm:ml-3 min-w-0">
+                                <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-[180px] md:max-w-xs">
                                   {editingUser?.id === usuario.id ? (
                                     <input
                                       type="text"
-                                      className="border rounded px-2 py-1 w-full"
+                                      className="border rounded px-2 py-1 w-full text-sm"
                                       defaultValue={usuario.nome}
                                       onChange={(e) =>
                                         setEditingUser({
@@ -831,23 +861,25 @@ export default function AdminDashboard() {
                                       }
                                     />
                                   ) : (
-                                    usuario.nome
+                                    <span className="truncate block">{usuario.nome}</span>
                                   )}
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                  {usuario.username && `@${usuario.username}`}
-                                  <div className="text-xs text-gray-600 font-medium">
+                                <div className="text-xs text-gray-500 truncate max-w-[120px] sm:max-w-[180px] md:max-w-xs">
+                                  {usuario.username && (
+                                    <div className="truncate">@{usuario.username}</div>
+                                  )}
+                                  <div className="text-xs text-gray-600 font-medium truncate hidden sm:block">
                                     {usuario.email}
                                   </div>
                                 </div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap hidden lg:table-cell">
                             {editingUser?.id === usuario.id ? (
                               <input
                                 type="email"
-                                className="border rounded px-2 py-1 w-full"
+                                className="border rounded px-2 py-1 w-full text-sm"
                                 defaultValue={usuario.email}
                                 onChange={(e) =>
                                   setEditingUser({
@@ -857,43 +889,54 @@ export default function AdminDashboard() {
                                 }
                               />
                             ) : (
-                              <div className="text-sm text-gray-900">
+                              <div className="text-sm text-gray-900 truncate max-w-[120px] md:max-w-xs">
                                 {usuario.email}
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                usuario.roles === 'ROLE_ADMINISTRADOR'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-blue-100 text-blue-800'
-                              }`}
-                            >
-                              {usuario.roles === 'ROLE_ADMINISTRADOR'
-                                ? 'Administrador'
-                                : 'Usuário'}
-                            </span>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center space-x-1 sm:space-x-2">
+                              <span
+                                className={`px-1.5 sm:px-2 py-0.5 inline-flex text-[10px] sm:text-xs leading-4 sm:leading-5 font-semibold rounded-full whitespace-nowrap ${
+                                  usuario.roles === 'ROLE_ADMINISTRADOR'
+                                    ? 'bg-green-100 text-green-800 border border-green-200'
+                                    : 'bg-blue-100 text-blue-800 border border-blue-200'
+                                }`}
+                              >
+                                {usuario.roles === 'ROLE_ADMINISTRADOR'
+                                  ? 'Admin'
+                                  : 'Usuário'}
+                              </span>
+                              <button
+                                onClick={() => alternarRoleUsuario(usuario)}
+                                className="p-0.5 sm:p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-blue-600 transition-colors"
+                                title={`Mudar para ${usuario.roles === 'ROLE_ADMINISTRADOR' ? 'Usuário' : 'Administrador'}`}
+                              >
+                                <FaUserCog className="h-3 w-3 sm:h-4 sm:w-4" />
+                              </button>
+                            </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap hidden sm:table-cell">
                             <span
-                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              className={`px-2 py-0.5 sm:py-1 inline-flex text-[10px] sm:text-xs leading-4 sm:leading-5 font-semibold rounded-full border ${
                                 usuario.ativo !== false
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-800'
+                                  ? 'bg-green-50 text-green-800 border-green-200'
+                                  : 'bg-red-50 text-red-800 border-red-200'
                               }`}
                             >
                               {usuario.ativo !== false ? 'Ativo' : 'Inativo'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button
-                              onClick={() => handleDeleteUser(usuario.id)}
-                              className="p-2 rounded-full bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-800 transition-colors"
-                              title="Excluir usuário"
-                            >
-                              <FaTrash className="inline" />
-                            </button>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex justify-end space-x-1 sm:space-x-2">
+                              <button
+                                onClick={() => handleDeleteUser(usuario.id)}
+                                className="p-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 transition-colors border border-red-100"
+                                title="Excluir usuário"
+                              >
+                                <FaTrash className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -907,8 +950,8 @@ export default function AdminDashboard() {
             {activeTab === 'posts' && (
               <div className="space-y-6">
                 {/* Filtros e totais */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-                  <div className="flex flex-wrap gap-2">
+                <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+                  <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 -mx-2 px-2">
                     {[
                       { id: 'noticias', name: 'Notícias' },
                       { id: 'doacoes', name: 'Doações' },
@@ -933,7 +976,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Barra de pesquisa */}
-                  <div className="relative">
+                  <div className="relative w-full">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FaSearch
                         className={`h-4 w-4 ${
@@ -943,7 +986,7 @@ export default function AdminDashboard() {
                     </div>
                     <input
                       type="text"
-                      className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                       placeholder="Pesquisar posts por título..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -1008,7 +1051,7 @@ export default function AdminDashboard() {
                 ) : activeTab === 'posts' &&
                   searchTerm.trim() &&
                   isSearchingPosts ? null : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 px-2 sm:px-0">
                     {postsFiltrados.map((post) => {
                       const tipoPost = getCorTipoPost(post.tipo);
                       const dataFormatada = formatarData(
@@ -1174,6 +1217,7 @@ export default function AdminDashboard() {
             )}
           </>
         )}
+        </div>
       </div>
     </div>
   );

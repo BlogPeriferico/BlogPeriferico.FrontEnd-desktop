@@ -65,9 +65,9 @@ export default function Vendas() {
         (a, b) => new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
 
-      // Filtra por região se necessário (trata Central vs Centro)
+      // Filtra por região se necessário (trata Central vs Centro e Todos)
       let produtosFiltrados = produtosOrdenados;
-      if (regiao) {
+      if (regiao && regiao.toLowerCase() !== 'todos') {
         const regiaoFiltro =
           regiao.toLowerCase() === "central" ? "Centro" : regiao;
         produtosFiltrados = produtosOrdenados.filter(

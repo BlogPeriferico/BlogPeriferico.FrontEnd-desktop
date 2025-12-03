@@ -2,6 +2,7 @@
 import React from "react";
 
 const regioes = [
+  "Todos",
   "Centro",
   "Norte",
   "Sul",

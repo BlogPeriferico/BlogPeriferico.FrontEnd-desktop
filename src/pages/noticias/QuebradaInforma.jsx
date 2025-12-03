@@ -7,12 +7,13 @@ import React, {
   useMemo,
 } from "react";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRegiao } from "../../contexts/RegionContext";
 import { useUser } from "../../contexts/UserContext";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../services/Api";
 import { regionColors } from "../../utils/regionColors";
-import { FiPlus, FiRefreshCw } from "react-icons/fi";
+import { FiPlus, FiRefreshCw, FiX, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import NoticiaService from "../../services/NoticiasService"; // se não usar, pode remover depois
 
 const ModalNoticia = React.lazy(() =>
@@ -40,6 +41,51 @@ const zonasClima = {
 };
 
 export default function QuebradaInforma() {
+  // Variantes de animação
+  const lightboxVariants = {
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      transition: {
+        duration: 0.3,
+        ease: [0.16, 1, 0.3, 1]
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.9,
+      transition: {
+        duration: 0.2,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  const imageVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        delay: 0.2,
+        duration: 0.4
+      }
+    }
+  };
+
+  const infoVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        delay: 0.4,
+        duration: 0.4
+      }
+    }
+  };
+
   // Clima
   const [dadosClima, setDadosClima] = useState({});
   const [ultimaAtualizacaoClima, setUltimaAtualizacaoClima] = useState(
@@ -49,6 +95,11 @@ export default function QuebradaInforma() {
   // Modais / usuário
   const [modalAberto, setModalAberto] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Lightbox
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentRegion, setCurrentRegion] = useState(null);
 
   // Notícias
   const [todasNoticias, setTodasNoticias] = useState([]);
@@ -134,7 +185,7 @@ export default function QuebradaInforma() {
       );
 
       let noticiasFiltradas = noticiasOrdenadas;
-      if (regiao) {
+      if (regiao && regiao.toLowerCase() !== 'todos') {
         const regiaoFiltro =
           regiao.toLowerCase() === "central" ? "Centro" : regiao;
         noticiasFiltradas = noticiasOrdenadas.filter(
@@ -181,6 +232,58 @@ export default function QuebradaInforma() {
       setPaginaAtual((prev) => prev + 1);
     }
   };
+
+  // ========== Handlers do Lightbox ==========
+  const openLightbox = (index, region) => {
+    setCurrentImageIndex(index);
+    setCurrentRegion(region);
+    setLightboxOpen(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+    document.body.style.overflow = 'unset';
+  };
+
+  const goToPrev = () => {
+    setCurrentImageIndex(prev => {
+      const newIndex = prev === 0 ? Object.keys(zonasClima).length - 1 : prev - 1;
+      const regionNames = Object.keys(zonasClima);
+      setCurrentRegion(regionNames[newIndex]);
+      return newIndex;
+    });
+  };
+
+  const goToNext = () => {
+    setCurrentImageIndex(prev => {
+      const newIndex = prev === Object.keys(zonasClima).length - 1 ? 0 : prev + 1;
+      const regionNames = Object.keys(zonasClima);
+      setCurrentRegion(regionNames[newIndex]);
+      return newIndex;
+    });
+  };
+
+  // Fechar com a tecla ESC
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        closeLightbox();
+      } else if (e.key === 'ArrowLeft') {
+        goToPrev();
+      } else if (e.key === 'ArrowRight') {
+        goToNext();
+      }
+    };
+
+    if (lightboxOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [lightboxOpen]);
 
   // ========== JSX ==========
 
@@ -272,6 +375,7 @@ export default function QuebradaInforma() {
             type="button"
             className="underline-offset-2 hover:underline text-sm font-medium"
             style={{ color: corSecundaria }}
+            onClick={() => window.open('https://www.gazetasp.com.br/cotidiano/descubra-o-significado-das-cores-diferentes-nos-onibus-de-sao-paulo/1142337/', '_blank')}
           >
             Por que das cores?
           </button>
@@ -298,14 +402,23 @@ export default function QuebradaInforma() {
             return (
               <article
                 key={nome}
-                className="relative rounded-xl text-white p-4 shadow-md overflow-hidden h-[150px] flex flex-col justify-between transition-transform duration-300 hover:scale-105 cursor-default"
+                className="relative rounded-xl text-white p-4 shadow-md overflow-hidden h-[150px] flex flex-col justify-between transition-all duration-300 hover:scale-105 cursor-pointer transform hover:shadow-lg"
                 style={{
                   backgroundImage:
                     `url(https://blogperic0.blob.core.windows.net/zonas/zona_${nome.toLowerCase()}.png)`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
-                aria-label={`Clima na região ${nome}, bairro ${zona.bairro}`}
+                onClick={() => openLightbox(Object.keys(zonasClima).indexOf(nome), nome)}
+                aria-label={`Clima na região ${nome}, bairro ${zona.bairro}. Clique para ampliar a imagem.`}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openLightbox(Object.keys(zonasClima).indexOf(nome), nome);
+                  }
+                }}
               >
                 <div className="absolute inset-0 bg-black bg-opacity-30 rounded-xl" />
                 <div className="relative z-10 text-xs space-y-0.5">
@@ -346,6 +459,224 @@ export default function QuebradaInforma() {
           })}
         </section>
       </div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxOpen && (
+          <motion.div 
+            className="fixed inset-0 bg-gray-900/95 z-50 flex items-center justify-center p-4 cursor-pointer"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={lightboxVariants}
+            onClick={closeLightbox}
+          >
+            {/* Botão de fechar */}
+            <motion.button 
+              onClick={(e) => {
+                e.stopPropagation();
+                closeLightbox();
+              }}
+              className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              aria-label="Fechar"
+            >
+              <FiX size={24} />
+            </motion.button>
+
+            {/* Navegação */}
+            <div className="absolute inset-0 flex items-center justify-between px-4 pointer-events-none">
+              <motion.button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToPrev();
+                }}
+                className="bg-white/10 backdrop-blur-md text-white hover:bg-white/20 rounded-full p-3 pointer-events-auto transform hover:scale-110 transition-all duration-200 shadow-xl"
+                whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.15)' }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Imagem anterior"
+              >
+                <FiChevronLeft size={28} />
+              </motion.button>
+              
+              <motion.button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToNext();
+                }}
+                className="bg-white/10 backdrop-blur-md text-white hover:bg-white/20 rounded-full p-3 pointer-events-auto transform hover:scale-110 transition-all duration-200 shadow-xl"
+                whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.15)' }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Próxima imagem"
+              >
+                <FiChevronRight size={28} />
+              </motion.button>
+            </div>
+            
+            {/* Conteúdo principal */}
+            <motion.div 
+              className="relative w-full max-w-6xl h-[80vh] flex flex-row items-stretch bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden shadow-2xl"
+              variants={imageVariants}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Lado esquerdo - Imagem */}
+              <div className="w-1/2 h-full bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden relative">
+                <img 
+                  src={`https://blogperic0.blob.core.windows.net/zonas/zona_${currentRegion?.toLowerCase()}.png`}
+                  alt={`Região ${currentRegion}`}
+                  className="w-full h-full object-cover"
+                  style={{
+                    objectPosition: 'center',
+                    minHeight: '100%',
+                    minWidth: '100%'
+                  }}
+                />
+                
+                {/* Cards de informações sobrepostos */}
+                {currentRegion && dadosClima[currentRegion] && (
+                  <>
+                    {/* Temperatura no canto superior esquerdo */}
+                    <div className="absolute top-6 left-6 bg-black/70 backdrop-blur-sm rounded-xl p-4 text-white transform transition-all duration-300 hover:bg-black/80">
+                      <div className="flex items-center gap-3">
+                        {dadosClima[currentRegion].weather?.[0]?.icon && (
+                          <div className="bg-white/20 p-2 rounded-lg">
+                            <img
+                              src={`https://openweathermap.org/img/wn/${dadosClima[currentRegion].weather[0].icon}@2x.png`}
+                              alt={dadosClima[currentRegion].weather[0].description}
+                              className="w-10 h-10"
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="text-2xl font-bold">
+                            {Math.round(dadosClima[currentRegion].main.temp)}°C
+                          </h3>
+                          <p className="text-xs text-gray-300 capitalize">
+                            {dadosClima[currentRegion].weather[0]?.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Horário no canto superior direito */}
+                    <div className="absolute top-6 right-6 bg-black/70 backdrop-blur-sm rounded-xl p-3 text-white transform transition-all duration-300 hover:bg-black/80">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-lg font-medium">
+                          {new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Demais informações na parte inferior */}
+                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm rounded-xl p-3 text-white transform transition-all duration-300 hover:bg-black/80">
+                      <div className="flex items-center justify-center gap-6">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                          </svg>
+                          <span>{dadosClima[currentRegion].main.humidity}%</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                          <span>{Math.round(dadosClima[currentRegion].wind.speed * 3.6)} km/h</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <span>{currentRegion}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              {/* Lado direito - Informações */}
+              <div className="w-1/2 p-8 bg-gradient-to-br from-gray-900 to-gray-800 text-white flex flex-col h-full">
+                {currentRegion && (
+                  <div className="h-full flex flex-col">
+                    {/* Cabeçalho */}
+                    <div className="mb-8">
+                      <h2 className="text-4xl font-bold mb-2">{currentRegion}</h2>
+                      <p className="text-xl text-gray-300">
+                        {zonasClima[currentRegion]?.bairro || 'Região de São Paulo'}
+                      </p>
+                      <div className="w-16 h-1 bg-blue-500 my-4 rounded-full"></div>
+                    </div>
+                    
+                    {/* Dados adicionais da região */}
+                    <div className="mb-8">
+                      <h3 className="text-2xl font-semibold mb-4">Sobre a Região</h3>
+                      <div className="space-y-4">
+                        <div className="bg-white/10 p-4 rounded-lg">
+                          <h4 className="font-semibold text-lg mb-2">Destaques</h4>
+                          <p className="text-gray-300 leading-relaxed">
+                            A região {currentRegion} é conhecida por sua rica cultura e diversidade. 
+                            Aqui você encontra desde pontos turísticos históricos até uma cena 
+                            gastronômica incrível.
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-white/10 p-4 rounded-lg">
+                            <p className="text-sm text-gray-400">População</p>
+                            <p className="text-xl font-bold">
+                              {zonasClima[currentRegion]?.populacao || '--'}
+                            </p>
+                          </div>
+                          <div className="bg-white/10 p-4 rounded-lg">
+                            <p className="text-sm text-gray-400">Área</p>
+                            <p className="text-xl font-bold">
+                              {zonasClima[currentRegion]?.area || '--'} km²
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Informações adicionais sobre a região */}
+                    <div className="mt-auto pt-6 border-t border-white/10">
+                      <h3 className="text-xl font-semibold mb-3">Sobre a Região</h3>
+                      <p className="text-gray-300 leading-relaxed">
+                        A região {currentRegion} é uma das áreas mais vibrantes de São Paulo, 
+                        conhecida por sua rica cultura e diversidade. Aqui você encontra desde 
+                        pontos turísticos históricos até uma cena gastronômica incrível.
+                      </p>
+                      <button 
+                        className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                        onClick={() => {
+                          // Adicione aqui a navegação para a página da região
+                          console.log(`Navegar para a região ${currentRegion}`);
+                        }}
+                      >
+                        Ver mais sobre {zonasClima[currentRegion]?.bairro || 'a região'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+            
+            {/* Indicador de página */}
+            <motion.div 
+              className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-medium z-10"
+              variants={infoVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {currentImageIndex + 1} de {Object.keys(zonasClima).length}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Notícias */}
       <div className="max-w-7xl mx-auto px-4">

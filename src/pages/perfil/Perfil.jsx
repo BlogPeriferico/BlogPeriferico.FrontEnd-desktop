@@ -13,6 +13,7 @@ import {
   FaBriefcase,
   FaArrowLeft,
   FaUserCog,
+  FaSignOutAlt,
 } from "react-icons/fa";
 
 import NoticiaService from "../../services/NoticiasService";
@@ -25,7 +26,7 @@ import NoPicture from "../../assets/images/NoPicture.webp";
 export default function Perfil() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user: usuarioAutenticado } = useUser();
+  const { user: usuarioAutenticado, logout } = useUser();
   const { regiao } = useRegiao();
 
   const [abaAtiva, setAbaAtiva] = useState("noticias");
@@ -312,9 +313,9 @@ export default function Perfil() {
                   e.target.src = NoPicture;
                 }}
               />
-              {/* Botão de editar perfil ao lado da foto */}
+              {/* Botões de ação do perfil */}
               {isMeuPerfil && (
-                <div className="absolute -bottom-2 -right-2">
+                <div className="absolute -bottom-2 -right-2 flex gap-2">
                   <Link
                     to="/editar-perfil"
                     className="bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200 inline-flex items-center justify-center"
@@ -323,6 +324,19 @@ export default function Perfil() {
                   >
                     <FaEdit />
                   </Link>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (window.confirm('Tem certeza que deseja sair da sua conta?')) {
+                        logout();
+                        navigate('/login');
+                      }
+                    }}
+                    className="bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 border border-red-200 inline-flex items-center justify-center text-red-500 hover:bg-red-50"
+                    title="Sair da conta"
+                  >
+                    <FaSignOutAlt />
+                  </button>
                 </div>
               )}
             </div>
@@ -354,17 +368,20 @@ export default function Perfil() {
                   </div>
                 )}
               </div>
-              {perfilUsuario.bio && (
-                <p className="text-gray-700 text-sm leading-relaxed max-w-2xl">
-                  {perfilUsuario.bio}
-                </p>
+              {perfilUsuario.biografia ? (
+                <div className="mt-4 w-full">
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {perfilUsuario.biografia}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center md:justify-start gap-2 mt-4">
+                  <FaMapMarkerAlt style={{ color: corPrincipal }} size={16} />
+                  <span className="text-gray-500 capitalize font-medium text-sm">
+                    {regiao || "Centro"}
+                  </span>
+                </div>
               )}
-              <div className="flex items-center justify-center md:justify-start gap-2 mt-4">
-                <FaMapMarkerAlt style={{ color: corPrincipal }} size={16} />
-                <span className="text-gray-500 capitalize font-medium text-sm">
-                  {regiao || "Centro"}
-                </span>
-              </div>
             </div>
 
             <div className="flex flex-col items-center space-y-4">

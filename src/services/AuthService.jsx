@@ -45,7 +45,7 @@ const AuthService = {
     }
   },
 
-  // Atualiza apenas campos como nome, email e senha
+  // Atualiza apenas campos como nome, email, biografia e senha
   updatePerfil: async (userId, perfilData) => {
     if (!userId) throw new Error("ID do usuário não informado.");
     if (!perfilData || typeof perfilData !== "object") {
@@ -55,21 +55,67 @@ const AuthService = {
     const token = localStorage.getItem("token");
     if (!token) throw new Error("Usuário não autenticado.");
 
-    const payload = {
-      nome: perfilData.nome ?? undefined,
-      email: perfilData.email ?? undefined,
-      senhaAtual: perfilData.senhaAtual ?? undefined,
-      novaSenha: perfilData.novaSenha ?? undefined,
-    };
+    // Verifica se precisa buscar os dados atuais do usuário
+    const precisaBuscarDadosAtuais = 
+      (perfilData.biografia !== undefined && perfilData.nome === undefined && perfilData.email === undefined) || // Apenas biografia
+      (perfilData.novaSenha !== undefined && perfilData.nome === undefined && perfilData.email === undefined); // Apenas senha
+    
+    if (precisaBuscarDadosAtuais) {
+      try {
+        // Busca os dados atuais do usuário
+        const currentUser = await api.get(`/usuarios/listar/${userId}`);
+        
+        // Cria o payload com os dados atuais + os campos que estão sendo atualizados
+        const payload = {
+          nome: currentUser.data.nome,
+          email: currentUser.data.email
+        };
+        
+        // Adiciona os campos que estão sendo atualizados
+        if (perfilData.biografia !== undefined) payload.biografia = perfilData.biografia;
+        if (perfilData.senhaAtual !== undefined) payload.senhaAtual = perfilData.senhaAtual;
+        if (perfilData.novaSenha !== undefined) payload.novaSenha = perfilData.novaSenha;
+        
+        console.log('Enviando payload para atualização:', payload);
+        const response = await api.patch(`/usuarios/atualizar/${userId}`, payload, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        
+        return response.data;
+        
+      } catch (error) {
+        console.error('Erro ao buscar/atualizar dados do usuário:', error);
+        throw error;
+      }
+    }
 
-    const response = await api.patch(`/usuarios/atualizar/${userId}`, payload, {
-      headers: {
-        // Authorization vem do interceptor
-        "Content-Type": "application/json",
-      },
-    });
+    // Para outros casos, mantém o comportamento original
+    const payload = {};
+    
+    // Adiciona apenas os campos que têm valor
+    if (perfilData.nome !== undefined) payload.nome = perfilData.nome;
+    if (perfilData.email !== undefined) payload.email = perfilData.email;
+    if (perfilData.biografia !== undefined) payload.biografia = perfilData.biografia;
+    if (perfilData.senhaAtual !== undefined) payload.senhaAtual = perfilData.senhaAtual;
+    if (perfilData.novaSenha !== undefined) payload.novaSenha = perfilData.novaSenha;
 
-    return response.data; // Pode conter { usuario, token }
+    console.log('Enviando payload para atualização:', payload); // Log para depuração
+
+    try {
+      const response = await api.patch(`/usuarios/atualizar/${userId}`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log('Resposta da API:', response.data); // Log para depuração
+      return response.data; // Pode conter { usuario, token }
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
   // Atualiza apenas a foto
@@ -111,6 +157,45 @@ const AuthService = {
       novaSenha,
     });
     return response.data;
+  },
+
+  // Exclui a conta do usuário atual
+  deleteAccount: async (senhaAtual) => {
+    try {
+      const response = await api.delete("/usuarios/deletar/minha-conta", {
+        params: { senhaAtual },
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      // Limpa todos os dados locais de autenticação
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("email");
+      
+      // Remove o token do cabeçalho das requisições
+      delete api.defaults.headers.common['Authorization'];
+      
+      // Limpa qualquer cache do axios
+      if (api.defaults.headers.common['Cache-Control']) {
+        delete api.defaults.headers.common['Cache-Control'];
+      }
+      if (api.defaults.headers.common['Pragma']) {
+        delete api.defaults.headers.common['Pragma'];
+      }
+      
+      // Limpa qualquer sessão ativa
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+      throw error;
+    }
   },
 };
 

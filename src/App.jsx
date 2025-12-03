@@ -21,6 +21,7 @@ import { UserProvider } from "./contexts/UserContext";
 import { RegionProvider } from "./contexts/RegionContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./pages/login/ForgotPassword";
+import ScrollToTop from "./components/ScrollToTop";
 
 function AppContent() {
   const location = useLocation();
@@ -33,15 +34,23 @@ function AppContent() {
     location.pathname === "/editar-perfil" ||
     location.pathname === "/forgot-password";
 
+  // Estilo para a página de login ocupar 100% da altura da tela
+  const loginStyle = {
+    height: '100vh',
+    width: '100%',
+    overflow: 'auto'
+  };
+
   return (
         <div className="flex flex-col min-h-screen">
           {!isAuthPage && <Header />}
 
-          <main className="flex-1 mb-16">
+          <main className={location.pathname === '/login' ? '' : 'flex-1 mb-16'}>
+            <ScrollToTop />
             <Routes>
               <Route path="/" element={<QuebradaInforma />} />
               <Route path="/login" element={
-                <div className="min-h-screen flex items-center justify-center">
+                <div style={loginStyle}>
                   <Login onLoginSuccess={() => navigate('/')} />
                 </div>
               } />

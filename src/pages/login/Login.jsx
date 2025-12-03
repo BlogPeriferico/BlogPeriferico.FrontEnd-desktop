@@ -57,6 +57,17 @@ export default function Login({ onLoginSuccess }) {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Função para evitar espaços nos campos de entrada
+  const handleInputChange = (e, setValue) => {
+    const inputValue = e.target.value;
+    // Remove todos os espaços em branco do valor
+    const value = inputValue.replace(/\s/g, '');
+    setValue(value);
+    
+    // Força a atualização do valor do input para garantir que os espaços sejam removidos
+    e.target.value = value;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !senha) {
@@ -157,15 +168,17 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div
-      className="relative w-full h-full min-h-screen font-poppins bg-center bg-cover overflow-x-hidden"
-      style={{ backgroundImage: `url(${FundoSaoPaulo})` }}
-    >
-      <div className="absolute inset-0 bg-black/40"></div>
+    <div className="fixed inset-0 w-full h-full overflow-hidden">
+      <div 
+        className="absolute inset-0 w-full h-full bg-cover bg-center"
+        style={{ backgroundImage: `url(${FundoSaoPaulo})` }}
+      >
+        <div className="absolute inset-0 bg-black/40"></div>
+      </div>
 
-      <div className="relative z-10 flex flex-col md:flex-row min-h-screen">
+      <div className="relative z-10 w-full h-full flex flex-col md:flex-row">
         {/* Painel do formulário */}
-        <div className="w-full md:w-[45%] bg-white/70 p-6 md:p-8 lg:p-12 shadow-lg flex flex-col justify-center min-h-screen md:min-h-full">
+        <div className="w-full md:w-[45%] bg-white/70 p-6 md:p-8 lg:p-12 shadow-lg flex flex-col justify-center overflow-y-auto" style={{ maxHeight: '100vh' }}>
           {mensagem && (
             <div
               className={`p-3 mb-4 rounded-md text-center ${
@@ -196,7 +209,25 @@ export default function Login({ onLoginSuccess }) {
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => handleInputChange(e, setEmail)}
+            onKeyDown={(e) => {
+              // Impede a inserção de espaços
+              if (e.key === ' ' || e.key === 'Spacebar') {
+                e.preventDefault();
+                return false;
+              }
+            }}
+            onPaste={(e) => {
+              // Remove espaços do texto colado
+              const pastedText = e.clipboardData.getData('text/plain').replace(/\s/g, '');
+              if (pastedText !== e.clipboardData.getData('text/plain')) {
+                e.preventDefault();
+                const newValue = email + pastedText;
+                setEmail(newValue);
+                e.target.value = newValue;
+              }
+            }}
+            maxLength={60}
             className="w-full mb-5 px-5 py-3 rounded-md text-black placeholder-gray-400 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 outline-none transition-all duration-400 ease-in-out transform hover:scale-[1.01] focus:scale-[1.02]"
             required
             disabled={isLoading}
@@ -207,7 +238,15 @@ export default function Login({ onLoginSuccess }) {
               type={showPassword ? "text" : "password"}
               placeholder="Senha"
               value={senha}
-              onChange={(e) => setSenha(e.target.value)}
+              onChange={(e) => handleInputChange(e, setSenha)}
+              onKeyDown={(e) => {
+                // Limita o comprimento do texto
+                if (e.target.value.length >= 60 && e.key !== 'Backspace' && e.key !== 'Delete' && !e.metaKey) {
+                  e.preventDefault();
+                  return false;
+                }
+              }}
+              maxLength={60}
               className="w-full px-5 py-3 rounded-md text-black placeholder-gray-400 pr-10 border border-gray-300 focus:border-gray-500 focus:ring-2 focus:ring-gray-400 outline-none transition-all duration-400 ease-in-out transform hover:scale-[1.01] focus:scale-[1.02]"
               required
               minLength={6}
@@ -292,7 +331,7 @@ export default function Login({ onLoginSuccess }) {
         </div>
 
         {/* Painel da direita - Apenas em desktop */}
-        <div className="hidden md:flex md:w-[55%] flex-col justify-center items-center p-4 lg:p-8 text-white bg-black/30 min-h-full">
+        <div className="hidden md:flex md:w-[55%] flex-col justify-center items-center p-4 lg:p-8 text-white bg-black/30" style={{ maxHeight: '100vh' }}>
           <div className="max-w-md mx-auto">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-center px-4">
               BlogPeriférico

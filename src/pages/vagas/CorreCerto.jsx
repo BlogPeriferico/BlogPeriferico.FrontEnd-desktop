@@ -61,9 +61,9 @@ export default function CorreCerto() {
         new Date(b.dataHoraCriacao) - new Date(a.dataHoraCriacao)
       );
       
-      // Filtra por região se necessário (trata Central vs Centro)
+      // Filtra por região se necessário (trata Central vs Centro e Todos)
       let vagasFiltradas = vagasOrdenadas;
-      if (regiao) {
+      if (regiao && regiao.toLowerCase() !== 'todos') {
         const regiaoFiltro = regiao.toLowerCase() === 'central' ? 'Centro' : regiao;
         vagasFiltradas = vagasOrdenadas.filter(vaga => 
           vaga.regiao && vaga.regiao.toLowerCase() === regiaoFiltro.toLowerCase()

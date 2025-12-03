@@ -38,7 +38,7 @@ function SelecaoAnunciosBase({ produtos = [], loading = false }) {
   );
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <div
@@ -75,7 +75,7 @@ function SelecaoAnunciosBase({ produtos = [], loading = false }) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8 justify-items-center">
           {ultimosProdutos.map((anuncio, index) => {
             const precoBruto =
               anuncio.preco ?? anuncio.valor ?? null;
@@ -115,28 +115,24 @@ function SelecaoAnunciosBase({ produtos = [], loading = false }) {
                 role="button"
                 tabIndex={0}
                 aria-label={`Ver detalhes do produto ${anuncio.titulo}`}
-                className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden cursor-pointer animate-slideInUp"
+                className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden cursor-pointer animate-slideInUp flex flex-col h-full w-full max-w-md"
                 style={{
-                  animationDelay: `${index * 80}ms`,
-                  width: "100%",
-                  maxWidth: "320px",
-                  height: "420px",
-                  display: "flex",
-                  flexDirection: "column",
+                  animationDelay: `${index * 80}ms`
                 }}
               >
                 {/* Imagem */}
-                <div className="relative h-48 w-full overflow-hidden flex-shrink-0">
-                  <img
-                    src={anuncio.imagem}
-                    alt={anuncio.titulo}
-                    loading="lazy"
-                    className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        "https://via.placeholder.com/400x200?text=Imagem+indispon%C3%ADvel";
-                    }}
-                  />
+                <div className="relative pt-[56.25%] w-full overflow-hidden flex-shrink-0">
+                  <div className="absolute inset-0">
+                    <img
+                      src={anuncio.imagem}
+                      alt={anuncio.titulo}
+                      loading="lazy"
+                      className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/400x200?text=Imagem+indispon%C3%ADvel";
+                      }}
+                    />
 
                   {/* Badge de Região */}
                   <div className="absolute top-4 right-4">
@@ -148,19 +144,17 @@ function SelecaoAnunciosBase({ produtos = [], loading = false }) {
                         borderColor: corPrincipal,
                       }}
                     >
-                      {regiao || anuncio.zona || "SP"}
+                      {anuncio.regiao || anuncio.zona || "SP"}
                     </span>
                   </div>
 
+                  </div>
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
 
                 {/* Conteúdo */}
-                <div
-                  className="p-6 flex flex-col"
-                  style={{ height: "172px", flex: 1 }}
-                >
+                <div className="p-4 md:p-5 flex flex-col flex-grow">
                   <div className="flex-grow">
                     <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 transition-colors duration-200">
                       {anuncio.titulo}

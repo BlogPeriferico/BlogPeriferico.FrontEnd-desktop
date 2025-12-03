@@ -63,7 +63,7 @@ export default function Doacoes() {
 
       let doacoesFiltradas = doacoesOrdenadas;
 
-      if (regiao) {
+      if (regiao && regiao.toLowerCase() !== 'todos') {
         const regiaoFiltro =
           regiao.toLowerCase() === "central" ? "Centro" : regiao;
         doacoesFiltradas = doacoesOrdenadas.filter((doacao) =>
