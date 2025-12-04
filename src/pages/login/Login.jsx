@@ -178,7 +178,7 @@ export default function Login({ onLoginSuccess }) {
 
       <div className="relative z-10 w-full h-full flex flex-col md:flex-row">
         {/* Painel do formulário */}
-        <div className="w-full md:w-[45%] bg-white/70 p-6 md:p-8 lg:p-12 shadow-lg flex flex-col justify-center overflow-y-auto" style={{ maxHeight: '100vh' }}>
+        <div className="w-full md:w-[45%] bg-white/70 p-6 md:p-8 lg:p-12 shadow-lg flex flex-col justify-center overflow-y-auto min-h-screen md:min-h-full">
           {mensagem && (
             <div
               className={`p-3 mb-4 rounded-md text-center ${
