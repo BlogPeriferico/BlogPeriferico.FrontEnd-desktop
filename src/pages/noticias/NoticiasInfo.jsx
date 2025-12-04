@@ -463,7 +463,7 @@ export default function NoticiasInfo() {
             </h1>
 
             {noticia.texto && (
-              <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed">
+              <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed whitespace-pre-line">
                 {noticia.texto}
               </p>
             )}
@@ -650,7 +650,7 @@ export default function NoticiasInfo() {
               {comentarios.map((coment) => (
                 <article
                   key={coment.id}
-                  className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300 relative group"
+                  className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all duração-300 relative group"
                 >
                   <div className="flex items-start gap-4">
                     <img
@@ -715,7 +715,7 @@ export default function NoticiasInfo() {
                           </button>
                         )}
                       </div>
-                      <div className="bg-gray-50 rounded-lg p-4 text-gray-700 text-sm leading-relaxed break-words">
+                      <div className="bg-gray-50 rounded-lg p-4 text-gray-700 text-sm leading-relaxed break-words whitespace-pre-line">
                         {coment.texto}
                       </div>
                     </div>
