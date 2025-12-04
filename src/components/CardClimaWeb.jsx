@@ -19,11 +19,7 @@ function WeatherCardsBase() {
   const [dados, setDados] = useState({});
   const [erro, setErro] = useState(null);
 
-  // memo pra não recriar a lista de zonas a cada render
-  const zonasEntries = useMemo(
-    () => Object.entries(zonasClima),
-    []
-  );
+  const zonasEntries = useMemo(() => Object.entries(zonasClima), []);
 
   useEffect(() => {
     let cancelado = false;
@@ -84,40 +80,38 @@ function WeatherCardsBase() {
 
   return (
     <section
-      className="px-4 py-10 bg-white"
+      className="w-full overflow-x-hidden px-3 sm:px-4 lg:px-8 py-8 sm:py-10 lg:py-12 bg-white"
       aria-labelledby="titulo-area-clima"
     >
       <h2
         id="titulo-area-clima"
-        className="text-2xl font-bold mb-8 text-center"
+        className="text-xl sm:text-2xl lg:text-3xl font-bold mb-6 sm:mb-8 text-center"
       >
         Área de Climatização
       </h2>
 
       {erro && (
-        <p className="text-center text-sm text-red-600 mb-4">
+        <p className="text-center text-xs sm:text-sm text-red-600 mb-4">
           {erro}
         </p>
       )}
 
       {isLoading ? (
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
           {zonasEntries.map(([nome]) => (
             <div
               key={nome}
-              className="rounded-xl bg-gray-100 animate-pulse h-48"
+              className="rounded-xl bg-gray-100 animate-pulse h-40 sm:h-48"
               aria-hidden="true"
             />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
           {zonasEntries.map(([nome, zona]) => {
             const clima = dados[nome];
             const precipitacao =
-              clima?.rain?.["1h"] ??
-              clima?.rain?.["3h"] ??
-              0;
+              clima?.rain?.["1h"] ?? clima?.rain?.["3h"] ?? 0;
 
             const descricaoClima =
               clima?.weather?.[0]?.description ||
@@ -126,7 +120,7 @@ function WeatherCardsBase() {
             return (
               <article
                 key={nome}
-                className="relative rounded-xl text-white p-4 shadow-md overflow-hidden"
+                className="relative rounded-xl text-white p-3 sm:p-4 shadow-md overflow-hidden min-h-[170px] sm:min-h-[190px] md:min-h-[200px]"
                 style={{
                   backgroundImage: `url(https://blogperiferico.blob.core.windows.net/zonas/zona_${nome.toLowerCase()}.png)`,
                   backgroundSize: "cover",
@@ -134,21 +128,17 @@ function WeatherCardsBase() {
                 }}
                 aria-label={`Clima na região ${nome}, bairro ${zona.bairro}`}
               >
-                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-xl" />
+                <div className="absolute inset-0 bg-black bg-opacity-35 rounded-xl" />
                 <div className="relative z-10 flex flex-col h-full justify-between">
                   {/* Info clima */}
-                  <div className="text-sm space-y-1">
+                  <div className="text-[11px] sm:text-xs md:text-sm space-y-1">
                     <p>
                       Precipitação:{" "}
-                      {precipitacao !== null &&
-                      precipitacao !== undefined
+                      {precipitacao !== null && precipitacao !== undefined
                         ? `${precipitacao} mm`
                         : "--"}
                     </p>
-                    <p>
-                      Umidade:{" "}
-                      {clima?.main?.humidity ?? "--"}%
-                    </p>
+                    <p>Umidade: {clima?.main?.humidity ?? "--"}%</p>
                     <p>
                       Vento:{" "}
                       {clima?.wind?.speed != null
@@ -157,31 +147,28 @@ function WeatherCardsBase() {
                     </p>
                   </div>
 
-                  <div className="flex justify-between items-center mt-4">
+                  {/* Ícone + temp + nome zona */}
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-4">
                     <div className="flex items-center">
                       {clima && clima.weather?.[0]?.icon && (
                         <img
                           src={`https://openweathermap.org/img/wn/${clima.weather[0].icon}@2x.png`}
                           alt={descricaoClima}
-                          className="w-12 h-12"
+                          className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0"
                           loading="lazy"
                         />
                       )}
-                      <span className="text-2xl ml-2 font-semibold">
+                      <span className="text-xl sm:text-2xl ml-2 font-semibold">
                         {clima?.main?.temp != null
-                          ? `${Math.round(
-                              clima.main.temp
-                            )}°C`
+                          ? `${Math.round(clima.main.temp)}°C`
                           : "--°C"}
                       </span>
                     </div>
-                    <div className="text-right text-xs sm:text-sm">
-                      <p className="font-bold">
+                    <div className="text-right text-[10px] sm:text-xs">
+                      <p className="font-semibold">
                         {nome} — {zona.bairro}
                       </p>
-                      <p className="opacity-90">
-                        {horaAtual}
-                      </p>
+                      <p className="opacity-90">{horaAtual}</p>
                     </div>
                   </div>
                 </div>
