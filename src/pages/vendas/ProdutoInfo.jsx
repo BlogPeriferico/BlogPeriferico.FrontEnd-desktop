@@ -1,4 +1,4 @@
-// src/pages/Vendas/ProdutoInfo.jsx (ajuste o caminho conforme o seu)
+// src/pages/Vendas/ProdutoInfo.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import ComentariosService from "../../services/ComentariosService";
@@ -252,8 +252,7 @@ export default function ProdutoInfo() {
       setComentarios((prevComentarios) =>
         prevComentarios.map((coment) => {
           const isUserComment =
-            coment.idUsuario === user.id ||
-            coment.emailUsuario === user.email;
+            coment.idUsuario === user.id || coment.emailUsuario === user.email;
 
           if (isUserComment) {
             return {
@@ -272,15 +271,17 @@ export default function ProdutoInfo() {
     usuarioLogado?.role || usuarioLogado?.roles || usuarioLogado?.papel || "";
   const roleNormalized = String(userRole || "").toUpperCase();
   const isAdmin =
-    roleNormalized.includes("ADMIN") || roleNormalized.includes("ADMINISTRADOR");
+    roleNormalized.includes("ADMIN") ||
+    roleNormalized.includes("ADMINISTRADOR");
   const isAutor = Boolean(
     produto &&
       usuarioLogado &&
       (produto.idUsuario === usuarioLogado.id ||
-        (produto.emailUsuario &&
-          produto.emailUsuario === usuarioLogado.email))
+        (produto.emailUsuario && produto.emailUsuario === usuarioLogado.email))
   );
-  const podeExcluirProduto = Boolean(produto && usuarioLogado && (isAdmin || isAutor));
+  const podeExcluirProduto = Boolean(
+    produto && usuarioLogado && (isAdmin || isAutor)
+  );
 
   // Deletar produto (confirmado pelo ModalConfirmacao)
   const handleDeletarProduto = async () => {
@@ -340,7 +341,7 @@ export default function ProdutoInfo() {
     }
   };
 
-  // Publicar comentário
+  // Publicar comentário (mantendo quebras de linha)
   const handlePublicarComentario = async () => {
     if (!user?.id) {
       alert("Você precisa estar logado para comentar.");
@@ -358,7 +359,7 @@ export default function ProdutoInfo() {
 
     try {
       const dto = {
-        texto: novoComentario,
+        texto: novoComentario, // mantém o texto com \n
         idVenda: Number(id),
         idUsuario: usuarioLogado.id,
         tipo: "VENDA",
@@ -513,6 +514,9 @@ export default function ProdutoInfo() {
                 src={produto.fotoPerfil || NoPicture}
                 alt={produto.autor || "Vendedor"}
                 className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                onError={(e) => {
+                  e.currentTarget.src = NoPicture;
+                }}
               />
               <div>
                 <p
@@ -551,8 +555,7 @@ export default function ProdutoInfo() {
               {produto.titulo}
             </h1>
 
-            {/* Resumo / Descrição curta */}
-            <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed">
+            <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed whitespace-pre-line">
               {produto.resumo ||
                 produto.descricao ||
                 produto.descricaoCompleta ||
@@ -609,9 +612,7 @@ export default function ProdutoInfo() {
                       d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                     ></path>
                   </svg>
-                  <span className="text-sm font-medium">
-                    {produto.local}
-                  </span>
+                  <span className="text-sm font-medium">{produto.local}</span>
                 </div>
               )}
 
@@ -729,28 +730,31 @@ export default function ProdutoInfo() {
             </div>
           )}
 
-          {/* Input de comentário */}
+          {/* Input de comentário (textarea com parágrafos) */}
           <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4">
               <img
                 src={user?.fotoPerfil || NoPicture}
                 alt="Seu avatar"
-                className="w-10 h-10 rounded-full border-2 hidden sm:block"
+                className="w-10 h-10 rounded-full border-2 hidden sm:block object-cover"
                 style={{ borderColor: corPrincipal }}
+                onError={(e) => {
+                  e.currentTarget.src = NoPicture;
+                }}
               />
               <div className="flex-1 w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <input
-                  type="text"
+                <textarea
                   placeholder="Escreva um comentário..."
                   value={novoComentario}
                   onChange={(e) => setNovoComentario(e.target.value)}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" &&
-                    !comentLoading &&
-                    !e.shiftKey &&
-                    handlePublicarComentario()
-                  }
-                  className="flex-1 px-4 py-3 bg-gray-50 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 transition-all duration-200"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && !comentLoading) {
+                      e.preventDefault();
+                      handlePublicarComentario();
+                    }
+                  }}
+                  rows={3}
+                  className="flex-1 px-4 py-3 bg-gray-50 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 transition-all duration-200 resize-none whitespace-pre-wrap"
                 />
                 <button
                   onClick={handlePublicarComentario}
@@ -762,10 +766,7 @@ export default function ProdutoInfo() {
                 >
                   {comentLoading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <svg
-                        className="animate-spin h-4 w-4"
-                        viewBox="0 0 24 24"
-                      >
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                         <circle
                           className="opacity-25"
                           cx="12"
@@ -821,13 +822,16 @@ export default function ProdutoInfo() {
               {comentarios.map((coment) => (
                 <div
                   key={coment.id}
-                  className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300 relative group"
+                  className="bg-white rounded-xl p-5 shadow-md border border-gray-200 hover:shadow-lg transition-all duração-300 relative group"
                 >
                   <div className="flex items-start gap-4">
                     <img
                       src={coment.avatar || NoPicture}
                       alt={coment.nomeUsuario || "Usuário"}
                       className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                      onError={(e) => {
+                        e.currentTarget.src = NoPicture;
+                      }}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-2">
@@ -837,20 +841,21 @@ export default function ProdutoInfo() {
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {coment.dataHoraCriacao
-                              ? new Date(
-                                  coment.dataHoraCriacao
-                                ).toLocaleString("pt-BR", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
+                              ? new Date(coment.dataHoraCriacao).toLocaleString(
+                                  "pt-BR",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )
                               : "agora"}
                           </p>
                         </div>
-                        {((coment.idUsuario === usuarioLogado.id ||
-                          coment.emailUsuario === usuarioLogado.email) ||
+                        {(coment.idUsuario === usuarioLogado.id ||
+                          coment.emailUsuario === usuarioLogado.email ||
                           isAdmin) && (
                           <button
                             onClick={() =>
@@ -879,7 +884,7 @@ export default function ProdutoInfo() {
                         )}
                       </div>
                       <div className="bg-gray-50 rounded-lg p-4 text-gray-700 text-sm leading-relaxed break-words">
-                        {coment.texto}
+                        <p className="whitespace-pre-line">{coment.texto}</p>
                       </div>
                     </div>
                   </div>
@@ -904,9 +909,7 @@ export default function ProdutoInfo() {
         {/* Modal de Confirmação de Exclusão de Comentário */}
         <ModalConfirmacao
           isOpen={modalDeletar.isOpen}
-          onClose={() =>
-            setModalDeletar({ isOpen: false, comentarioId: null })
-          }
+          onClose={() => setModalDeletar({ isOpen: false, comentarioId: null })}
           onConfirm={handleDeletarComentario}
           titulo="Excluir Comentário"
           mensagem="Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
