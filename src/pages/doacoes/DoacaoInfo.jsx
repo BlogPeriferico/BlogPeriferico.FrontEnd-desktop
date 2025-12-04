@@ -446,7 +446,7 @@ export default function DoacaoInfo() {
             </h1>
 
             {(doacao.resumo || doacao.descricao) && (
-              <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed">
+              <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed whitespace-pre-line">
                 {doacao.resumo || doacao.descricao}
               </p>
             )}
