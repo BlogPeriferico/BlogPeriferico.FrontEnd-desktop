@@ -556,7 +556,7 @@ export default function VagaInfo() {
 
             {/* Descrição */}
             {(vaga.descricaoCompleta || vaga.descricao || vaga.resumo) && (
-              <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed">
+              <p className="text-xl text-gray-600 mb-6 font-medium leading-relaxed whitespace-pre-line">
                 {vaga.descricaoCompleta || vaga.descricao || vaga.resumo}
               </p>
             )}
