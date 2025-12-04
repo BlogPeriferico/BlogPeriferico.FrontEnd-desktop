@@ -61,9 +61,9 @@ export default function Register() {
         <div className="absolute inset-0 bg-black/40"></div>
       </div>
 
-      <div className="relative z-10 w-full h-full flex flex-col md:flex-row overflow-hidden">
+      <div className="relative z-10 w-full h-full flex flex-col md:flex-row">
         {/* Painel do formulário */}
-        <div className="w-full md:w-[45%] bg-white/70 p-6 md:p-8 lg:p-12 shadow-lg flex flex-col justify-center">
+        <div className="w-full md:w-[45%] bg-white/70 p-6 md:p-8 lg:p-12 shadow-lg flex flex-col justify-center overflow-y-auto min-h-screen md:min-h-full">
           <h2 className="text-2xl md:text-3xl text-center font-bold mb-6 text-black">
             Registre-se
           </h2>
