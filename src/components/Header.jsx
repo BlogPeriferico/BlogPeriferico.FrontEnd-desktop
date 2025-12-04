@@ -482,7 +482,7 @@ export default function Header() {
               </div>
             </div>
           )}
-          {/* Busca mobile */}
+{/* Busca móvel */}
           <div className="relative w-full mb-4">
             <div className="relative" ref={searchContainerRef}>
               <div
