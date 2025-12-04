@@ -338,12 +338,15 @@ export default function AdminDashboard() {
 
     try {
       const novoRole = usuario.roles === 'ROLE_ADMINISTRADOR' ? 'ROLE_USUARIO' : 'ROLE_ADMINISTRADOR';
-      await api.patch(`/usuarios/${usuario.id}/role?novoRole=${novoRole}`);
+      await api.patch(`/usuarios/${usuario.id}/alterar-role?novaRole=${novoRole}`, null, {
+        withCredentials: true
+      });
       await carregarDados();
       alert('Papel do usuário atualizado com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar papel do usuário:', error);
-      alert('Erro ao atualizar papel do usuário. Verifique o console para mais detalhes.');
+      const errorMessage = error.response?.data?.message || error.message || 'Erro desconhecido';
+      alert(`Erro ao atualizar papel do usuário: ${errorMessage}`);
     }
   };
 

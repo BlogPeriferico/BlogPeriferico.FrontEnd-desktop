@@ -5,8 +5,11 @@ import { regionColors } from "../../utils/regionColors";
 import AnuncioService from "../../services/AnuncioService";
 import { useNavigate } from "react-router-dom";
 
+// ✅ GIF importado (funciona no Vite em dev e build)
+import uploadGif from "../../assets/gifs/upload.gif";
+
 const MAX_DESCRICAO = 800; // Aumentado para 800 conforme solicitado
-const MAX_TITULO = 60;
+const MAX_TITULO = 120; // alinhado com ModalNoticia
 
 const ZONAS = [
   "CENTRO",
@@ -18,6 +21,8 @@ const ZONAS = [
   "SUDESTE",
   "SUDOESTE",
   "NOROESTE",
+  "NORDESTE",
+
 ];
 
 const formatarTelefone = (valor) => {
@@ -97,80 +102,91 @@ function ModalProdutoBase({
     };
   }, [previewUrl]);
 
-  const handleSubmit = useCallback(async () => {
-    if (isSubmitting) return;
+  const handleSubmit = useCallback(
+    async () => {
+      if (isSubmitting) return;
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setErroToast("Você precisa estar logado para criar um anúncio.");
-      navigate("/login");
-      setTimeout(() => setErroToast(""), 3000);
-      return;
-    }
-
-    if (!titulo || !valor || !telefone || !local || !descricao) {
-      setErroToast("Preencha todos os campos obrigatórios.");
-      setTimeout(() => setErroToast(""), 3000);
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    const dto = {
-      titulo,
-      valor: parseFloat(valor.replace(/\D/g, "")) / 100,
-      telefone,
-      zona: local,
-      descricao,
-    };
-
-    const formData = new FormData();
-    formData.append("dto", JSON.stringify(dto));
-    if (imagem) formData.append("file", imagem);
-
-    try {
-      await AnuncioService.criarAnuncio(formData);
-      closeModal();
-      if (atualizarAnuncios) {
-        await atualizarAnuncios();
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setErroToast("Você precisa estar logado para criar um anúncio.");
+        navigate("/login");
+        setTimeout(() => setErroToast(""), 3000);
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      setErroToast(
-        "Erro ao criar anúncio. Verifique os dados e tente novamente."
-      );
-      setTimeout(() => setErroToast(""), 3000);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    isSubmitting,
-    titulo,
-    valor,
-    telefone,
-    local,
-    descricao,
-    imagem,
-    navigate,
-    atualizarAnuncios,
-    closeModal,
-  ]);
+
+      if (!titulo || !valor || !telefone || !local || !descricao) {
+        setErroToast("Preencha todos os campos obrigatórios.");
+        setTimeout(() => setErroToast(""), 3000);
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      const dto = {
+        titulo,
+        valor: parseFloat(valor.replace(/\D/g, "")) / 100,
+        telefone,
+        zona: local,
+        descricao,
+      };
+
+      const formData = new FormData();
+      formData.append("dto", JSON.stringify(dto));
+      if (imagem) formData.append("file", imagem);
+
+      try {
+        await AnuncioService.criarAnuncio(formData);
+        closeModal();
+        if (atualizarAnuncios) {
+          await atualizarAnuncios();
+        }
+      } catch (err) {
+        console.error(err);
+        setErroToast(
+          "Erro ao criar anúncio. Verifique os dados e tente novamente."
+        );
+        setTimeout(() => setErroToast(""), 3000);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [
+      isSubmitting,
+      titulo,
+      valor,
+      telefone,
+      local,
+      descricao,
+      imagem,
+      navigate,
+      atualizarAnuncios,
+      closeModal,
+    ]
+  );
 
   if (!modalAberto) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center px-2"
+      className="
+        fixed inset-0 z-50 bg-black bg-opacity-50 
+        flex items-center justify-center 
+        p-3 sm:p-4
+      "
       onClick={closeModal}
       onKeyDown={handleKeyDown}
+      tabIndex={-1}
     >
       <div
-        className="bg-white rounded-2xl w-full shadow-xl relative p-6"
+        className="
+          bg-white rounded-2xl w-full shadow-xl relative 
+          p-4 sm:p-6 
+          max-w-[900px]
+          max-h-[90vh]
+          overflow-y-auto
+        "
         style={{
           border: `2px solid ${corPrincipal}`,
-          maxWidth: "842px",
-          maxHeight: "500px",
-          overflowY: "auto",
         }}
         role="dialog"
         aria-modal="true"
@@ -178,11 +194,11 @@ function ModalProdutoBase({
         aria-describedby="modal-produto-descricao"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
           <button
             type="button"
             onClick={closeModal}
-            className="text-2xl text-gray-600 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-full"
+            className="text-xl sm:text-2xl text-gray-600 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-full"
             aria-label="Fechar modal de anúncio de produto"
           >
             <FaTimes />
@@ -191,20 +207,20 @@ function ModalProdutoBase({
 
         <h2
           id="modal-produto-titulo"
-          className="text-3xl font-bold text-black mb-2 font-poppins"
+          className="text-2xl sm:text-3xl font-bold text-black mb-2 font-poppins mr-8"
         >
           Anuncie seu produto
         </h2>
         <p
           id="modal-produto-descricao"
-          className="text-sm text-gray-600 mb-4 font-poppins"
+          className="text-xs sm:text-sm text-gray-600 mb-4 font-poppins"
         >
           Preencha os campos abaixo para divulgar seu produto para a comunidade.
         </p>
 
         {erroToast && (
           <div
-            className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg text-sm"
+            className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg text-xs sm:text-sm"
             role="alert"
             aria-live="assertive"
           >
@@ -212,9 +228,9 @@ function ModalProdutoBase({
           </div>
         )}
 
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:items-start">
           {/* Imagem */}
-          <div className="flex-shrink-0 border border-dashed border-gray-400 rounded-lg w-[200px] h-[200px] flex flex-col items-center justify-center text-center text-gray-700 text-xs px-2 overflow-hidden">
+          <div className="flex-shrink-0 border border-dashed border-gray-400 rounded-lg w-full md:w-[220px] h-[200px] flex flex-col items-center justify-center text-center text-gray-700 text-xs sm:text-sm px-2 overflow-hidden">
             <label
               htmlFor="imagem-produto"
               className="cursor-pointer flex flex-col items-center justify-center h-full w-full"
@@ -229,7 +245,7 @@ function ModalProdutoBase({
               ) : (
                 <>
                   <img
-                    src="/src/assets/gifs/upload.gif"
+                    src={uploadGif}
                     alt="Ícone de upload de imagem"
                     className="w-16 h-16 object-contain"
                     loading="lazy"
@@ -252,7 +268,7 @@ function ModalProdutoBase({
           </div>
 
           {/* Formulário */}
-          <div className="flex-1 space-y-3 text-xs font-poppins">
+          <div className="flex-1 space-y-3 text-xs sm:text-sm font-poppins">
             <div className="relative">
               <label
                 htmlFor="produto-titulo"
@@ -270,7 +286,7 @@ function ModalProdutoBase({
                 maxLength={MAX_TITULO}
                 required
               />
-              <div className="flex justify-end mt-1 text-xs text-gray-500">
+              <div className="flex justify-end mt-1 text-[10px] sm:text-xs text-gray-500">
                 {titulo.length}/{MAX_TITULO}
               </div>
             </div>
@@ -287,13 +303,16 @@ function ModalProdutoBase({
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 placeholder="Descreva o produto..."
-                className="w-full border border-gray-400 rounded px-2 py-2 resize-none"
-                rows={2}
+                className="
+                  w-full border border-gray-400 rounded px-2 py-2 
+                  resize-y 
+                  min-h-[120px] sm:min-h-[150px]
+                "
+                rows={4}
                 maxLength={MAX_DESCRICAO}
                 required
-                aria-describedby="produto-descricao-help"
               ></textarea>
-              <div className="flex justify-end mt-1 text-xs text-gray-500">
+              <div className="flex justify-end mt-1 text-[10px] sm:text-xs text-gray-500">
                 {descricao.length}/{MAX_DESCRICAO}
               </div>
             </div>
@@ -364,11 +383,10 @@ function ModalProdutoBase({
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className={`hover:bg-gray-700 text-white font-bold py-2 px-6 rounded shadow duration-300 ${
-                  isSubmitting
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:scale-105"
-                }`}
+                className={`
+                  text-white font-bold py-2 px-6 rounded shadow duration-300 
+                  ${isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}
+                `}
                 style={{
                   backgroundColor: isSubmitting ? "#9CA3AF" : corSecundaria,
                 }}

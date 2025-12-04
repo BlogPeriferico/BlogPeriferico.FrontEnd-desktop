@@ -134,7 +134,6 @@ export default function EditaPerfil() {
   const handleSaveField = async () => {
     if (!editingField || !usuarioLogado) return;
 
-    // Validação de senha
     if (editingField === "senha" && tempValue !== tempConfirmarSenha) {
       setErroToast("As senhas não coincidem.");
       setTimeout(() => setErroToast(""), 3000);
@@ -145,62 +144,56 @@ export default function EditaPerfil() {
     setErroToast("");
 
     try {
-      // Cria um payload limpo apenas com os campos que estão sendo alterados
       const payload = {};
 
-      // Adiciona apenas o campo que está sendo editado
       if (editingField === "nome") payload.nome = tempValue;
       if (editingField === "email") payload.email = tempValue;
       if (editingField === "biografia") payload.biografia = tempValue;
 
-      // Adiciona a senha atual apenas se for necessário
       if (["senha", "email"].includes(editingField) && tempSenhaAtual) {
         payload.senhaAtual = tempSenhaAtual;
       }
 
-      // Adiciona a nova senha apenas se estiver alterando a senha
       if (editingField === "senha" && tempValue) {
         payload.novaSenha = tempValue;
       }
 
-      console.log('Enviando para atualização:', { userId: usuarioLogado.id, payload });
+      const response = await AuthService.updatePerfil(
+        usuarioLogado.id,
+        payload
+      );
 
-      const response = await AuthService.updatePerfil(usuarioLogado.id, payload);
-      console.log('Resposta da atualização:', response);
-
-      // Atualiza o token se um novo for retornado
       if (response.token) {
         localStorage.setItem("token", response.token);
       }
 
-      // Atualiza o estado local com os dados retornados
       const usuarioAtualizado = response.usuario || response;
-      setUsuarioLogado(prev => ({
+      setUsuarioLogado((prev) => ({
         ...prev,
-        ...usuarioAtualizado
+        ...usuarioAtualizado,
       }));
 
-      // Atualiza o contexto do usuário se disponível
       if (updateProfile) {
         updateProfile(usuarioAtualizado);
       }
 
-      // Exibe mensagem de sucesso
-      const fieldName = editingField === "senha" ? "Senha" : 
-                       editingField === "biografia" ? "Biografia" :
-                       editingField.charAt(0).toUpperCase() + editingField.slice(1);
+      const fieldName =
+        editingField === "senha"
+          ? "Senha"
+          : editingField === "biografia"
+          ? "Biografia"
+          : editingField.charAt(0).toUpperCase() + editingField.slice(1);
 
       setSuccessToast(`${fieldName} atualizada com sucesso!`);
       setTimeout(() => setSuccessToast(""), 3000);
 
-      // Fecha o modal de edição
       closeEditModal();
-
     } catch (err) {
       console.error("Erro ao atualizar campo:", err);
-      const errorMessage = err.response?.data?.message || 
-                          err.message || 
-                          "Erro ao salvar alterações. Por favor, tente novamente.";
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Erro ao salvar alterações. Por favor, tente novamente.";
 
       setErroToast(errorMessage);
       setTimeout(() => setErroToast(""), 5000);
@@ -237,54 +230,63 @@ export default function EditaPerfil() {
     try {
       await AuthService.deleteAccount(confirmPassword);
       setSuccessToast("Sua conta foi excluída com sucesso. Redirecionando...");
-      
-      // Força um logout completo
+
       logout();
-      
-      // Redireciona para a página inicial após um pequeno atraso
+
       setTimeout(() => {
-        // Força um reload completo da página para limpar todo o estado da aplicação
-        window.location.href = '/';
+        window.location.href = "/";
       }, 1500);
-      
     } catch (err) {
       console.error("Erro ao excluir conta:", err);
       setDeleteError(
-        err.response?.data?.message || 
-        err.message || 
-        "Erro ao excluir conta. Verifique sua senha e tente novamente."
+        err.response?.data?.message ||
+          err.message ||
+          "Erro ao excluir conta. Verifique sua senha e tente novamente."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // Se não houver usuário logado, mostra um loading
+  // Loading geral enquanto não tem usuário
   if (!usuarioLogado) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+          <p className="text-gray-600 text-sm">Carregando perfil...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 pt-20 px-4 md:px-10">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 pt-24 px-4 sm:px-6 md:px-8">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
             Editar Perfil
           </h1>
+          <p className="text-gray-600 text-sm">
+            Atualize suas informações e deixe seu perfil com a sua cara.
+          </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* FOTO */}
-          <div className="lg:col-span-1 bg-white rounded-2xl shadow-xl p-6 border border-gray-100 text-center">
-            <div className="relative mx-auto w-40 h-40 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
+          {/* FOTO / LADO ESQUERDO */}
+          <div className="lg:col-span-1 bg-white rounded-2xl shadow-xl p-5 sm:p-6 border border-gray-100 text-center flex flex-col">
+            <div className="relative mx-auto w-28 h-28 sm:w-32 sm:h-32 md:w-40 md:h-40 mb-4">
               <img
-                src={previewFoto || (usuarioLogado?.fotoPerfil ? `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}${usuarioLogado.fotoPerfil}` : NoPicture)}
+                src={
+                  previewFoto ||
+                  (usuarioLogado?.fotoPerfil
+                    ? `${
+                        import.meta.env.VITE_API_URL || "http://localhost:8080"
+                      }${usuarioLogado.fotoPerfil}`
+                    : NoPicture)
+                }
                 alt="Foto de perfil"
-                className="w-40 h-40 rounded-full object-cover border-4 border-white shadow-lg"
+                className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
                 style={{ borderColor: `${corPrincipal}20` }}
                 onError={(e) => {
                   e.target.onerror = null;
@@ -293,11 +295,11 @@ export default function EditaPerfil() {
               />
               <label
                 htmlFor="fotoPerfil"
-                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white rounded-full p-3 shadow-lg cursor-pointer border-2 border-gray-200 hover:border-blue-400 transition-all duration-200 hover:scale-105"
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white rounded-full p-2.5 shadow-lg cursor-pointer border-2 border-gray-200 hover:border-blue-400 transition-all duration-200 hover:scale-105"
                 style={{ color: corPrincipal }}
                 title="Alterar foto"
               >
-                <FaCamera className="w-5 h-5" />
+                <FaCamera className="w-4 h-4 sm:w-5 sm:h-5" />
               </label>
               <input
                 type="file"
@@ -307,59 +309,62 @@ export default function EditaPerfil() {
                 className="hidden"
               />
             </div>
-            
-            {/* Botão de salvar foto (aparece apenas quando uma nova foto é selecionada) */}
+
             {fotoPerfil && (
               <div className="mb-4">
                 <button
                   onClick={handleSaveFoto}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 mx-auto"
+                  disabled={loading}
+                  className="bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 mx-auto text-sm"
                 >
                   <FaCheck className="w-4 h-4" />
                   Salvar Foto
                 </button>
                 <p className="text-gray-500 text-xs mt-2">
-                  Clique em "Salvar Foto" para confirmar
+                  Clique em &quot;Salvar Foto&quot; para confirmar
                 </p>
               </div>
             )}
-            
-            <h3 className="text-xl font-semibold text-gray-800 mt-2">
+
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mt-1 break-words">
               {usuarioLogado.nome}
             </h3>
-            
+
             {/* Biografia */}
-            <div className="w-full bg-gray-50 rounded-lg p-4 mt-4">
-              <div className="flex justify-center items-center mb-3 relative">
-                <h4 className="text-base font-semibold text-gray-700 flex items-center">
-                  <svg 
-                    className="w-4 h-4 mr-2 text-gray-500" 
-                    fill="none" 
-                    stroke="currentColor" 
+            <div className="w-full bg-gray-50 rounded-lg p-4 mt-4 flex-1">
+              <div className="flex items-center mb-3 relative">
+                <h4 className="text-sm font-semibold text-gray-700 flex items-center">
+                  <svg
+                    className="w-4 h-4 mr-2 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                     />
                   </svg>
                   Biografia
                 </h4>
                 <button
-                  onClick={() => openEditModal("biografia", usuarioLogado.biografia || "")}
+                  onClick={() =>
+                    openEditModal("biografia", usuarioLogado.biografia || "")
+                  }
                   className="text-gray-400 hover:text-blue-600 transition-colors absolute right-0"
                   title="Editar biografia"
                 >
                   <FaEdit size={14} />
                 </button>
               </div>
-              <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                <p className="text-gray-600 text-sm leading-relaxed">
+              <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm min-h-[80px]">
+                <p className="text-gray-600 text-sm leading-relaxed break-words">
                   {usuarioLogado.biografia || (
                     <span className="text-gray-400 italic">
-                      Adicione uma biografia para que as pessoas saibam mais sobre você.
+                      Adicione uma biografia para que as pessoas saibam mais
+                      sobre você.
                     </span>
                   )}
                 </p>
@@ -367,78 +372,84 @@ export default function EditaPerfil() {
             </div>
           </div>
 
-          {/* CAMPOS */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl p-8 border border-gray-100 space-y-6">
+          {/* CAMPOS / LADO DIREITO */}
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-xl p-5 sm:p-6 md:p-8 border border-gray-100 space-y-5 sm:space-y-6">
             {erroToast && (
-              <div className="p-4 bg-red-50 text-red-700 rounded">
+              <div className="p-3 sm:p-4 bg-red-50 text-red-700 rounded text-sm">
                 {erroToast}
               </div>
             )}
             {successToast && (
-              <div className="p-4 bg-green-50 text-green-700 rounded flex items-center gap-2">
+              <div className="p-3 sm:p-4 bg-green-50 text-green-700 rounded flex items-center gap-2 text-sm">
                 <FaCheck /> {successToast}
               </div>
             )}
 
             {/* Nome */}
-            <div className="flex justify-between items-center">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700">
                   Nome Completo
                 </label>
-                <p className="text-gray-900 text-lg">{usuarioLogado.nome}</p>
+                <p className="text-gray-900 text-base sm:text-lg break-words">
+                  {usuarioLogado.nome}
+                </p>
               </div>
               <button
                 onClick={() => openEditModal("nome", usuarioLogado.nome)}
-                className="text-gray-400 hover:text-blue-600"
+                className="text-gray-400 hover:text-blue-600 flex-shrink-0"
+                title="Editar nome"
               >
                 <FaEdit size={16} />
               </button>
             </div>
 
             {/* Email */}
-            <div className="flex justify-between items-center">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700">
                   Email
                 </label>
-                <p className="text-gray-900 text-lg">{usuarioLogado.email}</p>
+                <p className="text-gray-900 text-base sm:text-lg break-all">
+                  {usuarioLogado.email}
+                </p>
               </div>
               <button
                 onClick={() => openEditModal("email", usuarioLogado.email)}
-                className="text-gray-400 hover:text-blue-600"
+                className="text-gray-400 hover:text-blue-600 flex-shrink-0"
+                title="Editar email"
               >
                 <FaEdit size={16} />
               </button>
             </div>
 
             {/* Senha */}
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700">
                   Senha
                 </label>
-                <p className="text-gray-900 text-lg">••••••••</p>
+                <p className="text-gray-900 text-base sm:text-lg">••••••••</p>
               </div>
               <button
                 onClick={() => openEditModal("senha", "")}
-                className="text-gray-400 hover:text-blue-600"
+                className="text-gray-400 hover:text-blue-600 flex-shrink-0"
+                title="Alterar senha"
               >
                 <FaEdit size={16} />
               </button>
             </div>
 
-
-            <div className="flex flex-col gap-4 mt-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
               <button
                 onClick={handleVoltar}
-                className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200"
+                className="w-full bg-gray-100 text-gray-700 py-2.5 sm:py-3 rounded-xl hover:bg-gray-200 text-sm sm:text-base"
               >
                 Voltar ao Perfil
               </button>
               <button
                 onClick={openDeleteModal}
-                className="flex items-center justify-center gap-2 w-full bg-red-100 text-red-600 py-3 rounded-xl hover:bg-red-200 transition-colors border border-red-200"
+                className="flex items-center justify-center gap-2 w-full bg-red-100 text-red-600 py-2.5 sm:py-3 rounded-xl hover:bg-red-200 transition-colors border border-red-200 text-sm sm:text-base"
               >
                 <FaTrash />
                 Excluir Minha Conta
@@ -447,12 +458,12 @@ export default function EditaPerfil() {
           </div>
         </div>
 
-        {/* MODAL */}
+        {/* MODAL DE EDIÇÃO */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 sm:p-6">
+            <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto relative">
+              <div className="flex justify-between items-center mb-5 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
                   Redefinir{" "}
                   {editingField?.charAt(0).toUpperCase() +
                     editingField?.slice(1)}
@@ -462,10 +473,11 @@ export default function EditaPerfil() {
                   className="text-gray-600 hover:text-gray-800"
                   title="Fechar"
                 >
-                  <FaTimes className="text-2xl" />
+                  <FaTimes className="text-xl" />
                 </button>
               </div>
-              <form className="space-y-6">
+
+              <form className="space-y-5 sm:space-y-6">
                 {editingField === "email" && (
                   <div className="grid grid-cols-1 gap-4">
                     <div>
@@ -476,7 +488,7 @@ export default function EditaPerfil() {
                         type="password"
                         value={tempSenhaAtual}
                         onChange={(e) => setTempSenhaAtual(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                        className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm"
                         placeholder="Digite a senha atual"
                       />
                     </div>
@@ -488,7 +500,7 @@ export default function EditaPerfil() {
                         type="email"
                         value={tempValue}
                         onChange={(e) => setTempValue(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                        className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm"
                         placeholder="Digite o novo email"
                       />
                     </div>
@@ -505,7 +517,7 @@ export default function EditaPerfil() {
                         type="password"
                         value={tempSenhaAtual}
                         onChange={(e) => setTempSenhaAtual(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                        className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm"
                         placeholder="Digite a senha atual"
                       />
                     </div>
@@ -517,7 +529,7 @@ export default function EditaPerfil() {
                         type="password"
                         value={tempValue}
                         onChange={(e) => setTempValue(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                        className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm"
                         placeholder="Digite a nova senha"
                       />
                     </div>
@@ -528,8 +540,10 @@ export default function EditaPerfil() {
                       <input
                         type="password"
                         value={tempConfirmarSenha}
-                        onChange={(e) => setTempConfirmarSenha(e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                        onChange={(e) =>
+                          setTempConfirmarSenha(e.target.value)
+                        }
+                        className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm"
                         placeholder="Confirme a nova senha"
                       />
                     </div>
@@ -545,7 +559,7 @@ export default function EditaPerfil() {
                       type="text"
                       value={tempValue}
                       onChange={(e) => setTempValue(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                      className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm"
                       placeholder="Digite o novo nome"
                     />
                   </div>
@@ -563,7 +577,7 @@ export default function EditaPerfil() {
                           setTempValue(e.target.value);
                         }
                       }}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl h-32 resize-none"
+                      className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl h-32 resize-none text-sm"
                       placeholder="Conte um pouco sobre você... (máx. 250 caracteres)"
                       maxLength={250}
                     />
@@ -573,19 +587,19 @@ export default function EditaPerfil() {
                   </div>
                 )}
 
-                <div className="flex gap-4 pt-6">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
                     type="button"
                     onClick={handleSaveField}
                     disabled={loading}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-xl"
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2.5 sm:py-3 rounded-xl text-sm sm:text-base disabled:opacity-60"
                   >
                     {loading ? "Salvando..." : "Salvar"}
                   </button>
                   <button
                     type="button"
                     onClick={closeEditModal}
-                    className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl"
+                    className="flex-1 bg-gray-100 text-gray-700 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base"
                   >
                     Cancelar
                   </button>
@@ -597,24 +611,27 @@ export default function EditaPerfil() {
 
         {/* Modal de Confirmação de Exclusão */}
         {isDeleteModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Excluir Conta</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 sm:p-6">
+            <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-5 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                  Excluir Conta
+                </h2>
                 <button
                   onClick={closeDeleteModal}
                   className="text-gray-600 hover:text-gray-800"
                   title="Fechar"
                 >
-                  <FaTimes className="text-2xl" />
+                  <FaTimes className="text-xl" />
                 </button>
               </div>
-              
-              <p className="text-gray-700 mb-6">
-                Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão permanentemente removidos.
+
+              <p className="text-gray-700 mb-5 sm:mb-6 text-sm sm:text-base">
+                Tem certeza que deseja excluir sua conta? Esta ação não pode ser
+                desfeita e todos os seus dados serão permanentemente removidos.
               </p>
-              
-              <div className="mb-6">
+
+              <div className="mb-5 sm:mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Digite sua senha para confirmar:
                 </label>
@@ -622,25 +639,27 @@ export default function EditaPerfil() {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm"
                   placeholder="Sua senha atual"
                 />
                 {deleteError && (
-                  <p className="text-red-500 text-sm mt-2">{deleteError}</p>
+                  <p className="text-red-500 text-xs sm:text-sm mt-2">
+                    {deleteError}
+                  </p>
                 )}
               </div>
-              
-              <div className="flex gap-4">
+
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleDeleteAccount}
                   disabled={loading}
-                  className="flex-1 bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 disabled:opacity-50"
+                  className="flex-1 bg-red-500 text-white py-2.5 sm:py-3 rounded-xl hover:bg-red-600 disabled:opacity-50 text-sm sm:text-base"
                 >
                   {loading ? "Excluindo..." : "Sim, excluir conta"}
                 </button>
                 <button
                   onClick={closeDeleteModal}
-                  className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl hover:bg-gray-200"
+                  className="flex-1 bg-gray-100 text-gray-700 py-2.5 sm:py-3 rounded-xl hover:bg-gray-200 text-sm sm:text-base"
                 >
                   Cancelar
                 </button>

@@ -345,8 +345,8 @@ export default function Header() {
           {menuOpen ? <FaTimes aria-hidden="true" /> : <FaBars aria-hidden="true" />}
         </button>
 
-        {/* Login / Perfil - Apenas visível em telas médias e grandes */}
-        <div className="hidden md:block">
+        {/* Login / Perfil - Visível em todas as resoluções */}
+        <div>
           {isLoggedIn ? (
             <div className="relative group">
               <button

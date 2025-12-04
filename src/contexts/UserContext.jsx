@@ -173,11 +173,35 @@ export function UserProvider({ children }) {
     }
 
     try {
-      const response = await api.put(`/usuarios/${user.id}`, updates);
-      const updatedUser = normalizeUser(response.data);
+      // Se for atualização de biografia, usa o endpoint específico
+      if ('biografia' in updates) {
+        const response = await api.patch(
+          `/usuarios/${user.id}/biografia`,
+          null,
+          {
+            params: { biografia: updates.biografia || '' },
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        const updatedUser = normalizeUser(response.data);
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        return updatedUser;
+      }
 
+      // Para outras atualizações, mantém o comportamento original
+      const response = await api.put(`/usuarios/${user.id}`, updates, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const updatedUser = normalizeUser(response.data);
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
+      return updatedUser;
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
       throw error;

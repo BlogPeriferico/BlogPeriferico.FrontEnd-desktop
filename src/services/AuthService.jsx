@@ -162,10 +162,15 @@ const AuthService = {
   // Exclui a conta do usuário atual
   deleteAccount: async (senhaAtual) => {
     try {
-      const response = await api.delete("/usuarios/deletar/minha-conta", {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      const response = await api.delete("/usuarios/minha-conta", {
         params: { senhaAtual },
         headers: {
-          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
         }
       });
       
@@ -177,14 +182,6 @@ const AuthService = {
       
       // Remove o token do cabeçalho das requisições
       delete api.defaults.headers.common['Authorization'];
-      
-      // Limpa qualquer cache do axios
-      if (api.defaults.headers.common['Cache-Control']) {
-        delete api.defaults.headers.common['Cache-Control'];
-      }
-      if (api.defaults.headers.common['Pragma']) {
-        delete api.defaults.headers.common['Pragma'];
-      }
       
       // Limpa qualquer sessão ativa
       if (typeof window !== 'undefined') {
